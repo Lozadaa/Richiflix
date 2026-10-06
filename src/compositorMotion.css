@@ -39,7 +39,8 @@
 @media(max-width:1450px){.tv-stage .focus-stage-copy{width:46%}.tv-stage .focus-description{font-size:22px}.expansion-tv .expansion-body{padding:18px 24px}.expansion-tv .expansion-description{font-size:22px}.expansion-tv .expansion-body h3{font-size:30px}}
 @media(max-width:700px){.expansion-tv .expansion-media{flex-basis:auto}.expansion-tv .expansion-body{padding:12px 20px}.tv-stage .focus-stage-copy{width:64%}.expansion-tv .expansion-description{-webkit-line-clamp:3;font-size:20px}}
 .samsung-tv .tv-mode .card.is-expanded .card-open:after{opacity:0}
-.card-trailer-banner{border-radius:0}.card-trailer-banner:after{content:'';position:absolute;inset:0;background:linear-gradient(0deg,#101827 0%,#10182722 24%,transparent 50%);pointer-events:none}
+.card-trailer-banner{border-radius:0}.card-trailer-banner:after{content:'';position:absolute;inset:0;background:linear-gradient(0deg,#101827 0%,#10182722 24%,transparent 50%);pointer-events:none;opacity:0}
+.card-trailer-banner[data-trailer-state='playing']:after{opacity:1}
 .tv-stage[data-card-trailer] .focus-stage-copy,.tv-stage[data-card-trailer] .focus-stage-visual{opacity:0;pointer-events:none;transition:opacity .16s ease}
 @media(prefers-reduced-motion:reduce){.tv-stage[data-card-trailer] .focus-stage-copy,.tv-stage[data-card-trailer] .focus-stage-visual{transition:none}}
 /* Two stable viewports: reserve the scene only after actual video playback. */

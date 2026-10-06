@@ -69,9 +69,11 @@ export function TrailerPreview({id,active=true,card=false}){
  useEffect(()=>()=>publishPreviewPlayback(playbackToken.current,false),[]);
  useLayoutEffect(()=>{
   if(!card||!owner?.target)return;
+  const deck=root.current?.closest('.card-trailer-deck');
+  deck?.setAttribute('data-trailer-state',playing?'playing':'poster');
   const state=playing&&!owner.banner?'playing':'poster';owner.target.dataset.trailerState=state;owner.target.parentElement?.setAttribute('data-trailer-state',state);
   owner.banner?.setAttribute('data-card-trailer',playing?'playing':'pending');
-  return()=>owner.banner?.removeAttribute('data-card-trailer');
+  return()=>{deck?.setAttribute('data-trailer-state','poster');owner.banner?.removeAttribute('data-card-trailer');};
  },[card,owner,playing]);
  return <div ref={root} className={'trailer-preview '+(playing?'is-playing':holding?'is-exiting':'')} data-trailer-state={playing?'playing':'poster'} data-trailer-transport={trailerBridgeEnabled?'bridge':'direct'} data-trailer-muted="false" aria-hidden="true"/>;
 }

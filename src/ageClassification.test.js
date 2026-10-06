@@ -1,3 +1,4 @@
+import {ageBadgeTone} from './ageBadgeStyle.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {tmdbAgeClassification} from './ageClassification.js';
@@ -22,4 +23,9 @@ test('certifications share the metadata request and survive a persistent cache r
  const cache=createPersistentMetadataCache(options);await cache.put('series',await load(42,'series'));await cache.put('movie',await load(43,'movie'));await cache.flush();
  const resumed=createPersistentMetadataCache(options);
  assert.equal((await resumed.get('series')).ageClassification.label,'18');assert.equal((await resumed.get('movie')).ageClassification,null);assert.equal(requests,2);
+});
+
+test('certificate colours respect regional labels and never assign a category to an unknown certificate',()=>{
+ const cases=[['CL','TE','general'],['CL','TE +7','family'],['CL','14','guidance'],['CL','18','mature'],['ES','12','family'],['US','PG-13','guidance'],['US','TV-MA','mature'],['US','14','neutral'],['XX','18','neutral']];
+ for(const [country,label,tone] of cases){const rating={country,label};assert.equal(ageBadgeTone(rating),tone);assert.deepEqual(rating,{country,label});}
 });
