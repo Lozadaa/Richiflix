@@ -56,6 +56,9 @@ export function installTVPlatform(){
     }return;
    }
    if(event.keyCode===10009&&event.target.dataset.tvSearch==='true'){event.preventDefault();event.stopImmediatePropagation();event.target.blur();document.querySelector('.topbar nav button.active')?.focus();return;}
+   if(event.keyCode===10009&&event.target.dataset.tvSearch==='filter'){
+    event.preventDefault();event.stopImmediatePropagation();const back=new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true});Object.defineProperty(back,'richiflixRemote',{value:true});event.target.dispatchEvent(back);return;
+   }
    if(event.keyCode===10009&&['INPUT','TEXTAREA'].includes(event.target.tagName)&&event.target.type!=='range'){
     event.preventDefault();event.stopImmediatePropagation();event.target.blur();
     (event.target.closest('form,[role="dialog"],.topbar')?.querySelector('button:not(:disabled)'))?.focus();return;

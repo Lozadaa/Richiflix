@@ -1,5 +1,5 @@
 import React,{useEffect,useMemo,useRef,useState} from 'react';
-import {Play,Plus,Search,Heart,Settings,ChevronRight,X,Monitor,ArrowUp,Check,Maximize,Minimize,Shuffle} from 'lucide-react';
+import {Play,Plus,Search,Heart,Settings,X,Monitor,ArrowUp,Check,Maximize,Minimize,Shuffle} from 'lucide-react';
 import {forProfile,canShowForKids,ratingFor} from './content.js';
 import {useContent} from './useContent.js';
 import {xtreamClient} from './xtreamClient.js';
@@ -43,16 +43,16 @@ const avatar=kind=>`${import.meta.env.BASE_URL}avatars/${kind==='kids'?'kids-kit
 const count=number=>number.toLocaleString('es-CL');
 export default function App({profile,changeProfile}){
  const isKids=profile.kind==='kids',catalogue=useContent(!isKids);
- const [page,setPage]=useState('Inicio'),[query,setQuery]=useState('');
+ const [page,setPage]=useState('Inicio'),[query,setQuery]=useState(''),[collectionView,setCollectionView]=useState(null);
  const {favorites,history,setFavorites,setHistory}=useProfileLibrary(profile.id);
  const [playing,setPlaying]=useState(null),[details,setDetails]=useState(null),[modal,setModal]=useState(null);
  const [notice,setNotice]=useState(''),[tv,setTv]=useState(isTVBuild||read('rf-tv-mode',true));
  const [previewItem,setPreviewItem]=useState(null),[previewActive,setPreviewActive]=useState(false),[previewPendingId,setPreviewPendingId]=useState(null),[metadataRevision,setMetadataRevision]=useState(0);
  const previewTimer=useRef(),leaveTimer=useRef(),previewCandidate=useRef(null),previewCard=useRef(null),pointerPosition=useRef({x:null,y:null}),stageMemory=useRef(null),previewContext=useRef(null),lastDirection=useRef('ArrowRight');
  const [category,setCategory]=useState('Todas');
- const stageScope=JSON.stringify([page,category,query]),previewScope=useRef(null);
+ const stageScope=JSON.stringify([page,category,query,collectionView?.title]),previewScope=useRef(null),viewAllPending=useRef(false);
  const mainRef=useRef(),searchRef=useRef(),fullscreenSession=useRef(null),experienceOrigin=useRef(null),playRequest=useRef(0),episodeOrigin=useRef(null),searchSubmitted=useRef(false);
- const banner=useBannerMotion(tv,mainRef,`${page}-${Boolean(query)}`);
+ const banner=useBannerMotion(tv,mainRef,`${page}-${Boolean(query)}-${collectionView?.title||''}`);
  const previewCache=useMemo(()=>createPreviewCache(item=>xtreamClient().details(item.streamId,item.mediaType,item.sourceId)),[catalogue.connection.revision||catalogue.connection.key,metadataRevision]);
  useEffect(()=>()=>previewCache.dispose(),[previewCache]);
  const [scrolled,setScrolled]=useState(false),[showTop,setShowTop]=useState(false),[fullscreen,setFullscreen]=useState(false),[featureDetails,setFeatureDetails]=useState({});
@@ -74,6 +74,7 @@ export default function App({profile,changeProfile}){
  const all=useMemo(()=>[...movies,...shows,...channels],[movies,shows,channels]);
  const featuredBase=useMemo(()=>(movies.length?movies:shows.length?shows:channels).slice(0,4),[movies,shows,channels]);
  const index=useMemo(()=>createCatalogueIndex(all),[all]);
+ const collectionItems=useMemo(()=>collectionView?collectionView.items.map(item=>index.byId.get(item.id)).filter(Boolean):null,[collectionView,index]);
  useEffect(()=>{
   banner.reset();clearTimeout(previewTimer.current);previewCandidate.current=null;previewCard.current=null;previewContext.current=null;previewScope.current=null;stageMemory.current=null;
   setPreviewItem(null);setPreviewActive(false);setPreviewPendingId(null);setSelectedCard(null);
@@ -128,15 +129,15 @@ export default function App({profile,changeProfile}){
  const leavePreview=useStableEvent(()=>{if(document.activeElement?.closest('.card,.focus-stage,.topbar')||document.querySelector('.card:hover,.focus-stage:hover'))return;clearTimeout(previewTimer.current);clearTimeout(leaveTimer.current);leaveTimer.current=setTimeout(()=>{
   if(document.activeElement?.closest('.card,.focus-stage,.topbar')||document.querySelector('.card:hover,.focus-stage:hover'))return;setPreviewActive(false);banner.reset();if(!tv)setPreviewItem(null);
  },250);});
- const navigate=useStableEvent(name=>{if(name==='Inicio'&&page!=='Inicio')discovery.change();banner.reset();clearTimeout(previewTimer.current);clearTimeout(leaveTimer.current);previewCandidate.current=null;previewCard.current=null;previewContext.current=null;previewScope.current=null;stageMemory.current=null;setPreviewItem(null);setSelectedCard(null);setPreviewActive(false);setPage(name);setQuery('');setCategory('Todas');window.scrollTo({top:0,behavior:motionAllowed()?'smooth':'instant'});});
- useEffect(()=>{banner.reset();clearTimeout(previewTimer.current);previewCandidate.current=null;previewCard.current=null;previewContext.current=null;setPreviewItem(null);setSelectedCard(null);setPreviewActive(false);mainRef.current?.scrollTo({top:0,behavior:'instant'});if(tv&&document.activeElement?.closest('.topbar')){banner.show();setPreviewActive(true);}},[query,category,page]);
- useReveal(mainRef,`${page}-${Boolean(query)}-${catalogue.loading}-${category}`);
+ const navigate=useStableEvent(name=>{if(name==='Inicio'&&page!=='Inicio')discovery.change();banner.reset();clearTimeout(previewTimer.current);clearTimeout(leaveTimer.current);previewCandidate.current=null;previewCard.current=null;previewContext.current=null;previewScope.current=null;stageMemory.current=null;setPreviewItem(null);setSelectedCard(null);setPreviewActive(false);setPage(name);setCollectionView(null);setQuery('');setCategory('Todas');window.scrollTo({top:0,behavior:motionAllowed()?'smooth':'instant'});});
+ useEffect(()=>{banner.reset();clearTimeout(previewTimer.current);previewCandidate.current=null;previewCard.current=null;previewContext.current=null;setPreviewItem(null);setSelectedCard(null);setPreviewActive(false);mainRef.current?.scrollTo({top:0,behavior:'instant'});if(tv&&document.activeElement?.closest('.topbar')){banner.show();setPreviewActive(true);}},[query,category,page,collectionView]);
+ useReveal(mainRef,`${page}-${Boolean(query)}-${catalogue.loading}-${category}-${collectionView?.title||''}`);
  useEffect(()=>{if(!notice)return;const timer=setTimeout(()=>setNotice(''),6500);return()=>clearTimeout(timer);},[notice]);
  useEffect(()=>{const scroll=()=>{setScrolled(window.scrollY>20);setShowTop(window.scrollY>600);};window.addEventListener('scroll',scroll,{passive:true});return()=>window.removeEventListener('scroll',scroll);},[]);
  useEffect(()=>{const search=e=>{if((e.ctrlKey||e.metaKey)&&e.key==='k'&&!document.querySelector('[role="dialog"]')){e.preventDefault();searchRef.current?.focus();}};window.addEventListener('keydown',search);return()=>window.removeEventListener('keydown',search);},[]);
  useEffect(()=>{let unsubscribe;const sync=()=>setFullscreen(Boolean(document.fullscreenElement));if(window.richiflix?.onFullscreenChange){window.richiflix.getFullscreen().then(setFullscreen);unsubscribe=window.richiflix.onFullscreenChange(setFullscreen);}else document.addEventListener('fullscreenchange',sync);return()=>{unsubscribe?.();document.removeEventListener('fullscreenchange',sync);};},[]);
  useEffect(()=>{if(tv)requestAnimationFrame(()=>document.querySelector('.topbar nav button.active')?.focus());},[tv]);
- useEffect(()=>{if(!tv)return;const back=event=>{if(event.defaultPrevented||event.key!=='Escape'||document.querySelector('[role="dialog"]'))return;event.preventDefault();if(document.activeElement?.closest('.card,.focus-stage,.catalog-controls')){setPreviewActive(false);document.querySelector('.topbar nav button.active')?.focus();}else if(query){setQuery('');document.querySelector('.topbar nav button.active')?.focus();}else if(page!=='Inicio')navigate('Inicio');else changeProfile();};window.addEventListener('keydown',back);return()=>window.removeEventListener('keydown',back);},[tv,page,query,changeProfile]);
+ useEffect(()=>{if(!tv)return;const back=event=>{if(event.defaultPrevented||event.key!=='Escape'||document.querySelector('[role="dialog"]'))return;event.preventDefault();if(document.activeElement?.closest('.card,.focus-stage,.catalog-controls')){setPreviewActive(false);document.querySelector('.topbar nav button.active')?.focus();}else if(query){setQuery('');document.querySelector('.topbar nav button.active')?.focus();}else if(page!=='Inicio'||collectionView)navigate('Inicio');else changeProfile();};window.addEventListener('keydown',back);return()=>window.removeEventListener('keydown',back);},[tv,page,query,collectionView,changeProfile]);
  const allowed=item=>!isKids||canShowForKids(item);
  function beginExperience(){
   clearTimeout(previewTimer.current);banner.reset();setPreviewActive(false);
@@ -166,12 +167,14 @@ export default function App({profile,changeProfile}){
  });
  const playEpisode=useStableEvent((episode,selection)=>{if(!allowed(episode)||!details)return;episodeOrigin.current={item:details,...selection};open(episode);});
  const destination=item=>item.mediaType==='series'?'Series':item.mediaType==='live'?'TV en vivo':'Películas';
- const moreButtons=useMemo(()=>Object.fromEntries(['Películas','Series','TV en vivo'].map(name=>[name,<button className="row-more" onClick={()=>navigate(name)}>Ver todo <ChevronRight size={15}/></button>])),[navigate]);
+ const rowActionFocus=useStableEvent(()=>{banner.reset();clearTimeout(previewTimer.current);clearTimeout(leaveTimer.current);previewCandidate.current=null;previewCard.current=null;previewContext.current=null;setPreviewActive(false);setSelectedCard(null);});
+ const viewAllRow=useStableEvent((title,items)=>{viewAllPending.current=true;const group=smartCollections.find(group=>group.items===items);navigate(items===continuing?'Inicio':destination(items[0]));if(group)setCategory(group.name);else if(items===continuing)setCollectionView({title,items});});
  const pointerPreview=useStableEvent((item,event,cardId,context)=>{const intent=pointerPosition.current;if(!tv||(intent.itemId===item.id&&performance.now()-intent.at<200))preview(item,cardId,context);});
  const previewProps={preview,pointerPreview,leave:leavePreview,tv,warmWindow,resolvedMetadata};
- const row=(title,items)=>{const visible=index.filter(items,query);return visible.length?<VirtualCarousel title={title} items={visible} open={tv?open:inspect} metadata={cardMetadata} history={history} favorites={favorites} toggle={toggle} {...previewProps} more={visible.length>40&&moreButtons[destination(visible[0])]}/>:null;};
+ const row=(title,items)=>{const visible=index.filter(items,query);return visible.length?<VirtualCarousel title={title} items={visible} open={tv?open:inspect} metadata={cardMetadata} history={history} favorites={favorites} toggle={toggle} {...previewProps} viewAll={rowActions.get(items)} actionFocus={rowActionFocus}/>:null;};
  const cards=items=><VirtualCatalogue items={items} metadata={cardMetadata} open={tv?open:inspect} history={history} favorites={favorites} toggle={toggle} {...previewProps}/>;
  const smartCollections=useMemo(()=>selections.collections.map(group=>({...group,items:group.ids.map(id=>index.byId.get(id)).filter(Boolean)})).filter(group=>group.items.length),[selections.collections,index]);
+ const rowActions=useMemo(()=>{const actions=new WeakMap();for(const [title,items]of [['Continuar viendo',continuing],[isKids?'Una gran aventura':'Películas',movies],['Series',shows],['En vivo',channels],...smartCollections.map(group=>[group.name,group.items])])actions.set(items,()=>viewAllRow(title,items));return actions;},[continuing,isKids,movies,shows,channels,smartCollections,viewAllRow]);
  const discovery=useHomeDiscovery(smartCollections,profile.id);
  const categoryBundles=useMemo(()=>new Map([movies,shows].map(items=>{const groups=smartCollections.filter(group=>group.type===(items===shows?'series':'movie'));return [items,{groups,names:[...new Set([...groups.map(group=>group.name),...index.categories(items)])]}];})),[movies,shows,smartCollections,index]);
  const smartFor=items=>categoryBundles.get(items)?.groups||[];
@@ -184,12 +187,12 @@ export default function App({profile,changeProfile}){
   return <><PageTitle title={title}/><div className={`catalog-controls ${items===movies||items===shows?'has-category-chips':''}`}><p className="catalog-count">{count(visible.length)} títulos</p>{categoryControls(title,items)}</div>{cards(visible)}{!visible.length&&!catalogue.loading&&<p className="empty-inline">{isKids?'No hay títulos con edad verificada de hasta 10 años.':'Sin títulos en esta categoría.'}</p>}</>;
  };
  const baseball=useMemo(()=>channels.filter(item=>/\bmlb\b|baseball|b[eé]isbol/i.test(item.title+' '+item.genre)),[channels]);
- const searchSource=page==='Películas'?movies:page==='Series'?shows:page==='TV en vivo'?channels:page==='Mi lista'?savedItems:page==='MLB'?baseball:all;
+ const searchSource=collectionItems||(page==='Películas'?movies:page==='Series'?shows:page==='TV en vivo'?channels:page==='Mi lista'?savedItems:page==='MLB'?baseball:all);
  const smartSearch=categoryItems(searchSource);
  const search=useCatalogueSearch(index,smartSearch||searchSource,query,smartSearch?'Todas':category),searchResults=search.items;
  const submitSearch=useStableEvent(event=>{const key=event.key==='Unidentified'?{13:'Enter',40:'ArrowDown',10009:'Escape'}[event.keyCode]:event.key;if(!tv||event.nativeEvent.isComposing||!['Enter','Escape'].includes(key))return;event.preventDefault();event.stopPropagation();searchRef.current?.blur();if(key==='Escape'){searchSubmitted.current=false;document.querySelector('.topbar nav button.active')?.focus();return;}searchSubmitted.current=true;if(!search.loading){requestAnimationFrame(()=>{searchSubmitted.current=false;(mainRef.current?.querySelector('.card-open')||document.querySelector('.topbar nav button.active'))?.focus({preventScroll:true});});}});
  useEffect(()=>{if(!searchSubmitted.current||search.loading)return;const frame=requestAnimationFrame(()=>{searchSubmitted.current=false;(mainRef.current?.querySelector('.card-open')||document.querySelector('.topbar nav button.active'))?.focus({preventScroll:true});});return()=>cancelAnimationFrame(frame);},[search.loading,searchResults]);
- const sectionFirst=page==='Películas'?filteredItems(movies)[0]:page==='Series'?filteredItems(shows)[0]:page==='TV en vivo'?index.filter(channels,'',category)[0]:page==='MLB'?index.filter(baseball,'',category)[0]:page==='Mi lista'?savedItems[0]:featured[0];
+ const sectionFirst=collectionItems?filteredItems(collectionItems)[0]:page==='Películas'?filteredItems(movies)[0]:page==='Series'?filteredItems(shows)[0]:page==='TV en vivo'?index.filter(channels,'',category)[0]:page==='MLB'?index.filter(baseball,'',category)[0]:page==='Mi lista'?savedItems[0]:featured[0];
  const stageFirst=query?searchResults[0]:sectionFirst;
  const validStage=item=>item&&index.byId.get(item.id)&&(page!=='Mi lista'||favoriteIds.has(item.id));
  const rememberedStage=stageMemory.current?.scope===stageScope&&validStage(stageMemory.current.item)?index.byId.get(stageMemory.current.item.id):null;
@@ -204,10 +207,10 @@ export default function App({profile,changeProfile}){
  const stageVisible=stageItem&&(tv||previewItem)&&!details&&!playing&&!modal;
  const nearby=useMemo(()=>{
   if(query)return searchResults;
-  const source=page==='Series'?shows:page==='TV en vivo'?channels:page==='MLB'?baseball:page==='Mi lista'?savedItems:movies;
+  const source=collectionItems||(page==='Series'?shows:page==='TV en vivo'?channels:page==='MLB'?baseball:page==='Mi lista'?savedItems:movies);
   const chosen=smartCollections.find(group=>group.name===category&&group.type===(source===movies?'movie':source===shows?'series':null));
   return chosen?.items||index.filter(source,'',category);
- },[index,query,searchResults,page,shows,channels,baseball,savedItems,movies,category,smartCollections]);
+ },[index,query,searchResults,page,shows,channels,baseball,savedItems,movies,category,smartCollections,collectionItems]);
  useEffect(()=>{
   if(banner.moving||!previewActive)return;
   const context=previewContext.current;
@@ -215,7 +218,8 @@ export default function App({profile,changeProfile}){
   const warm=setTimeout(()=>neighbors.forEach(item=>preparePreview(item,false,true)),240);
   return()=>clearTimeout(warm);
  },[previewItem?.id,page,query,category,nearby.length,previewCache,banner.moving,previewActive]);
- return <div onFocusCapture={headerPreview} onKeyDownCapture={event=>{if(event.key.startsWith('Arrow')&&event.target.closest('.card'))lastDirection.current=event.key;pointerPosition.current.itemId=null;pointerPosition.current.cardId=null;}} onMouseMoveCapture={event=>{const previous=pointerPosition.current,moved=event.clientX!==previous.x||event.clientY!==previous.y;event.nativeEvent.richiflixPointerMoved=moved;if(moved){const card=event.target.closest('.card');pointerPosition.current={x:event.clientX,y:event.clientY,itemId:card?.dataset.contentId,cardId:card?.dataset.cardId,at:performance.now()};}}} className={`app ${tv?'tv-mode':''} ${tv&&stageItem?'has-tv-stage':''} ${banner.collapsed?'stage-collapsed':''} ${banner.moving?'is-browsing-rows':''} ${isKids?'kids-space':''} ${page==='Inicio'&&!query&&featured.length?'scenic':''}`}>
+ useEffect(()=>{if(!viewAllPending.current)return;viewAllPending.current=false;const frame=requestAnimationFrame(()=>(mainRef.current?.querySelector('.catalog-grid .card-open')||document.querySelector('.topbar nav button.active'))?.focus({preventScroll:true}));return()=>cancelAnimationFrame(frame);},[page,category,collectionView]);
+ return <div onFocusCapture={headerPreview} onKeyDownCapture={event=>{if(event.key.startsWith('Arrow')&&event.target.closest('.card'))lastDirection.current=event.key;pointerPosition.current.itemId=null;pointerPosition.current.cardId=null;}} onMouseMoveCapture={event=>{const previous=pointerPosition.current,moved=event.clientX!==previous.x||event.clientY!==previous.y;event.nativeEvent.richiflixPointerMoved=moved;if(moved){const card=event.target.closest('.card');pointerPosition.current={x:event.clientX,y:event.clientY,itemId:card?.dataset.contentId,cardId:card?.dataset.cardId,at:performance.now()};}}} className={`app ${tv?'tv-mode':''} ${tv&&stageItem?'has-tv-stage':''} ${banner.collapsed?'stage-collapsed':''} ${banner.moving?'is-browsing-rows':''} ${isKids?'kids-space':''} ${page==='Inicio'&&!query&&!collectionView&&featured.length?'scenic':''}`}>
   <header className={`topbar ${scrolled?'is-scrolled':''}`}>
    <a className="brand" href="#" onClick={event=>{event.preventDefault();navigate('Inicio');}}><Brand/></a>
    <nav aria-label="Principal">{(isKids?['Inicio','Películas','Series','Mi lista']:['Inicio','Películas','Series','TV en vivo','MLB','Mi lista']).map(name=><button className={page===name?'active':''} aria-current={page===name?'page':undefined} key={name} onClick={()=>navigate(name)}>{name}</button>)}</nav>
@@ -226,13 +230,13 @@ export default function App({profile,changeProfile}){
    </div>
   </header>
   {stageVisible&&<FocusStage item={stageItem} metadataPending={stageMetadataPending} active={previewActive&&!banner.moving} loading={previewPendingId===stageItem.id&&previewActive&&!banner.moving} collapsed={banner.collapsed} moving={banner.moving} open={open} inspect={inspect} favorite={favorites.includes(stageItem.id)} toggle={toggle} tv={tv} hover={keepPreview} leave={leavePreview}/>}
-  <main ref={mainRef} key={`${page}-${Boolean(query)}`} className="page-scene">
-   {!tv&&page==='Inicio'&&!query&&featured.length>0&&<Hero items={featured} metadata={featureDetails} prepare={preparePreview} open={open} inspect={inspect}/>}
-   <div className={`content ${page==='Inicio'&&!query&&featured.length?'home-content':''}`}>
+  <main ref={mainRef} key={`${page}-${Boolean(query)}-${collectionView?.title||''}`} className="page-scene">
+   {!tv&&page==='Inicio'&&!query&&!collectionView&&featured.length>0&&<Hero items={featured} metadata={featureDetails} prepare={preparePreview} open={open} inspect={inspect}/>}
+   <div className={`content ${page==='Inicio'&&!query&&!collectionView&&featured.length?'home-content':''}`}>
     {!isKids&&catalogue.loading&&<p className="catalog-status" role="status">Cargando tus fuentes…</p>}
     {!isKids&&catalogue.error&&<p role="alert">{displayText(catalogue.error)}</p>}
     {!isKids&&!catalogue.loading&&!catalogue.connection.configured&&<Empty icon={Settings} title="Conecta tu IPTV" text="Tu login Xtream Codes reúne canales, películas y series." action={()=>setModal('ajustes')} label="Conectar"/>}
-    {query?<><PageTitle title={page==='Películas'?'Buscar películas':page==='Series'?'Buscar series':'Resultados'}/><div className={`catalog-controls ${searchSource===movies||searchSource===shows?'has-category-chips':''}`}><p className="catalog-count" role={search.loading?'status':undefined}>{search.loading?'Buscando…':`${count(searchResults.length)} resultados`}</p>{categoryControls(page,searchSource)}</div>{cards(searchResults)}{!searchResults.length&&!search.loading&&<p className="empty-inline">Sin resultados.</p>}</>:<>
+    {query?<><PageTitle title={page==='Películas'?'Buscar películas':page==='Series'?'Buscar series':'Resultados'}/><div className={`catalog-controls ${searchSource===movies||searchSource===shows?'has-category-chips':''}`}><p className="catalog-count" role={search.loading?'status':undefined}>{search.loading?'Buscando…':`${count(searchResults.length)} resultados`}</p>{categoryControls(page,searchSource)}</div>{cards(searchResults)}{!searchResults.length&&!search.loading&&<p className="empty-inline">Sin resultados.</p>}</>:collectionItems?catalogueGrid(collectionView.title,collectionItems):<>
      {page==='Inicio'&&<>{row('Continuar viendo',continuing)}{row(isKids?'Una gran aventura':'Películas',movies)}{row('Series',shows)}{!isKids&&row('En vivo',channels)}{smartCollections.filter(group=>group.name===TMDB_BEST||group.name===TMDB_RECENT).sort((a,b)=>Number(a.name===TMDB_RECENT)-Number(b.name===TMDB_RECENT)).map(group=><React.Fragment key={`${group.type}:${group.name}`}>{row(group.name===TMDB_RECENT?(group.type==='movie'?'Películas recientes mejor valoradas · TMDB':'Series recientes mejor valoradas · TMDB'):(group.type==='movie'?'Películas mejor valoradas · TMDB':'Series mejor valoradas · TMDB'),group.items)}</React.Fragment>)}{discovery.groups.length>0&&<section className="home-discovery" aria-label="Descubre algo diferente"><div className="discovery-heading"><div><h2>Tu próximo mood</h2><p>Historias para descubrir, a tu ritmo.</p></div>{smartCollections.filter(group=>group.kind==='discovery').length>1&&<button className="discovery-refresh" onClick={discovery.change}><Shuffle aria-hidden="true"/>Otra selección</button>}</div>{discovery.groups.map(group=><React.Fragment key={group.key}>{row(group.name,group.items)}</React.Fragment>)}</section>}{isKids&&all.length===0&&<div className="empty-inline kids-empty"><h1>No hay títulos verificados para Kids</h1><p>Solo aparecen contenidos con edad confirmada de hasta 10 años.</p></div>}</>}
      {page==='Películas'&&catalogueGrid('Películas',movies)}
      {page==='Series'&&catalogueGrid('Series',shows)}

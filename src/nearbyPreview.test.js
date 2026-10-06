@@ -10,3 +10,10 @@ test('preview warms two future titles in the remote direction, with vertical gri
  assert.deepEqual(nearbyPreviewItems({items,index:6,key:'ArrowRight',columns:7,kind:'grid'}),[]);
  assert.deepEqual(nearbyPreviewItems({items,index:39}),[]);
 });
+test('circular rails prewarm across both ends without requesting the focused title twice',()=>{
+ assert.deepEqual(nearbyPreviewItems({items,index:0,key:'ArrowLeft',loop:true}).map(item=>item.id),[39,38]);
+ assert.deepEqual(nearbyPreviewItems({items,index:39,key:'ArrowRight',loop:true}).map(item=>item.id),[0,1]);
+ assert.deepEqual(nearbyPreviewItems({items:items.slice(0,2),index:0,loop:true}).map(item=>item.id),[1]);
+ assert.deepEqual(nearbyPreviewItems({items:items.slice(0,1),index:0,loop:true}),[]);
+ assert.deepEqual(nearbyPreviewItems({items,index:0,key:'ArrowLeft',loop:true,kind:'grid',columns:7}),[]);
+});

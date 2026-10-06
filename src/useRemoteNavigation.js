@@ -2,7 +2,7 @@ import {useEffect} from 'react';
 import {isTVBuild} from './platform.js';
 import {virtualController,virtualCardIndex,restoreVirtualFocus,directionalTarget} from './virtualNavigation.js';
 import {installFocusPaintDiagnostics} from './focusPaintDiagnostics.js';
-import {nextGridIndex} from './virtualWindow.js';
+import {nextGridIndex,nextRailIndex} from './virtualWindow.js';
 export function useRemoteNavigation(){
  useEffect(()=>{
  const memories=new WeakMap(),gridSizes=new WeakMap(),announced=new WeakSet();let lastCard,lastGroup,lastIndex=-1;
@@ -34,8 +34,8 @@ export function useRemoteNavigation(){
    if(current.matches('.discovery-refresh')){const discovery=current.closest('.home-discovery'),first=discovery.querySelector('.cards'),rows=[...document.querySelectorAll('.catalog-row .cards')],previous=rows[rows.indexOf(first)-1];if(e.key==='ArrowDown'&&first){move(e,recalled(e,first));return;}if(e.key==='ArrowUp'&&previous){move(e,recalled(e,previous));return;}move(e,null);return;}
    // Only a destination in the catalogue hides its stage. The header and
    // playback/list buttons remain visible while the remote moves among them.
-   if(e.key==='ArrowDown'&&current.closest('.topbar')){const primary=document.querySelector('.focus-actions .primary');if(primary){move(e,primary);return;}}
-   if(e.key==='ArrowDown'&&current.closest('.focus-actions')){let target=lastCard?.isConnected?lastCard:null;if(!target&&lastGroup?.isConnected){if(Number(lastGroup.dataset.virtualCount)>0)announce(e);target=restoreVirtualFocus(lastGroup,lastIndex);}target??=document.querySelector('.card-open');if(target){move(e,target);return;}}
+   if(e.key==='ArrowDown'&&current.closest('.topbar')){const primary=document.querySelector('.focus-actions .primary')||document.querySelector('main .catalog-controls button');if(primary){move(e,primary);return;}}
+   if(e.key==='ArrowDown'&&current.closest('.focus-actions')){const filter=document.querySelector('main .category-filter-entry');if(filter){move(e,filter);return;}let target=lastCard?.isConnected?lastCard:null;if(!target&&lastGroup?.isConnected){if(Number(lastGroup.dataset.virtualCount)>0)announce(e);target=restoreVirtualFocus(lastGroup,lastIndex);}target??=document.querySelector('.card-open');if(target){move(e,target);return;}}
    if(current.closest('.catalog-controls')){if(e.key==='ArrowUp'){move(e,document.querySelector('.focus-actions .primary')||document.querySelector('.topbar nav button.active'));return;}if(e.key==='ArrowDown'){move(e,lastCard?.isConnected?lastCard:document.querySelector('.card-open'));return;}}
    if(e.key==='ArrowUp'&&current.closest('.focus-actions')){move(e,document.querySelector('.topbar nav button.active'));return;}
    const horizontal=e.key==='ArrowLeft'||e.key==='ArrowRight',controlRow=current.closest('.topbar,.focus-actions');
@@ -50,17 +50,17 @@ export function useRemoteNavigation(){
     if(controller&&(horizontal||controller.kind==='grid')){
      // Virtual navigate() focuses internally, so announce before calling it,
      // after establishing that this key actually has another card to reach.
-     const index=virtualCardIndex(current),count=Number(group.dataset.virtualCount),next=controller.kind==='grid'?nextGridIndex(index,e.key,Number(group.dataset.virtualColumns)||1,count):index+(e.key==='ArrowRight'?1:-1);
-     if(next!==null&&next>=0&&next<count)announce(e);
+     const index=virtualCardIndex(current),count=Number(group.dataset.virtualCount),next=controller.kind==='grid'?nextGridIndex(index,e.key,Number(group.dataset.virtualColumns)||1,count):nextRailIndex(index,e.key,count);
+     if(next!==null&&next>=0&&next<count&&next!==index)announce(e);
      const target=controller.navigate(e.key,current);
      if(target){move(e,target);return;}
      if(horizontal){move(e,null);return;}
-     if(e.key==='ArrowUp'){move(e,document.querySelector('main .catalog-controls button')||document.querySelector('.focus-actions .primary')||document.querySelector('.topbar nav button.active'));return;}
+     if(e.key==='ArrowUp'){move(e,document.querySelector('main .catalog-controls .category-chip.selected')||document.querySelector('main .catalog-controls button')||document.querySelector('.focus-actions .primary')||document.querySelector('.topbar nav button.active'));return;}
      move(e,null);return;
     }
     const cards=controller?[]:[...group.querySelectorAll('.card-open')],index=cards.indexOf(current);
     if(horizontal){
-     const target=cards[index+(e.key==='ArrowRight'?1:-1)];
+     const target=cards[group.matches('.cards')?nextRailIndex(index,e.key,cards.length):index+(e.key==='ArrowRight'?1:-1)];
      if(group.matches('.cards')||!target||Math.abs(target.getBoundingClientRect().y-current.getBoundingClientRect().y)<20){move(e,target);return;}
      move(e,null);return;
     }

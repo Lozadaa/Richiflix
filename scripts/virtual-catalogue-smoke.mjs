@@ -44,10 +44,10 @@ try{
  const columns=Number(await page.locator('.catalog-grid').getAttribute('data-virtual-columns'));assert.ok(columns>=7);
  for(let step=0;step<500;step++){
   const current=await index(),row=Math.floor(current/columns),column=current%columns,key=row%2===0?(column===columns-1?'ArrowDown':'ArrowRight'):(column===0?'ArrowDown':'ArrowLeft');
-  await page.keyboard.press(key);const next=await index();assert.notEqual(next,current,`Movement ${step} retained ${current}`);last=next;
+  await page.keyboard.press(key);const next=await index();assert.equal(next,current+(key==='ArrowDown'?columns:key==='ArrowRight'?1:-1),`Movement ${step} from ${current}, ${key}, grid ${await page.locator('.catalog-grid').getAttribute('data-virtual-columns')}, active ${await page.evaluate(()=>document.activeElement.outerHTML.slice(0,200))}`);last=next;
   if(step%10===0){const mounted=await cards();maxMounted=Math.max(maxMounted,mounted);assert.ok(mounted<=50,`Mounted ${mounted}`);}
  }
- assert.ok(last>=500);await page.waitForTimeout(100);
+ assert.ok(last>=Math.floor(500/columns)*columns,`Serpentine traversal reached ${last} in ${columns} columns`);await page.waitForTimeout(100);
  await page.waitForTimeout(150);
  assert.ok(await page.evaluate(()=>{const target=document.activeElement.closest('.card').getBoundingClientRect();return target.height<=window.innerHeight*.52-100-16;}),'The enlarged card must fit the expanded list viewport.');
  const firstRoundHeap=await heap(),firstMetrics=await page.evaluate(()=>window.__richiflixPerformance.snapshot());
@@ -64,7 +64,7 @@ try{
  // A pointer scroll may move away from the focused row, but may not recycle its button.
  await page.evaluate(()=>document.querySelector('main').scrollTop=0);await page.waitForTimeout(80);
  assert.equal(await index(),last);assert.ok(await cards()<=50);
- await page.locator('.focus-actions .primary').focus();await page.keyboard.press('ArrowDown');assert.equal(await index(),last);
+ await page.locator('.focus-actions .primary').focus();await page.keyboard.press('ArrowDown');assert.equal(await index(),last);await page.waitForTimeout(300);
  assert.ok(await page.evaluate(()=>{const target=document.activeElement.getBoundingClientRect(),viewport=document.querySelector('main').getBoundingClientRect();return target.bottom>viewport.top&&target.top<viewport.bottom;}));
  await page.evaluate(()=>document.querySelector('.app').classList.remove('stage-collapsed'));
  await page.locator('.focus-actions .primary').focus();await page.keyboard.press('ArrowDown');await page.waitForTimeout(300);
@@ -82,6 +82,14 @@ try{
  await page.keyboard.press('ArrowDown');assert.equal(await page.evaluate(()=>document.activeElement.closest('.cards').getAttribute('aria-label')),'Comedia');
  await page.keyboard.press('ArrowUp');assert.equal(await index(),500);
  assert.ok(await page.locator('.virtual-rail-cell').count()<=30);await page.waitForTimeout(100);
+ // Both extreme jumps preserve the same DOM budget at 27,000 titles. The last
+ // position is the reachable action; returning right removes the old window.
+ await page.locator('.cards').first().evaluate(element=>element.scrollLeft=0);await page.waitForTimeout(50);await page.locator('.cards').first().locator('[data-virtual-index="0"] .card-open').focus();
+ const firstRailCard=await page.locator('.cards').first().locator('[data-virtual-index="0"]').elementHandle();
+ await page.keyboard.press('ArrowLeft');assert.equal(await index(),27000);assert.equal(await page.evaluate(()=>document.activeElement.matches('.rail-more-open')),true);
+ assert.equal(await firstRailCard.evaluate(element=>element.isConnected),false);assert.ok(await page.locator('.virtual-rail-cell').count()<=30);
+ await page.keyboard.press('ArrowLeft');assert.equal(await index(),26999);await page.keyboard.press('ArrowRight');assert.equal(await index(),27000);await page.keyboard.press('ArrowRight');assert.equal(await index(),0);
+ assert.equal(await page.locator('.cards').first().locator('.rail-more-open').count(),0);assert.ok(await page.locator('.virtual-rail-cell').count()<=30);
  const finalHeap=await heap(),finalMetrics=await page.evaluate(()=>window.__richiflixPerformance.snapshot());assert.deepEqual(errors,[]);
  const navigationReads=await page.evaluate(()=>window.__navigationReads);
  // A virtual-window crossing can mount QualityImage during flushSync. Its

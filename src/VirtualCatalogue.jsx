@@ -2,7 +2,7 @@ import {useStableEvent} from './useStableEvent.js';
 import React,{memo,useEffect,useId,useLayoutEffect,useMemo,useRef,useState} from 'react';
 import {flushSync} from 'react-dom';
 import {Card} from './interactions.jsx';
-import {nextGridIndex,rowWindow,sameIndices} from './virtualWindow.js';
+import {nextGridIndex,rowWindow,sameIndices,pinWindowFocus} from './virtualWindow.js';
 import {registerVirtualNavigation,virtualCardIndex} from './virtualNavigation.js';
 import {revealGridIndex,scrollViewport,viewportHeight,viewportOffset,viewportIsGliding,cancelViewportGlide} from './virtualViewport.js';
 import './virtualCatalogue.css';
@@ -22,7 +22,7 @@ export const VirtualCatalogue=memo(function VirtualCatalogue({items,metadata,ope
   const element=grid.current;if(!element)return;const {items,layout}=snapshot.current;
   const viewport=scrollViewport(element),rect=element.getBoundingClientRect(),top=viewport===window?0:viewport.getBoundingClientRect().top,height=viewportHeight(viewport);
   const next=rowWindow({count:items.length,columns:layout.columns,rowHeight:layout.rowHeight,offset:top-rect.top-layout.paddingTop,viewport:height,overscan:tv?1:2,focusedIndex:focused.current}).indices;
-  setIndices(previous=>sameIndices(previous,next)?previous:next);
+  setIndices(previous=>{const pinned=pinWindowFocus(next,focused.current,snapshot.current.items.length);return sameIndices(previous,pinned)?previous:pinned;});
  };
  useLayoutEffect(()=>{
   const element=grid.current;let frame,lastWidth=-1;
@@ -89,7 +89,7 @@ export const VirtualCatalogue=memo(function VirtualCatalogue({items,metadata,ope
  const height=Math.ceil(items.length/layout.columns)*layout.rowHeight-(items.length?(layout.rowGap||0):0)+layout.paddingTop+layout.paddingBottom;
  return <div ref={grid} className={`catalog-grid virtual-catalogue ${live?'live-grid':'poster-grid'}`} data-virtual-kind="grid" data-virtual-count={items.length} data-virtual-columns={layout.columns} style={{height}}>
   <div ref={probe} className="virtual-layout-probe" aria-hidden="true"/>
-  {indices.filter(index=>index<items.length).map(index=>{const item=items[index];return <div key={item.id} className="virtual-grid-cell" data-virtual-index={index} style={{width:layout.width,left:layout.paddingLeft+(index%layout.columns)*(layout.width+layout.gap),top:layout.paddingTop+Math.floor(index/layout.columns)*layout.rowHeight}}>
+  {pinWindowFocus(indices,focused.current,items.length).filter(index=>index<items.length).map(index=>{const item=items[index];return <div key={item.id} className="virtual-grid-cell" data-virtual-index={index} style={{width:layout.width,left:layout.paddingLeft+(index%layout.columns)*(layout.width+layout.gap),top:layout.paddingTop+Math.floor(index/layout.columns)*layout.rowHeight}}>
    <Card instanceId={`${instancePrefix}:${item.id}`} item={item} metadata={metadata?.[item.id]} metadataPending={resolvedMetadata?!resolvedMetadata.has(item.id):false} open={open} progress={history[item.id]} favorite={favoriteIds.has(item.id)} toggle={toggle} index={index} preview={focusedPreview} pointerPreview={pointedPreview} leave={leave} tv={tv}/>
   </div>;})}
  </div>;

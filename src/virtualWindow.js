@@ -22,4 +22,13 @@ export function nextGridIndex(index,key,columns,count){
  if(key==='ArrowDown')return index+columns<count?index+columns:Math.floor(index/columns)<Math.floor((count-1)/columns)?count-1:null;
  return null;
 }
+export function nextRailIndex(index,key,count){
+ if(!Number.isInteger(count)||count<1||!Number.isInteger(index)||index<0||index>=count||!['ArrowLeft','ArrowRight'].includes(key))return null;
+ return (index+(key==='ArrowRight'?1:-1)+count)%count;
+}
+// A queued scroll window may commit after the next remote key. Keep the focus
+// that exists at commit time, rather than recycling its just-focused button.
+export function pinWindowFocus(indices,index,count){
+ return Number.isInteger(index)&&index>=0&&index<count&&!indices.includes(index)?[...indices,index]:indices;
+}
 export const sameIndices=(previous,next)=>previous.length===next.length&&previous.every((index,position)=>index===next[position]);

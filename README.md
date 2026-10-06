@@ -8,9 +8,11 @@ Tu biblioteca local para Windows y Samsung TV. Películas, series y canales IPTV
 
 - Portada integrada en el fondo, información en español y puntuaciones TMDB cuando están disponibles.
 - Flechas, OK y Volver para recorrer el catálogo; el ratón también funciona en PC.
+- Carruseles circulares en ambos sentidos y una tarjeta «Ver todo» al final de cada fila, accesible con el mando.
 - Películas y series por categorías, búsqueda, Mi lista e historial por perfil.
 - TOP de películas y series de los últimos 12 meses, con puntuaciones TMDB.
 - Colecciones que rotan al volver a Inicio o elegir «Otra selección»: misterio, comedia, clásicos, fantasía y más. Categorías con chips, accesibles con el mando y combinables con la búsqueda.
+- Botón «Filtrar» con búsqueda de categorías; el género elegido se conserva al buscar títulos.
 - Episodios en una lista continua agrupada por temporada, sin selector. Volver recupera el capítulo elegido.
 - Perfiles locales Adulto y Kids. Kids exige evidencia de edad de hasta 10 años; un título sin clasificación confirmada queda oculto.
 - Player por iconos, un único loader y controles adaptados a TV. El volumen en Samsung se gestiona con el mando.
@@ -19,6 +21,10 @@ Tu biblioteca local para Windows y Samsung TV. Películas, series y canales IPTV
 ![Lista de episodios](docs/screenshots/episodios.png)
 
 ![Colecciones de Inicio](docs/screenshots/descubrir.png)
+
+![Ver todo al final del carrusel](docs/screenshots/carruseles.png)
+
+![Buscar y filtrar categorías](docs/screenshots/filtros.png)
 
 [Cómo funcionan las colecciones y categorías](docs/COLECCIONES-HOME.md).
 
