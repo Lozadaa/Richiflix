@@ -31,6 +31,7 @@ export function useRemoteNavigation(){
   const current=document.activeElement,tv=Boolean(document.querySelector('.tv-mode')),dialog=document.querySelector('[role="dialog"]');
   if(['INPUT','TEXTAREA','VIDEO',...(!isTVBuild?['SELECT']:[])].includes(current.tagName))return;
   if(tv&&!dialog){
+   if(current.matches('.discovery-refresh')){const discovery=current.closest('.home-discovery'),first=discovery.querySelector('.cards'),rows=[...document.querySelectorAll('.catalog-row .cards')],previous=rows[rows.indexOf(first)-1];if(e.key==='ArrowDown'&&first){move(e,recalled(e,first));return;}if(e.key==='ArrowUp'&&previous){move(e,recalled(e,previous));return;}move(e,null);return;}
    // Only a destination in the catalogue hides its stage. The header and
    // playback/list buttons remain visible while the remote moves among them.
    if(e.key==='ArrowDown'&&current.closest('.topbar')){const primary=document.querySelector('.focus-actions .primary');if(primary){move(e,primary);return;}}
@@ -71,6 +72,7 @@ export function useRemoteNavigation(){
      if(target){move(e,target);return;}
     }else{
      const rows=[...document.querySelectorAll('.catalog-row .cards')],next=rows[rows.indexOf(group)+(down?1:-1)];
+     const refresh=document.querySelector('.home-discovery .discovery-refresh'),firstDiscovery=document.querySelector('.home-discovery .cards');if(refresh&&(down&&next===firstDiscovery&&!group.closest('.home-discovery')||!down&&group===firstDiscovery)){move(e,refresh);return;}
      if(next){move(e,recalled(e,next));return;}
     }
     if(!down){move(e,document.querySelector('.focus-actions .primary')||document.querySelector('.topbar nav button.active'));return;}

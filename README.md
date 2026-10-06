@@ -9,12 +9,18 @@ Tu biblioteca local para Windows y Samsung TV. Películas, series y canales IPTV
 - Portada integrada en el fondo, información en español y puntuaciones TMDB cuando están disponibles.
 - Flechas, OK y Volver para recorrer el catálogo; el ratón también funciona en PC.
 - Películas y series por categorías, búsqueda, Mi lista e historial por perfil.
+- TOP de películas y series de los últimos 12 meses, con puntuaciones TMDB.
+- Colecciones que rotan al volver a Inicio o elegir «Otra selección»: misterio, comedia, clásicos, fantasía y más. Categorías con chips, accesibles con el mando y combinables con la búsqueda.
 - Episodios en una lista continua agrupada por temporada, sin selector. Volver recupera el capítulo elegido.
 - Perfiles locales Adulto y Kids. Kids exige evidencia de edad de hasta 10 años; un título sin clasificación confirmada queda oculto.
 - Player por iconos, un único loader y controles adaptados a TV. El volumen en Samsung se gestiona con el mando.
 - MLB: portadas de duelos compuestas con los escudos locales de los equipos y cuenta atrás de eventos con hora de Santiago.
 
 ![Lista de episodios](docs/screenshots/episodios.png)
+
+![Colecciones de Inicio](docs/screenshots/descubrir.png)
+
+[Cómo funcionan las colecciones y categorías](docs/COLECCIONES-HOME.md).
 
 ## Abrir en Windows
 
@@ -61,7 +67,7 @@ npm run test:pc
 node electron/smoke.cjs
 ```
 
-Las pruebas usan datos temporales y respuestas simuladas. La prueba de episodios recorre 610 capítulos manteniendo como máximo 12 botones montados; también comprueba precarga, búsqueda con keycodes del mando y regreso desde reproducción. **No conecta ni instala en un TV.** [Informe de validación](docs/VALIDACION-PC-20261006.md).
+Las pruebas usan datos temporales y respuestas simuladas. La prueba de episodios recorre 610 capítulos manteniendo como máximo 12 botones montados; también comprueba precarga, búsqueda con keycodes del mando, filtros de categorías, rotación persistente y regreso desde reproducción. **No conecta ni instala en un TV.** [Informe de validación](docs/VALIDACION-PC-20261006.md).
 
 ## Diseño y recursos
 
