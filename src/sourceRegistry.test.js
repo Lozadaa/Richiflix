@@ -66,9 +66,9 @@ test('an expired cache is returned immediately and explicitly marked for backgro
 test('a complete provider response stays available if saving its cache fails',async()=>{
  const state=setup(null,{writeCache:async()=>{throw Error('quota');}}),data=await state.create().catalogue();assert.equal(data.channels.length,1);assert.equal(data.movies.length,1);assert.equal(data.sources[0].error,undefined);
 });
-test('metadata-v3 ignores obsolete detail entries and reuses the new generation without changing sources or catalogues',async()=>{
+test('metadata-v4 ignores obsolete detail entries and reuses the new generation without changing sources or catalogues',async()=>{
  const token='x'.repeat(30),stored=[{...preset,sourceId:'eterboxtv'}],baseKey='eterboxtv:'+accountKey(preset)+':movie:23',tokenKey=accountKey({host:'metadata',username:token});
- const legacyKey=baseKey+':'+tokenKey,currentKey=baseKey+':metadata-v3:'+tokenKey,cache=new Map([[legacyKey,{description:'Old Spanish-only cache'}]]);
+ const legacyKey=baseKey+':metadata-v3:'+tokenKey,currentKey=baseKey+':metadata-v4:'+tokenKey,cache=new Map([[legacyKey,{description:'Old Spanish-only cache'}]]);
  let fetches=0,accountWrites=0,catalogueReads=0,catalogueWrites=0;
  const state=setup(stored,{metadataToken:async()=>token,readDetails:async key=>cache.get(key),writeDetails:async(key,data)=>{cache.set(key,data);},
   writeAccounts:async()=>{accountWrites++;},readCache:async()=>{catalogueReads++;},writeCache:async()=>{catalogueWrites++;},

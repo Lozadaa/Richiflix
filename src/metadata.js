@@ -32,6 +32,7 @@ export async function spanishMetadata(tmdbId,type,token,fetcher=fetch){
   // Video languages are independent of the Spanish title and synopsis. Fetch
   // English fallbacks with the same request instead of another network round trip.
   const data=await tmdbRequest(`${type==='series'?'tv':'movie'}/${tmdbId}?append_to_response=videos&include_video_language=es,en,null`,token,fetcher);
+  if(data.adult===true)return {isPornographic:true};
   const languageRank=video=>video.iso_639_1==='es'?0:video.iso_639_1==='en'?1:video.iso_639_1==null||video.iso_639_1===''?2:3;
   const videos=Array.isArray(data.videos?.results)?data.videos.results:[];
   const trailer=videos.filter(video=>video&&video.site==='YouTube'&&video.type==='Trailer'&&languageRank(video)<3&&youtubeID(video.key))

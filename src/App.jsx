@@ -2,6 +2,8 @@ import React,{useEffect,useMemo,useRef,useState} from 'react';
 import {Play,Plus,Search,Heart,Settings,X,Monitor,ArrowUp,Check,Maximize,Minimize,Shuffle} from 'lucide-react';
 import {forProfile,canShowForKids,ratingFor} from './content.js';
 import {useContent} from './useContent.js';
+import {blockContent} from './contentStore.js';
+import {isPornographic} from './contentPolicy.js';
 import {xtreamClient} from './xtreamClient.js';
 import {XtreamSettings} from './XtreamSettings.jsx';
 import {SeriesDetail} from './SeriesDetail.jsx';
@@ -65,7 +67,7 @@ export default function App({profile,changeProfile}){
  useEffect(()=>registerPerformanceStats('previews',()=>({...previewCache.stats,...previewArtworkStats(),visibleDetailCache:detailsCount.current})),[previewCache]);
  const movies=useMemo(()=>forProfile(catalogue.movies,profile),[catalogue.movies,profile]);
  const shows=useMemo(()=>forProfile(catalogue.shows,profile),[catalogue.shows,profile]);
- const scheduledChannels=useMemo(()=>!isKids&&catalogue.preparedChannels?catalogue.preparedChannels:composeChannels(forProfile(catalogue.channels,profile)).map(item=>{
+ const scheduledChannels=useMemo(()=>!isKids&&catalogue.preparedChannels?forProfile(catalogue.preparedChannels,profile):composeChannels(forProfile(catalogue.channels,profile)).map(item=>{
   const source=(catalogue.sources||catalogue.connection.sources||[]).find(source=>source.id===item.sourceId);
   const timed={...item,eventStartsAt:scheduledEventTime(item,{updatedAt:item.catalogueUpdatedAt||catalogue.updatedAt,host:source?.host})};
   return {...timed,eventDisplayTitle:eventDisplayTitle(timed)};
@@ -84,14 +86,14 @@ export default function App({profile,changeProfile}){
  const savedItems=useMemo(()=>all.filter(item=>favoriteIds.has(item.id)),[all,favoriteIds]);
  const featured=useMemo(()=>featuredBase.map(item=>({...item,...cardMetadata[item.id]})),[featuredBase,cardMetadata]);
  const featureKey=featuredBase.map(item=>item.id).join(',');
- const publishPreview=useStableEvent((item,data)=>setFeatureDetails(previous=>{
+ const publishPreview=useStableEvent((item,data)=>{if(isPornographic(data)){blockContent(item.id);return;}setFeatureDetails(previous=>{
   if(previous[item.id]===data)return previous;
   const next={...previous};delete next[item.id];next[item.id]=data;
   const keep=new Set([...featuredBase.map(item=>item.id),item.id,previewItem?.id]);
   const ids=Object.keys(next);let retained=ids.length;
   for(const id of ids){if(retained<=80)break;if(!keep.has(id)){delete next[id];retained--;}}
   return next;
- }));
+ });});
  const proactive=useMemo(()=>createProactivePreviews({cache:previewCache,publish:(item,data)=>publishPreview(item,data)}),[previewCache]);
  useEffect(()=>()=>proactive.dispose(),[proactive]);
  useEffect(()=>proactive.enable(!banner.moving&&!details&&!playing&&!modal),[proactive,banner.moving,details,playing,modal]);
@@ -103,6 +105,7 @@ export default function App({profile,changeProfile}){
   if(priority&&(!featureDetails[item.id]||!Object.keys(featureDetails[item.id]).length))setPreviewPendingId(item.id);
   previewCache.get(item,priority).then(data=>{
    if(previewCache.disposed)return;
+   if(isPornographic(data)){publishPreview(item,data);return;}
    if(warmArt&&!banner.moving&&previewCandidate.current?.id===warmingFor)preloadPreviewArtwork({...item,...data});
    publishPreview(item,data);
   }).catch(error=>{
@@ -138,7 +141,7 @@ export default function App({profile,changeProfile}){
  useEffect(()=>{let unsubscribe;const sync=()=>setFullscreen(Boolean(document.fullscreenElement));if(window.richiflix?.onFullscreenChange){window.richiflix.getFullscreen().then(setFullscreen);unsubscribe=window.richiflix.onFullscreenChange(setFullscreen);}else document.addEventListener('fullscreenchange',sync);return()=>{unsubscribe?.();document.removeEventListener('fullscreenchange',sync);};},[]);
  useEffect(()=>{if(tv)requestAnimationFrame(()=>document.querySelector('.topbar nav button.active')?.focus());},[tv]);
  useEffect(()=>{if(!tv)return;const back=event=>{if(event.defaultPrevented||event.key!=='Escape'||document.querySelector('[role="dialog"]'))return;event.preventDefault();if(document.activeElement?.closest('.card,.focus-stage,.catalog-controls')){setPreviewActive(false);document.querySelector('.topbar nav button.active')?.focus();}else if(query){setQuery('');document.querySelector('.topbar nav button.active')?.focus();}else if(page!=='Inicio'||collectionView)navigate('Inicio');else changeProfile();};window.addEventListener('keydown',back);return()=>window.removeEventListener('keydown',back);},[tv,page,query,collectionView,changeProfile]);
- const allowed=item=>!isKids||canShowForKids(item);
+ const allowed=item=>!isPornographic(item)&&(!isKids||canShowForKids(item));
  function beginExperience(){
   clearTimeout(previewTimer.current);banner.reset();setPreviewActive(false);
   if(isTVBuild||fullscreenSession.current)return;
@@ -156,7 +159,7 @@ export default function App({profile,changeProfile}){
  const toggleFullscreen=()=>{if(window.richiflix?.setFullscreen)window.richiflix.setFullscreen(!fullscreen).catch(()=>{});else if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});else document.documentElement.requestFullscreen?.().catch(()=>{});};
  const inspect=useStableEvent(item=>{
   if(!allowed(item))return;episodeOrigin.current=null;setNotice('');beginExperience();setDetails({...item,...cardMetadata[item.id]});
-  if(['movie','series'].includes(item.mediaType))previewCache.get(item,true).then(data=>setDetails(previous=>previous?.id===item.id?{...previous,...data}:previous)).catch(()=>{});
+  if(['movie','series'].includes(item.mediaType))previewCache.get(item,true).then(data=>{if(isPornographic(data)){publishPreview(item,data);setDetails(previous=>previous?.id===item.id?null:previous);return;}setDetails(previous=>previous?.id===item.id?{...previous,...data}:previous);}).catch(()=>{});
  });
  const toggle=useStableEvent(item=>{if(allowed(item)){const saved=favorites.includes(item.id);setFavorites(previous=>previous.includes(item.id)?previous.filter(id=>id!==item.id):[...previous,item.id]);setNotice(`${item.title} · ${saved?'Quitado de':'Añadido a'} Mi lista`);}});
  const open=useStableEvent(async item=>{

@@ -2,6 +2,7 @@
 import {youtubeID,spanishMetadata} from './metadata.js';
 import {eventInstant} from './eventTime.js';
 import {cooperativeMap} from './cooperativeWork.js';
+import {isPornographic,isPornographicCategory,CONTENT_POLICY_VERSION} from './contentPolicy.js';
 const text=value=>typeof value==='string'?value:typeof value==='number'?String(value):'';
 const id=value=>/^\d{1,20}$/.test(text(value))?text(value):null;
 const extension=value=>/^[a-z0-9]{1,10}$/i.test(text(value))?text(value).toLowerCase():'mp4';
@@ -47,6 +48,7 @@ export function normaliseItem(raw,type,categories,account){
  const streamId=id(type==='series'?raw.series_id:raw.stream_id??raw.id);if(!streamId)return null;
  const suffix=type==='live'?'m3u8':extension(raw.container_extension),key=accountKey(account);
  const category=categories.get(text(raw.category_id))||({live:'TV en vivo',movie:'Películas',series:'Series',episode:'Episodios'})[type];
+ if(isPornographic({...raw,title:raw.name||raw.title,category,mediaType:type}))return null;
  const clock=type==='episode'&&/^\d{1,2}:[0-5]\d:[0-5]\d$/.test(text(raw.info?.duration))?text(raw.info.duration).split(':').map(Number):null;
  const suppliedDuration=Number(raw.info?.duration_secs)||(type==='episode'?Number(raw.duration_secs)|| (clock?clock[0]*3600+clock[1]*60+clock[2]:0):0);
  const durationSeconds=Number.isFinite(suppliedDuration)&&suppliedDuration>0?suppliedDuration:0;
@@ -63,13 +65,15 @@ export async function loadXtreamCatalogue(account,fetcher=fetch,workOptions){
   const [categories,items]=await Promise.all([requestXtream(account,`get_${stem}_categories`,{},fetcher),requestXtream(account,action,{},fetcher)]);
   if(!Array.isArray(categories)||!Array.isArray(items))throw Error('El servidor no devolvió el catálogo completo.');
   const map=new Map(categories.map(category=>[text(category.category_id),text(category.category_name)]));
-  result[type]=(await cooperativeMap(items,item=>normaliseItem(item,type,map,account),workOptions)).filter(Boolean);
+  const blocked=new Set(categories.filter(isPornographicCategory).map(category=>text(category.category_id)));
+  result[type]=(await cooperativeMap(items,item=>[item.category_id,...(Array.isArray(item.category_ids)?item.category_ids:[])].some(value=>blocked.has(text(value)))?null:normaliseItem(item,type,map,account),workOptions)).filter(Boolean);
  }
- return {connection,channels:result.live,movies:result.movie,shows:result.series,updatedAt:new Date().toISOString()};
+ return {connection,channels:result.live,movies:result.movie,shows:result.series,contentPolicyVersion:CONTENT_POLICY_VERSION,updatedAt:new Date().toISOString()};
 }
 export async function loadXtreamEpisodes(account,seriesId,fetcher=fetch){
  if(!id(seriesId))throw Error('Serie no válida.');
  const data=await requestXtream(account,'get_series_info',{series_id:seriesId},fetcher),groups=data?.episodes;
+ if(isPornographic(data?.info))return [];
  if(!groups||typeof groups!=='object')throw Error('No se encontraron episodios de esta serie.');
  return Object.entries(groups).sort(([a],[b])=>Number(a)-Number(b)).map(([season,episodes])=>({season,episodes:(Array.isArray(episodes)?episodes:[]).map(raw=>{
   const item=normaliseItem({...raw,name:raw.title||raw.name},'episode',new Map(),account);return item?{...item,episodeNumber:Number(raw.episode_num)||0,season}:null;
@@ -79,6 +83,7 @@ export async function loadXtreamVideoDetails(account,streamId,fetcher=fetch,type
  if(!id(streamId))throw Error('Película no válida.');
  const series=type==='series';
  const data=await requestXtream(account,series?'get_series_info':'get_vod_info',{[series?'series_id':'vod_id']:streamId},fetcher,10000),info=data?.info||{};
+ if(isPornographic(info)||isPornographic(data?.movie_data))return {isPornographic:true};
  const description=text(info.plot||info.description).slice(0,5000),contentGenre=text(info.genre);
  const backdropImage=imageURL(Array.isArray(info.backdrop_path)?info.backdrop_path[0]:info.backdrop_path,account),trailerId=youtubeID(info.youtube_trailer);
  const durationSeconds=Number(info.duration_secs),year=text(info.releasedate||info.release_date).slice(0,4);
@@ -90,6 +95,7 @@ export async function loadXtreamVideoDetails(account,streamId,fetcher=fetch,type
   ...(cast?{cast}:{}),...(director?{director}:{}),...await spanishMetadata(info.tmdb_id,series?'series':'movie',metadataToken,fetcher)};
 }
 export function playbackURL(account,item,formats=['m3u8']){
+ if(isPornographic(item))throw Error('Este contenido está bloqueado en Richiflix.');
  const streamId=id(item.streamId),type=item.mediaType;if(!streamId||!['live','movie','episode'].includes(type))throw Error('Vídeo no válido.');
  const folder=type==='episode'?'series':type,format=type==='live'?(formats.includes('m3u8')?'m3u8':'ts'):extension(item.extension);
  return `${account.host}/${folder}/${encodeURIComponent(account.username)}/${encodeURIComponent(account.password)}/${streamId}.${format}`;
