@@ -1,0 +1,17 @@
+/* Cell wrappers own geometry; Card keeps its scale, focus ring and image transition. */
+.catalog-grid.virtual-catalogue{position:relative;display:block;overflow:visible;contain:layout style}
+.virtual-layout-probe{position:absolute;left:12px;right:12px;top:0;height:0;display:grid;grid-template-columns:inherit;column-gap:inherit;visibility:hidden;pointer-events:none}
+.virtual-grid-cell{position:absolute;overflow:visible}
+.virtual-catalogue .portrait-card .card-caption{height:58px;min-height:58px}
+.tv-mode .virtual-catalogue .portrait-card .card-caption{height:76px;min-height:76px}
+.samsung-tv .virtual-catalogue .portrait-card .card-caption{height:80px;min-height:80px}
+.virtual-catalogue .card{animation:none}
+/* Preserve entry motion at the viewport level instead of replaying 50 arrivals on scroll. */
+.virtual-catalogue.is-visible{animation:virtual-enter .24s var(--ease-out,ease) both}
+@keyframes virtual-enter{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.cards.virtual-rail{display:block;position:relative;scroll-snap-type:none}
+.virtual-rail-track{position:relative}
+.virtual-rail-cell{position:absolute;top:0}
+.virtual-rail-cell .card{width:100%;min-width:0}
+.virtual-rail-probe{position:absolute!important;top:0;left:0;height:0;visibility:hidden;pointer-events:none}
+@media(prefers-reduced-motion:reduce){.virtual-catalogue.is-visible{animation:none}}

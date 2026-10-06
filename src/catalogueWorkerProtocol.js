@@ -1,0 +1,1 @@
+export const catalogueWorkerMethods=new Set(['status','recommendations','cachedRatings','save','catalogue','episodes','details','playback','remove','restore','metadataStatus','metadataSave','flush','prepareChannels','indexSearch','search','dropSearch']);

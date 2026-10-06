@@ -1,0 +1,15 @@
+/* The virtual window bounds how many bitmaps can be retained. A fixed layer
+   avoids rerasterizing every poster during its 1.08 scale animation on Samsung.
+   The focus ring has its own opacity layer and does not dirty the image. */
+.samsung-tv .tv-mode .card{will-change:transform}
+.samsung-tv .tv-mode .card,.samsung-tv .tv-mode .card.is-previewed,.samsung-tv .tv-mode .card:focus-within:not(.is-previewed){z-index:1}
+.samsung-tv .tv-mode .card .poster{box-shadow:none;filter:none;transition:none}
+.samsung-tv .tv-mode .card .card-title{color:#e8eef9}
+.samsung-tv .tv-mode .card-open{position:relative}
+.samsung-tv .tv-mode .card-open:after{content:'';position:absolute;inset:0;border:4px solid #f5d58d;border-radius:15px;pointer-events:none;opacity:0;will-change:opacity;transition:opacity .12s ease}
+.samsung-tv .tv-mode .card.is-previewed .card-open:after{opacity:1}
+/* Retain the chosen title, but show its halo only while the catalogue owns
+   focus. Header/banner/dialog navigation must not leave a second active target. */
+.samsung-tv .tv-mode[data-focus-region]:not([data-focus-region='catalogue']) .card.is-previewed{transform:none}
+.samsung-tv .tv-mode[data-focus-region]:not([data-focus-region='catalogue']) .card.is-previewed .card-open:after{opacity:0}
+@media(prefers-reduced-motion:reduce){.samsung-tv .tv-mode .card-open:after{transition:none}}

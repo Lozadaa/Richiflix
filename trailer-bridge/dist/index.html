@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="es">
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1">
+ <meta name="referrer" content="strict-origin-when-cross-origin">
+ <meta name="robots" content="noindex,nofollow">
+ <title>Richiflix · Tráilers</title>
+ <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23101827'/%3E%3Cpath d='M9 7h9c8 0 8 11 1 12l6 7h-8l-5-7v7H9zm4 5v3h5c2 0 2-3 0-3z' fill='%23ff987f'/%3E%3C/svg%3E">
+ <style>html,body,#player,iframe{width:100%;height:100%;margin:0;border:0;overflow:hidden;background:#000}iframe{display:block}body{color:#e8eef9;font:20px system-ui}p{margin:0;padding:24px}</style>
+</head>
+<body>
+ <div id="player"></div>
+ <script>
+ (()=>{
+  'use strict';
+  const parameters=new URLSearchParams(location.hash.slice(1));
+  const session=parameters.get('session'),initial=parameters.get('video');
+  const validID=value=>typeof value==='string'&&/^[A-Za-z0-9_-]{11}$/.test(value);
+  if(parent===window||!session||!/^[A-Za-z0-9_-]{16,128}$/.test(session)||!validID(initial)){
+   document.getElementById('player').textContent='Este reproductor se abre desde Richiflix.';
+   return;
+  }
+  let player,ready=false,closed=false,wanted=initial,intent=1;
+  const report=(type,fields={})=>{
+   if(closed)return;
+   // The installed widget has an opaque file origin. Only its parent window
+   // knows this per-frame nonce; no source URLs, account data or API keys cross.
+   parent.postMessage({channel:'richiflix-trailer',version:1,session,intent,videoId:wanted,type,...fields},'*');
+  };
+  const audio=()=>{player.setVolume(100);player.unMute();};
+  const stop=()=>{closed=true;clearTimeout(startup);window.removeEventListener('message',command);try{player?.destroy();}catch{};};
+  function command(event){
+   const value=event.data;
+   if(closed||event.source!==parent||!value||value.channel!=='richiflix-trailer'||value.version!==1||value.session!==session)return;
+   if(value.type==='destroy'){stop();return;}
+   if(!ready||!Number.isSafeInteger(value.intent)||value.intent<1||!validID(value.videoId))return;
+   if(value.type==='cue'){
+    if(value.intent<=intent)return;
+    intent=value.intent;wanted=value.videoId;
+    try{player.pauseVideo();player.cueVideoById(wanted);}catch{report('error',{code:'playback-unavailable'});}
+    return;
+   }
+   if(value.intent!==intent||value.videoId!==wanted)return;
+   try{
+    if(value.type==='play'){audio();player.playVideo();}
+    else if(value.type==='pause')player.pauseVideo();
+    else if(value.type==='volume'&&Number.isFinite(value.volume))player.setVolume(Math.max(0,Math.min(100,value.volume)));
+    else if(value.type==='unmute')player.unMute();
+   }catch{report('error',{code:'playback-unavailable'});}
+  }
+  window.addEventListener('message',command);
+  window.addEventListener('pagehide',stop,{once:true});
+  const startup=setTimeout(()=>report('error',{code:'api-unavailable'}),11000);
+  window.onYouTubeIframeAPIReady=()=>{
+   if(closed)return;
+   const frame=document.createElement('iframe');
+   frame.title='Tráiler de Richiflix';frame.tabIndex=-1;
+   frame.setAttribute('allow','autoplay; encrypted-media');
+   frame.referrerPolicy='strict-origin-when-cross-origin';
+   const url=new URL('https://www.youtube-nocookie.com/embed/'+initial);
+   for(const [key,value] of Object.entries({enablejsapi:1,autoplay:0,controls:0,disablekb:1,fs:0,playsinline:1,rel:0,hl:'es',origin:location.origin}))url.searchParams.set(key,String(value));
+   frame.src=url.href;document.getElementById('player').replaceChildren(frame);
+   try{
+    player=new YT.Player(frame,{host:'https://www.youtube-nocookie.com',videoId:initial,events:{
+     onReady:()=>{if(closed)return;clearTimeout(startup);ready=true;audio();report('ready');},
+     onStateChange:event=>{
+      if(closed)return;
+      const shown=player.getVideoData()?.video_id;
+      if(!validID(shown)||shown!==wanted){if(event.data===1)player.pauseVideo();return;}
+      report('state',{state:event.data,videoId:shown});
+     },
+     onError:event=>{if(closed)return;const shown=player.getVideoData()?.video_id;if(shown&&shown!==wanted)return;report('error',{code:event.data});},
+     onAutoplayBlocked:()=>report('autoplay-blocked')
+    }});
+   }catch{report('error',{code:'embed-unavailable'});}
+  };
+  const script=document.createElement('script');
+  script.src='https://www.youtube.com/iframe_api';script.async=true;
+  script.referrerPolicy='strict-origin-when-cross-origin';
+  script.onerror=()=>{clearTimeout(startup);report('error',{code:'api-unavailable'});};
+  document.head.appendChild(script);
+ })();
+ </script>
+</body>
+</html>
