@@ -1,3 +1,4 @@
+import {AgeBadge} from './AgeBadge.jsx';
 import React,{memo,useEffect,useId,useMemo,useRef,useState} from 'react';
 import {ArrowUpRight,Check,ChevronLeft,ChevronRight,Heart,Info,Play} from 'lucide-react';
 import {QualityImage} from './QualityImage.jsx';
@@ -32,7 +33,7 @@ export const Card=memo(function Card({item:original,instanceId,metadata,metadata
     {matchup?<MatchupArtwork matchup={matchup}/>:<>
     <QualityImage className={item.kind==='iptv'?'channel-logo':'poster-art'} src={item.imageGeneric?undefined:artworkURL(item.image)} fit={item.kind==='iptv'?'contain':'cover'} minVisibleSize={item.kind==='iptv'?72:0} pending={item.kind!=='iptv'&&metadataPending} loader fallbackWhileLoading={false} fallback={<ContentIdentity item={item} channel={item.kind==='iptv'}/>}/></>}
     {item.kind==='iptv'&&<EventBadge item={item}/>}
-    {item.kind!=='iptv'&&<UserScore item={item} compact/>}
+    {item.kind!=='iptv'&&<><UserScore item={item} compact/><AgeBadge item={item}/></>}
     {item.kind==='provider'&&<span className="provider-label">{displayText(item.genre)}</span>}
     {!matchup&&<div className="poster-title">{item.kind==='iptv'?channelTitle(item):displayTitle(item)}</div>}
     {!tv&&<div className="card-play">{item.kind==='provider'?<ArrowUpRight size={24}/>:<Play fill="currentColor" size={20}/>}</div>}

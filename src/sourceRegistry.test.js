@@ -66,15 +66,15 @@ test('an expired cache is returned immediately and explicitly marked for backgro
 test('a complete provider response stays available if saving its cache fails',async()=>{
  const state=setup(null,{writeCache:async()=>{throw Error('quota');}}),data=await state.create().catalogue();assert.equal(data.channels.length,1);assert.equal(data.movies.length,1);assert.equal(data.sources[0].error,undefined);
 });
-test('metadata-v4 ignores obsolete detail entries and reuses the new generation without changing sources or catalogues',async()=>{
+test('metadata-v5 ignores obsolete detail entries and reuses the new generation without changing sources or catalogues',async()=>{
  const token='x'.repeat(30),stored=[{...preset,sourceId:'eterboxtv'}],baseKey='eterboxtv:'+accountKey(preset)+':movie:23',tokenKey=accountKey({host:'metadata',username:token});
- const legacyKey=baseKey+':metadata-v3:'+tokenKey,currentKey=baseKey+':metadata-v4:'+tokenKey,cache=new Map([[legacyKey,{description:'Old Spanish-only cache'}]]);
+ const legacyKey=baseKey+':metadata-v4:'+tokenKey,currentKey=baseKey+':metadata-v5:'+tokenKey,cache=new Map([[legacyKey,{description:'Old Spanish-only cache'}]]);
  let fetches=0,accountWrites=0,catalogueReads=0,catalogueWrites=0;
  const state=setup(stored,{metadataToken:async()=>token,readDetails:async key=>cache.get(key),writeDetails:async(key,data)=>{cache.set(key,data);},
   writeAccounts:async()=>{accountWrites++;},readCache:async()=>{catalogueReads++;},writeCache:async()=>{catalogueWrites++;},
-  fetcher:async address=>{fetches++;const url=new URL(address);return new Response(JSON.stringify(url.hostname==='api.themoviedb.org'?{title:'Título español',overview:'Sinopsis nueva',videos:{results:[{site:'YouTube',type:'Trailer',key:'ENtrailer01',official:true,iso_639_1:'en'}]}}:{info:{tmdb_id:123}}));},
+  fetcher:async address=>{fetches++;const url=new URL(address);return new Response(JSON.stringify(url.hostname==='api.themoviedb.org'?{title:'Título español',overview:'Sinopsis nueva',release_dates:{results:[{iso_3166_1:'CL',release_dates:[{certification:'14',type:3}]}]},videos:{results:[{site:'YouTube',type:'Trailer',key:'ENtrailer01',official:true,iso_639_1:'en'}]}}:{info:{tmdb_id:123}}));},
  });
- const details=await state.create().details('23');assert.equal(details.trailerId,'ENtrailer01');assert.equal(details.description,'Sinopsis nueva');assert.equal(fetches,2);assert.deepEqual(cache.get(currentKey),details);
+ const details=await state.create().details('23');assert.equal(details.trailerId,'ENtrailer01');assert.equal(details.description,'Sinopsis nueva');assert.equal(details.ageClassification.label,'14');assert.equal(fetches,2);assert.deepEqual(cache.get(currentKey),details);
  assert.equal(cache.get(legacyKey).description,'Old Spanish-only cache');
  assert.deepEqual(await state.create().details('23'),details);assert.equal(fetches,2);
  assert.equal(accountWrites,0);assert.equal(catalogueReads,0);assert.equal(catalogueWrites,0);assert.deepEqual(state.saved(),stored);

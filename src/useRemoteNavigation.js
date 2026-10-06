@@ -34,9 +34,9 @@ export function useRemoteNavigation(){
    if(current.matches('.discovery-refresh')){const discovery=current.closest('.home-discovery'),first=discovery.querySelector('.cards'),rows=[...document.querySelectorAll('.catalog-row .cards')],previous=rows[rows.indexOf(first)-1];if(e.key==='ArrowDown'&&first){move(e,recalled(e,first));return;}if(e.key==='ArrowUp'&&previous){move(e,recalled(e,previous));return;}move(e,null);return;}
    // Only a destination in the catalogue hides its stage. The header and
    // playback/list buttons remain visible while the remote moves among them.
-   if(e.key==='ArrowDown'&&current.closest('.topbar')){const primary=document.querySelector('.focus-actions .primary')||document.querySelector('main .catalog-controls button');if(primary){move(e,primary);return;}}
+   if(e.key==='ArrowDown'&&current.closest('.topbar')){const primary=document.querySelector('.app.has-tv-stage .focus-actions .primary')||document.querySelector('main .catalog-controls button')||document.querySelector('.card-open');if(primary){move(e,primary);return;}}
    if(e.key==='ArrowDown'&&current.closest('.focus-actions')){const filter=document.querySelector('main .category-filter-entry');if(filter){move(e,filter);return;}let target=lastCard?.isConnected?lastCard:null;if(!target&&lastGroup?.isConnected){if(Number(lastGroup.dataset.virtualCount)>0)announce(e);target=restoreVirtualFocus(lastGroup,lastIndex);}target??=document.querySelector('.card-open');if(target){move(e,target);return;}}
-   if(current.closest('.catalog-controls')){if(e.key==='ArrowUp'){move(e,document.querySelector('.focus-actions .primary')||document.querySelector('.topbar nav button.active'));return;}if(e.key==='ArrowDown'){move(e,lastCard?.isConnected?lastCard:document.querySelector('.card-open'));return;}}
+   if(current.closest('.catalog-controls')){if(e.key==='ArrowUp'){move(e,document.querySelector('.app.has-tv-stage .focus-actions .primary')||document.querySelector('.topbar nav button.active'));return;}if(e.key==='ArrowDown'){move(e,lastCard?.isConnected?lastCard:document.querySelector('.card-open'));return;}}
    if(e.key==='ArrowUp'&&current.closest('.focus-actions')){move(e,document.querySelector('.topbar nav button.active'));return;}
    const horizontal=e.key==='ArrowLeft'||e.key==='ArrowRight',controlRow=current.closest('.topbar,.focus-actions');
    if(horizontal&&controlRow){
@@ -55,7 +55,7 @@ export function useRemoteNavigation(){
      const target=controller.navigate(e.key,current);
      if(target){move(e,target);return;}
      if(horizontal){move(e,null);return;}
-     if(e.key==='ArrowUp'){move(e,document.querySelector('main .catalog-controls .category-chip.selected')||document.querySelector('main .catalog-controls button')||document.querySelector('.focus-actions .primary')||document.querySelector('.topbar nav button.active'));return;}
+     if(e.key==='ArrowUp'){move(e,document.querySelector('main .catalog-controls .category-chip.selected')||document.querySelector('main .catalog-controls button')||document.querySelector('.app.has-tv-stage .focus-actions .primary')||document.querySelector('.topbar nav button.active'));return;}
      move(e,null);return;
     }
     const cards=controller?[]:[...group.querySelectorAll('.card-open')],index=cards.indexOf(current);
@@ -75,7 +75,7 @@ export function useRemoteNavigation(){
      const refresh=document.querySelector('.home-discovery .discovery-refresh'),firstDiscovery=document.querySelector('.home-discovery .cards');if(refresh&&(down&&next===firstDiscovery&&!group.closest('.home-discovery')||!down&&group===firstDiscovery)){move(e,refresh);return;}
      if(next){move(e,recalled(e,next));return;}
     }
-    if(!down){move(e,document.querySelector('.focus-actions .primary')||document.querySelector('.topbar nav button.active'));return;}
+    if(!down){move(e,document.querySelector('.app.has-tv-stage .focus-actions .primary')||document.querySelector('.topbar nav button.active'));return;}
     move(e,null);return;
    }
   }

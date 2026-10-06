@@ -13,7 +13,7 @@ export function CategoryChips({categories,collections=[],value,change,title}){
  const navigate=event=>{
   const buttons=[...strip.current.querySelectorAll('button')],index=buttons.indexOf(event.target);if(index<0||!event.key.startsWith('Arrow'))return;event.preventDefault();event.stopPropagation();
   if(event.key==='ArrowLeft'||event.key==='ArrowRight'){buttons[index+(event.key==='ArrowRight'?1:-1)]?.focus({preventScroll:true});return;}
-  const app=strip.current.closest('.app');if(event.key==='ArrowUp'){(app.querySelector('.focus-actions .primary')||app.querySelector('.topbar nav button.active'))?.focus({preventScroll:true});return;}
+  const app=strip.current.closest('.app');if(event.key==='ArrowUp'){(app.querySelector('.has-tv-stage .focus-actions .primary')||app.querySelector('.topbar nav button.active'))?.focus({preventScroll:true});return;}
   const grid=app.querySelector('main .catalog-grid');if(grid){window.dispatchEvent(new CustomEvent('richiflix-catalog-navigation',{detail:{key:'ArrowDown',repeat:event.repeat}}));(restoreVirtualFocus(grid,0)||grid.querySelector('.card-open'))?.focus({preventScroll:true});}
  };
  return <div className="category-chips" role="group" aria-label={`Filtrar ${title} por categoría`} ref={strip} onFocusCapture={reveal} onKeyDownCapture={navigate}>

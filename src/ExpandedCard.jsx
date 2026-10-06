@@ -1,3 +1,4 @@
+import {AgeBadge} from './AgeBadge.jsx';
 import React,{useLayoutEffect,useRef} from 'react';
 import {createPortal} from 'react-dom';
 import {Play,Plus,Check,ArrowRight} from 'lucide-react';
@@ -31,7 +32,7 @@ export function ExpandedCard({item,instanceId,expansion,metadataPending,favorite
   let position=expansion.placement;
   if(stage&&header){const headerBox=header.getBoundingClientRect();position={left:0,top:headerBox.bottom,width:window.innerWidth,height:Math.max(0,stage.offsetHeight-headerBox.bottom)};}
   return claimCardTrailer(trailer.current,item.trailerId,position,stage);
- },[expansion.placement,item.kind,item.trailerId,tv,anchor]);
+ },[Boolean(expansion.placement),item.kind,item.trailerId,tv,anchor]);
  const position=expansion.placement;if(!position)return null;
  const live=item.kind==='iptv',matchup=mlbMatchup(item),title=live?channelTitle(item):displayTitle(item),facts=titleFacts(item);
  const artwork=live?(item.imageGeneric?undefined:artworkURL(item.image)):tv?artworkURL(item.image)||artworkURL(item.backdropImage,true):artworkURL(item.backdropImage,true)||artworkURL(item.image);
@@ -46,7 +47,7 @@ export function ExpandedCard({item,instanceId,expansion,metadataPending,favorite
   <div className="expansion-media" aria-hidden="true" onClick={()=>open(item)}>
    {matchup?<MatchupArtwork matchup={matchup} wide/>:<QualityImage className={live?'expansion-logo':'expansion-art'} src={artwork} fit={live?'contain':'cover'} minVisibleSize={live?72:0} eager pending={!live&&metadataPending&&!artwork} loader fallbackWhileLoading={false} fallback={<ContentIdentity item={item} channel={live} wide/>}/>}
    {live&&<EventBadge item={item}/>}
-   <span className="expansion-media-shade"/>
+   <span className="expansion-media-shade"/><AgeBadge item={item}/>
   </div>
   <div className="expansion-body"><h3>{title}</h3>
    {description&&!genericLive?<p className="expansion-description">{description}</p>:metadataPending?<div className="expansion-synopsis-loading" role="status" aria-label="Cargando información"><span/><span/></div>:null}

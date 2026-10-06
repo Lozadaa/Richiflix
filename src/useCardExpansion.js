@@ -1,10 +1,18 @@
-import {useEffect,useRef,useState} from 'react';
+import {useEffect,useLayoutEffect,useRef,useState} from 'react';
 import {expandedCardPlacement,createCardPress} from './cardExpansion.js';
 import {useStableEvent} from './useStableEvent.js';
 import {reserveCardExpansion} from './cardExpansionSpace.js';
 
 export function useCardExpansion(anchor,selected,instanceId,tv,onOpen,live=false){
  const [placement,setPlacement]=useState(null),surface=useRef(),latest=useRef(),press=useRef();
+ const previousPlacement=useRef(),movement=useRef();
+ useLayoutEffect(()=>{
+  const previous=previousPlacement.current;previousPlacement.current=placement;movement.current?.cancel();
+  if(!previous||!placement||!surface.current||window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  const x=previous.left-placement.left,y=previous.top-placement.top;if(Math.abs(x)+Math.abs(y)<1)return;
+  movement.current=surface.current.animate([{transform:`translate3d(${x}px,${y}px,0)`},{transform:'translate3d(0,0,0)'}],{duration:220,easing:'cubic-bezier(.22,1,.36,1)'});
+ },[placement]);
+ useEffect(()=>()=>movement.current?.cancel(),[]);
  latest.current={placement,onOpen};
  const owned=useStableEvent(node=>Boolean(node&&(anchor.current?.contains(node)||surface.current?.contains(node))));
  const restore=useStableEvent(()=>anchor.current?.querySelector('.card-open')?.focus({preventScroll:true}));
@@ -30,8 +38,9 @@ export function useCardExpansion(anchor,selected,instanceId,tv,onOpen,live=false
   const move=event=>{pointer=owned(event.target);if(pointer){if(!latest.current.placement)queue();}else if(!owned(document.activeElement))hide();};
   const scroll=()=>{if(performance.now()<ignoreScrollUntil)return;hide();if(owned(document.activeElement)||pointer)queue();};
   const navigating=()=>hide();
-  queue();window.addEventListener('focusin',focus);window.addEventListener('pointermove',move,{passive:true});window.addEventListener('scroll',scroll,true);window.addEventListener('resize',scroll);window.addEventListener('richiflix-catalog-navigation',navigating);document.addEventListener('visibilitychange',hide);
-  return()=>{clearTimeout(timer);space?.cleanup();press.current.cancel();window.removeEventListener('focusin',focus);window.removeEventListener('pointermove',move);window.removeEventListener('scroll',scroll,true);window.removeEventListener('resize',scroll);window.removeEventListener('richiflix-catalog-navigation',navigating);document.removeEventListener('visibilitychange',hide);};
+  const reflow=()=>{if(latest.current.placement)show();};
+  queue();window.addEventListener('focusin',focus);window.addEventListener('pointermove',move,{passive:true});window.addEventListener('scroll',scroll,true);window.addEventListener('resize',scroll);window.addEventListener('richiflix-catalog-navigation',navigating);window.addEventListener('richiflix-preview-layout',reflow);document.addEventListener('visibilitychange',hide);
+  return()=>{clearTimeout(timer);space?.cleanup();press.current.cancel();window.removeEventListener('focusin',focus);window.removeEventListener('pointermove',move);window.removeEventListener('scroll',scroll,true);window.removeEventListener('resize',scroll);window.removeEventListener('richiflix-catalog-navigation',navigating);window.removeEventListener('richiflix-preview-layout',reflow);document.removeEventListener('visibilitychange',hide);};
  },[selected,anchor,instanceId,tv,owned,live]);
  const keyDown=event=>{
   if(event.key==='Tab'&&!event.shiftKey&&placement&&event.target.matches('.card-open')){event.preventDefault();actions();return;}

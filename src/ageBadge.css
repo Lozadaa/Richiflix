@@ -1,0 +1,5 @@
+.poster,.expansion-media{position:relative}
+.age-badge{position:absolute;z-index:4;top:12px;right:12px;display:inline-flex;align-items:center;gap:6px;padding:6px 9px;border:1px solid #ffffff80;border-radius:7px;background:#10121eee;color:#fff;font-size:17px;line-height:1;font-weight:750;pointer-events:none}
+.age-badge small{font-size:10px;color:#d5d8e4;font-weight:600}
+.tv-mode .age-badge,.expansion-tv .age-badge{top:16px;right:16px;font-size:23px;padding:8px 11px}
+.tv-mode .age-badge small,.expansion-tv .age-badge small{font-size:13px}

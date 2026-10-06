@@ -42,3 +42,9 @@
 .card-trailer-banner{border-radius:0}.card-trailer-banner:after{content:'';position:absolute;inset:0;background:linear-gradient(0deg,#101827 0%,#10182722 24%,transparent 50%);pointer-events:none}
 .tv-stage[data-card-trailer] .focus-stage-copy,.tv-stage[data-card-trailer] .focus-stage-visual{opacity:0;pointer-events:none;transition:opacity .16s ease}
 @media(prefers-reduced-motion:reduce){.tv-stage[data-card-trailer] .focus-stage-copy,.tv-stage[data-card-trailer] .focus-stage-visual{transition:none}}
+/* Two stable viewports: reserve the scene only after actual video playback. */
+.app.tv-mode{--stage-height:42vh}
+.app.tv-mode .page-scene{position:fixed;top:100px;bottom:0;left:0;right:0;overflow-y:auto;overflow-x:hidden;z-index:1;scroll-padding:36px;overflow-anchor:none;transition:none;transform:none}
+.app.tv-mode.has-tv-stage .page-scene{top:calc(100px + var(--stage-height))}
+.app.tv-mode:not(.has-tv-stage) .focus-stage.hero{opacity:0;pointer-events:none}
+.tv-mode .content,.tv-mode .home-content{padding:24px 4.5% 70px;margin:0;min-height:0}

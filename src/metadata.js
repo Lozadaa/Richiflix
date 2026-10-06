@@ -1,3 +1,4 @@
+import {tmdbAgeClassification} from './ageClassification.js';
 export function youtubeID(value){
  if(typeof value!=='string')return undefined;
  if(/^[\w-]{11}$/.test(value))return value;
@@ -31,13 +32,13 @@ export async function spanishMetadata(tmdbId,type,token,fetcher=fetch){
  try{
   // Video languages are independent of the Spanish title and synopsis. Fetch
   // English fallbacks with the same request instead of another network round trip.
-  const data=await tmdbRequest(`${type==='series'?'tv':'movie'}/${tmdbId}?append_to_response=videos&include_video_language=es,en,null`,token,fetcher);
+  const data=await tmdbRequest(`${type==='series'?'tv':'movie'}/${tmdbId}?append_to_response=videos,${type==='series'?'content_ratings':'release_dates'}&include_video_language=es,en,null`,token,fetcher);
   if(data.adult===true)return {isPornographic:true};
   const languageRank=video=>video.iso_639_1==='es'?0:video.iso_639_1==='en'?1:video.iso_639_1==null||video.iso_639_1===''?2:3;
   const videos=Array.isArray(data.videos?.results)?data.videos.results:[];
   const trailer=videos.filter(video=>video&&video.site==='YouTube'&&video.type==='Trailer'&&languageRank(video)<3&&youtubeID(video.key))
    .sort((a,b)=>languageRank(a)-languageRank(b)||Number(Boolean(b.official))-Number(Boolean(a.official)))[0];
-  return {...tmdbRating(data),tmdbId:String(tmdbId),...(Array.isArray(data.genres)?{tmdbGenres:data.genres.map(genre=>genre.name).filter(name=>typeof name==='string'),contentGenre:data.genres.map(genre=>genre.name).filter(name=>typeof name==='string').join(', ')}:{}),...(data.overview?.trim()?{description:data.overview.slice(0,5000),descriptionLanguage:'es'}:{}),
+  return {...tmdbRating(data),ageClassification:tmdbAgeClassification(data,type,tmdbId),tmdbId:String(tmdbId),...(Array.isArray(data.genres)?{tmdbGenres:data.genres.map(genre=>genre.name).filter(name=>typeof name==='string'),contentGenre:data.genres.map(genre=>genre.name).filter(name=>typeof name==='string').join(', ')}:{}),...(data.overview?.trim()?{description:data.overview.slice(0,5000),descriptionLanguage:'es'}:{}),
    ...(data.title||data.name?{localizedTitle:data.title||data.name}:{}),
    ...(data.backdrop_path?{backdropImage:`https://image.tmdb.org/t/p/original${data.backdrop_path}`} :{}),
    ...(data.poster_path?{image:`https://image.tmdb.org/t/p/w780${data.poster_path}`} :{}),

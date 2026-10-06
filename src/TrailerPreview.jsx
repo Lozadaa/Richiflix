@@ -1,5 +1,6 @@
 import React,{useEffect,useLayoutEffect,useRef,useState} from 'react';
 import {useCardTrailer} from './cardTrailerStore.js';
+import {publishPreviewPlayback} from './previewPlaybackStore.js';
 import {youtubeID} from './metadata.js';
 import {youtubeAPI,trailerFrameURL,trailerErrorKind,trailerBridgeEnabled} from './trailerApi.js';
 export {warmTrailerAPI} from './trailerApi.js';
@@ -7,6 +8,7 @@ let sequence=0;
 function applyAudio(player){player.setVolume?.(100);player.unMute?.();}
 export function TrailerPreview({id,active=true,card=false}){
  const owner=useCardTrailer();
+ const playbackToken=useRef({});
  if(!card&&owner)active=false;
  const root=useRef(),player=useRef(),loaded=useRef(),wanted=useRef(),creating=useRef(false),playerReady=useRef(false),alive=useRef(false),generation=useRef(0),creationTimer=useRef(),playbackTimer=useRef(),exitTimer=useRef(),readyId=useRef(null),lastFrame=useRef(null),exitingId=useRef(null),lastIntent=useRef(),failed=useRef(new Set());
  const [ready,setReady]=useState(null),[exiting,setExiting]=useState(null),[initialized,setInitialized]=useState(0),[visible,setVisible]=useState(()=>!document.hidden),[motion,setMotion]=useState(()=>!window.matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -63,6 +65,8 @@ export function TrailerPreview({id,active=true,card=false}){
   return()=>{clearPlayback();pause();};
  },[valid,play,initialized]);
  const playing=ready===valid&&play,holding=exiting===valid&&valid&&!failed.current.has(valid);
+ useLayoutEffect(()=>{publishPreviewPlayback(playbackToken.current,playing);},[playing]);
+ useEffect(()=>()=>publishPreviewPlayback(playbackToken.current,false),[]);
  useLayoutEffect(()=>{
   if(!card||!owner?.target)return;
   const state=playing&&!owner.banner?'playing':'poster';owner.target.dataset.trailerState=state;owner.target.parentElement?.setAttribute('data-trailer-state',state);

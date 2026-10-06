@@ -1,4 +1,4 @@
-import React,{useEffect,useMemo,useRef,useState} from 'react';
+import React,{useEffect,useLayoutEffect,useMemo,useRef,useState} from 'react';
 import {Play,Plus,Search,Heart,Settings,X,Monitor,ArrowUp,Check,Maximize,Minimize,Shuffle} from 'lucide-react';
 import {forProfile,canShowForKids,ratingFor} from './content.js';
 import {useContent} from './useContent.js';
@@ -24,6 +24,7 @@ import {QualityImage} from './QualityImage.jsx';
 import {artworkURL,displayTitle} from './artwork.js';
 import {FocusStage} from './FocusStage.jsx';
 import {CardTrailerPreview} from './CardTrailerPreview.jsx';
+import {usePreviewPlayback} from './previewPlaybackStore.js';
 import {MetadataSettings} from './MetadataSettings.jsx';
 import {displayText} from './displayText.js';
 import {scheduledEventTime,eventDisplayTitle} from './eventTime.js';
@@ -46,10 +47,12 @@ const avatar=kind=>`${import.meta.env.BASE_URL}avatars/${kind==='kids'?'kids-kit
 const count=number=>number.toLocaleString('es-CL');
 export default function App({profile,changeProfile}){
  const isKids=profile.kind==='kids',catalogue=useContent(!isKids);
+ const previewPlaying=usePreviewPlayback();
  const [page,setPage]=useState('Inicio'),[query,setQuery]=useState(''),[collectionView,setCollectionView]=useState(null);
  const {favorites,history,setFavorites,setHistory}=useProfileLibrary(profile.id);
  const [playing,setPlaying]=useState(null),[details,setDetails]=useState(null),[modal,setModal]=useState(null);
  const [notice,setNotice]=useState(''),[tv,setTv]=useState(isTVBuild||read('rf-tv-mode',true));
+ useLayoutEffect(()=>{if(tv)window.dispatchEvent(new Event('richiflix-preview-layout'));},[tv,previewPlaying]);
  const [previewItem,setPreviewItem]=useState(null),[previewActive,setPreviewActive]=useState(false),[previewPendingId,setPreviewPendingId]=useState(null),[metadataRevision,setMetadataRevision]=useState(0);
  const previewTimer=useRef(),leaveTimer=useRef(),previewCandidate=useRef(null),previewCard=useRef(null),pointerPosition=useRef({x:null,y:null}),stageMemory=useRef(null),previewContext=useRef(null),lastDirection=useRef('ArrowRight');
  const [category,setCategory]=useState('Todas');
@@ -223,7 +226,7 @@ export default function App({profile,changeProfile}){
   return()=>clearTimeout(warm);
  },[previewItem?.id,page,query,category,nearby.length,previewCache,banner.moving,previewActive]);
  useEffect(()=>{if(!viewAllPending.current)return;viewAllPending.current=false;const frame=requestAnimationFrame(()=>(mainRef.current?.querySelector('.catalog-grid .card-open')||document.querySelector('.topbar nav button.active'))?.focus({preventScroll:true}));return()=>cancelAnimationFrame(frame);},[page,category,collectionView]);
- return <div onFocusCapture={headerPreview} onKeyDownCapture={event=>{if(event.key.startsWith('Arrow')&&event.target.closest('.card'))lastDirection.current=event.key;pointerPosition.current.itemId=null;pointerPosition.current.cardId=null;}} onMouseMoveCapture={event=>{const previous=pointerPosition.current,moved=event.clientX!==previous.x||event.clientY!==previous.y;event.nativeEvent.richiflixPointerMoved=moved;if(moved){const card=event.target.closest('.card');pointerPosition.current={x:event.clientX,y:event.clientY,itemId:card?.dataset.contentId,cardId:card?.dataset.cardId,at:performance.now()};}}} className={`app ${tv?'tv-mode':''} ${tv&&stageItem?'has-tv-stage':''} ${banner.collapsed?'stage-collapsed':''} ${banner.moving?'is-browsing-rows':''} ${isKids?'kids-space':''} ${page==='Inicio'&&!query&&!collectionView&&featured.length?'scenic':''}`}>
+ return <div onFocusCapture={headerPreview} onKeyDownCapture={event=>{if(event.key.startsWith('Arrow')&&event.target.closest('.card'))lastDirection.current=event.key;pointerPosition.current.itemId=null;pointerPosition.current.cardId=null;}} onMouseMoveCapture={event=>{const previous=pointerPosition.current,moved=event.clientX!==previous.x||event.clientY!==previous.y;event.nativeEvent.richiflixPointerMoved=moved;if(moved){const card=event.target.closest('.card');pointerPosition.current={x:event.clientX,y:event.clientY,itemId:card?.dataset.contentId,cardId:card?.dataset.cardId,at:performance.now()};}}} className={`app ${tv?'tv-mode':''} ${tv&&stageVisible&&previewPlaying?'has-tv-stage':''} ${banner.collapsed?'stage-collapsed':''} ${banner.moving?'is-browsing-rows':''} ${isKids?'kids-space':''} ${page==='Inicio'&&!query&&!collectionView&&featured.length?'scenic':''}`}>
   <header className={`topbar ${scrolled?'is-scrolled':''}`}>
    <a className="brand" href="#" onClick={event=>{event.preventDefault();navigate('Inicio');}}><Brand/></a>
    <nav aria-label="Principal">{(isKids?['Inicio','Películas','Series','Mi lista']:['Inicio','Películas','Series','TV en vivo','MLB','Mi lista']).map(name=><button className={page===name?'active':''} aria-current={page===name?'page':undefined} key={name} onClick={()=>navigate(name)}>{name}</button>)}</nav>
@@ -234,7 +237,7 @@ export default function App({profile,changeProfile}){
    </div>
   </header>
   {stageVisible&&<CardTrailerPreview/>}
-  {stageVisible&&<FocusStage item={stageItem} metadataPending={stageMetadataPending} active={previewActive&&!banner.moving} loading={previewPendingId===stageItem.id&&previewActive&&!banner.moving} collapsed={banner.collapsed} moving={banner.moving} open={open} inspect={inspect} favorite={favorites.includes(stageItem.id)} toggle={toggle} tv={tv} hover={keepPreview} leave={leavePreview}/>}
+  {stageVisible&&<FocusStage previewPlaying={previewPlaying} item={stageItem} metadataPending={stageMetadataPending} active={previewActive&&!banner.moving} loading={previewPendingId===stageItem.id&&previewActive&&!banner.moving} collapsed={banner.collapsed} moving={banner.moving} open={open} inspect={inspect} favorite={favorites.includes(stageItem.id)} toggle={toggle} tv={tv} hover={keepPreview} leave={leavePreview}/>}
   <main ref={mainRef} key={`${page}-${Boolean(query)}-${collectionView?.title||''}`} className="page-scene">
    {!tv&&page==='Inicio'&&!query&&!collectionView&&featured.length>0&&<Hero items={featured} metadata={featureDetails} prepare={preparePreview} open={open} inspect={inspect}/>}
    <div className={`content ${page==='Inicio'&&!query&&!collectionView&&featured.length?'home-content':''}`}>

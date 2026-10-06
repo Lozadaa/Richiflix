@@ -11,11 +11,11 @@ import {useEventCountdown} from './EventBadge.jsx';
 import {eventStartLabel} from './eventTime.js';
 import {isTVBuild} from './platform.js';
 import {TitleFacts} from './UserScore.jsx';
-export const FocusStage=memo(function FocusStage({item,active,loading=false,metadataPending=loading,collapsed=false,moving=false,open,inspect,favorite,toggle,tv,hover,leave}){
+export const FocusStage=memo(function FocusStage({item,active,loading=false,metadataPending=loading,collapsed=false,moving=false,open,inspect,favorite,toggle,tv,hover,leave,previewPlaying=true}){
  const [actionsFocused,setActionsFocused]=useState(false);
  const event=useEventCountdown(item);
  if(!item)return null;const live=item.kind==='iptv',matchup=mlbMatchup(item),upcoming=event?.state==='upcoming',remoteActions=isTVBuild&&tv;
- return <section className={`hero focus-stage ${tv?'tv-stage':'pointer-stage'} ${live?'channel-stage':''} ${matchup?'mlb-stage':''}`} data-content-id={item.id} data-stage-state={moving?'browsing':collapsed?'hidden':'settled'} aria-label="Vista del título seleccionado" style={identityStyle(item)} onMouseEnter={hover} onMouseLeave={leave} onFocus={event=>{if(remoteActions)setActionsFocused(true);hover?.(event);}} onBlur={event=>{if(!event.currentTarget.contains(event.relatedTarget)){setActionsFocused(false);leave?.();}}}>
+ return <section className={`hero focus-stage ${tv?'tv-stage':'pointer-stage'} ${live?'channel-stage':''} ${matchup?'mlb-stage':''}`} data-content-id={item.id} data-stage-state={moving?'browsing':collapsed?'hidden':'settled'} inert={tv&&!previewPlaying} aria-label="Vista del título seleccionado" style={identityStyle(item)} onMouseEnter={hover} onMouseLeave={leave} onFocus={event=>{if(remoteActions)setActionsFocused(true);hover?.(event);}} onBlur={event=>{if(!event.currentTarget.contains(event.relatedTarget)){setActionsFocused(false);leave?.();}}}>
   {<TrailerPreview id={live?undefined:item.trailerId} active={!live&&active&&!collapsed}/>}
   <BannerArtwork key={item.id} item={item} metadataPending={metadataPending}/>
   <div className="focus-stage-shade"/>
