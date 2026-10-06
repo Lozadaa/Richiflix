@@ -6,6 +6,8 @@ Después de los TOP aparece «Tu próximo mood»: hasta cuatro colecciones escog
 
 La selección es estable al navegar. Cambia con «Otra selección» o al regresar a Inicio desde otra sección; el perfil y la fecha de Santiago determinan el orden inicial. La elección se guarda localmente y se conserva al recargar. No hay un temporizador que reordene filas debajo del mando.
 
+La portada recuerda la selección sólo dentro de su sección, categoría y búsqueda. Al entrar en una sección vacía, obtener cero resultados o quitar el último favorito, se limpia el banner junto con sus acciones y tráiler. Mover el foco al header dentro de una sección con contenido conserva el título seleccionado.
+
 Películas y Series muestran los TOP, las colecciones y los géneros como chips: izquierda/derecha recorre los filtros, OK los aplica, abajo entra en los resultados y arriba devuelve a la portada. La búsqueda conserva la categoría seleccionada. Las categorías numerosas siguen disponibles en «Más categorías», sin selector nativo.
 
 El catálogo genera las colecciones en el worker o backend de Electron, por lotes cooperativos, y transmite listas de hasta 80 IDs. Los TOP y géneros se guardan durante 24 horas; el nuevo formato conserva también las consultas recientes. La descarga usa dos solicitudes simultáneas, reutiliza el caché y no sustituye una copia completa por una respuesta parcial. La interfaz conserva la virtualización y la precarga de dos filas.
