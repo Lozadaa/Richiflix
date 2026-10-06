@@ -23,6 +23,7 @@ import {Brand} from './Brand.jsx';
 import {QualityImage} from './QualityImage.jsx';
 import {artworkURL,displayTitle} from './artwork.js';
 import {FocusStage} from './FocusStage.jsx';
+import {CardTrailerPreview} from './CardTrailerPreview.jsx';
 import {MetadataSettings} from './MetadataSettings.jsx';
 import {displayText} from './displayText.js';
 import {scheduledEventTime,eventDisplayTitle} from './eventTime.js';
@@ -129,8 +130,8 @@ export default function App({profile,changeProfile}){
   if(tv){setPreviewActive(false);banner.select(commitPreview);}else previewTimer.current=setTimeout(commitPreview,150);
  });
  const keepPreview=useStableEvent(()=>{clearTimeout(leaveTimer.current);if(tv)banner.keep(()=>{if(previewCandidate.current)return commitPreview();setPreviewActive(true);preparePreview(stageItem,true,true);return true;});else setPreviewActive(true);});
- const leavePreview=useStableEvent(()=>{if(document.activeElement?.closest('.card,.focus-stage,.topbar')||document.querySelector('.card:hover,.focus-stage:hover'))return;clearTimeout(previewTimer.current);clearTimeout(leaveTimer.current);leaveTimer.current=setTimeout(()=>{
-  if(document.activeElement?.closest('.card,.focus-stage,.topbar')||document.querySelector('.card:hover,.focus-stage:hover'))return;setPreviewActive(false);banner.reset();if(!tv)setPreviewItem(null);
+ const leavePreview=useStableEvent(()=>{if(document.activeElement?.closest('.card,.card-expansion,.focus-stage,.topbar')||document.querySelector('.card:hover,.card-expansion:hover,.focus-stage:hover'))return;clearTimeout(previewTimer.current);clearTimeout(leaveTimer.current);leaveTimer.current=setTimeout(()=>{
+  if(document.activeElement?.closest('.card,.card-expansion,.focus-stage,.topbar')||document.querySelector('.card:hover,.card-expansion:hover,.focus-stage:hover'))return;setPreviewActive(false);banner.reset();if(!tv)setPreviewItem(null);
  },250);});
  const navigate=useStableEvent(name=>{if(name==='Inicio'&&page!=='Inicio')discovery.change();banner.reset();clearTimeout(previewTimer.current);clearTimeout(leaveTimer.current);previewCandidate.current=null;previewCard.current=null;previewContext.current=null;previewScope.current=null;stageMemory.current=null;setPreviewItem(null);setSelectedCard(null);setPreviewActive(false);setPage(name);setCollectionView(null);setQuery('');setCategory('Todas');window.scrollTo({top:0,behavior:motionAllowed()?'smooth':'instant'});});
  useEffect(()=>{banner.reset();clearTimeout(previewTimer.current);previewCandidate.current=null;previewCard.current=null;previewContext.current=null;setPreviewItem(null);setSelectedCard(null);setPreviewActive(false);mainRef.current?.scrollTo({top:0,behavior:'instant'});if(tv&&document.activeElement?.closest('.topbar')){banner.show();setPreviewActive(true);}},[query,category,page,collectionView]);
@@ -232,6 +233,7 @@ export default function App({profile,changeProfile}){
     <button className="icon-button" aria-label="Ajustes" onClick={()=>setModal('ajustes')}><Settings size={20}/></button>
    </div>
   </header>
+  {stageVisible&&<CardTrailerPreview/>}
   {stageVisible&&<FocusStage item={stageItem} metadataPending={stageMetadataPending} active={previewActive&&!banner.moving} loading={previewPendingId===stageItem.id&&previewActive&&!banner.moving} collapsed={banner.collapsed} moving={banner.moving} open={open} inspect={inspect} favorite={favorites.includes(stageItem.id)} toggle={toggle} tv={tv} hover={keepPreview} leave={leavePreview}/>}
   <main ref={mainRef} key={`${page}-${Boolean(query)}-${collectionView?.title||''}`} className="page-scene">
    {!tv&&page==='Inicio'&&!query&&!collectionView&&featured.length>0&&<Hero items={featured} metadata={featureDetails} prepare={preparePreview} open={open} inspect={inspect}/>}

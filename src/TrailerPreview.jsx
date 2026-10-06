@@ -1,10 +1,13 @@
 import React,{useEffect,useLayoutEffect,useRef,useState} from 'react';
+import {useCardTrailer} from './cardTrailerStore.js';
 import {youtubeID} from './metadata.js';
 import {youtubeAPI,trailerFrameURL,trailerErrorKind,trailerBridgeEnabled} from './trailerApi.js';
 export {warmTrailerAPI} from './trailerApi.js';
 let sequence=0;
 function applyAudio(player){player.setVolume?.(100);player.unMute?.();}
-export function TrailerPreview({id,active=true}){
+export function TrailerPreview({id,active=true,card=false}){
+ const owner=useCardTrailer();
+ if(!card&&owner)active=false;
  const root=useRef(),player=useRef(),loaded=useRef(),wanted=useRef(),creating=useRef(false),playerReady=useRef(false),alive=useRef(false),generation=useRef(0),creationTimer=useRef(),playbackTimer=useRef(),exitTimer=useRef(),readyId=useRef(null),lastFrame=useRef(null),exitingId=useRef(null),lastIntent=useRef(),failed=useRef(new Set());
  const [ready,setReady]=useState(null),[exiting,setExiting]=useState(null),[initialized,setInitialized]=useState(0),[visible,setVisible]=useState(()=>!document.hidden),[motion,setMotion]=useState(()=>!window.matchMedia('(prefers-reduced-motion: reduce)').matches);
  const valid=youtubeID(id),play=Boolean(active&&motion&&visible&&valid);wanted.current={valid,play};
@@ -60,5 +63,6 @@ export function TrailerPreview({id,active=true}){
   return()=>{clearPlayback();pause();};
  },[valid,play,initialized]);
  const playing=ready===valid&&play,holding=exiting===valid&&valid&&!failed.current.has(valid);
+ useLayoutEffect(()=>{if(card&&owner?.target){owner.target.dataset.trailerState=playing?'playing':'poster';owner.target.parentElement?.setAttribute('data-trailer-state',playing?'playing':'poster');}},[card,owner,playing]);
  return <div ref={root} className={'trailer-preview '+(playing?'is-playing':holding?'is-exiting':'')} data-trailer-state={playing?'playing':'poster'} data-trailer-transport={trailerBridgeEnabled?'bridge':'direct'} data-trailer-muted="false" aria-hidden="true"/>;
 }
