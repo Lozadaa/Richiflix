@@ -5,6 +5,7 @@ import {xtreamClient} from './xtreamClient.js';
 import {preloadPreviewArtwork} from './previewArtwork.js';
 import {recoverBootProfiles} from './bootRecovery.js';
 import {warmTrailerAPI} from './TrailerPreview.jsx';
+import {artworkCacheClient} from './artworkCacheClient.js';
 const bounded=(promise,ms)=>new Promise(resolve=>{const timer=setTimeout(resolve,ms);promise.then(value=>{clearTimeout(timer);resolve(value);},()=>{clearTimeout(timer);resolve();});});
 function image(path){return new Promise(resolve=>{const img=new Image();img.onload=async()=>{try{await img.decode?.();}catch{}resolve();};img.onerror=resolve;img.src=import.meta.env.BASE_URL+path;});}
 export function Boot({children}){
@@ -12,6 +13,7 @@ export function Boot({children}){
  useEffect(()=>{let live=true;setProfileError(null);setSlow(false);const timer=setTimeout(()=>{if(live)setSlow(true);},6000);performance.mark('richiflix-boot-start');
   const resources=Promise.allSettled([document.fonts.load('600 24px Manrope'),document.fonts.load('800 40px "Bricolage Grotesque"'),image('avatars/adult-raccoon.png'),image('avatars/kids-kitten.png'),image('brand/richiflix-glyph.svg'),image('artwork/categories/cinema.png')]);
   warmTrailerAPI();
+  void artworkCacheClient().warm();
   let contentReady=false,resourcesReady=false,profilesReady=false;
   const remainingStage=()=>{if(!live)return;if(contentReady&&resourcesReady&&!profilesReady)setStage('profiles');else if(contentReady&&!resourcesReady)setStage('resources');};
   const unsubscribe=contentStore.subscribe(()=>{if(live){if(contentReady&&resourcesReady&&!profilesReady)setStage('profiles');else setStage(contentStore.get().phase||'configuration');}});

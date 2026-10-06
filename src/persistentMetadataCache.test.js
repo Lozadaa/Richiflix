@@ -1,11 +1,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createPersistentMetadataCache} from './persistentMetadataCache.js';
+import {createPersistentMetadataCache,previewMetadataCacheOptions} from './persistentMetadataCache.js';
 test('bulk scores survive restart and expire without issuing network requests',async()=>{
  let saved,now=1000,reads=0;const options={read:async()=>{reads++;return saved;},write:async data=>{saved=structuredClone(data);},capacity:5000,ttl:100,now:()=>now};
  const first=createPersistentMetadataCache(options);for(let i=0;i<150;i++)await first.put('score-'+i,{tmdbScore:8.2,tmdbVotes:200+i});await first.flush();
  const restarted=createPersistentMetadataCache(options);const keys=Array.from({length:150},(_,i)=>'score-'+i);assert.equal(Object.keys(await restarted.getMany(keys)).length,150);assert.equal(reads,2);assert.equal((await restarted.getMany(['score-149','missing']))['score-149'].tmdbVotes,349);assert.equal(reads,2);
  now+=101;assert.deepEqual(await restarted.getMany(keys),{});
+});
+test('Spanish synopses, translated titles and preview URLs survive restart for thirty days, with a bounded byte budget',async()=>{
+ let saved,now=1000;const options={...previewMetadataCacheOptions,read:async()=>saved,write:async value=>saved=structuredClone(value),now:()=>now};const cache=createPersistentMetadataCache(options),data={description:'Sinopsis en español',descriptionLanguage:'es',localizedTitle:'Título traducido',backdropImage:'https://image.tmdb.org/t/p/original/a.jpg',trailerId:'abcdefghijk'};
+ for(let i=0;i<200;i++)await cache.put('title-'+i,data);await cache.flush();now+=8*86400000;const restarted=createPersistentMetadataCache(options);assert.deepEqual(await restarted.get('title-0'),data);assert.equal(restarted.stats().entries,200);now+=23*86400000;assert.equal(await restarted.get('title-0'),null);
+ const bounded=createPersistentMetadataCache({...options,maxBytes:500});await bounded.put('a',data);await bounded.put('b',data);await bounded.get('a');await bounded.put('c',data);assert.equal(await bounded.get('b'),null);assert.ok(bounded.stats().bytes<=500);await bounded.flush();
+});
+test('missing translations and transient empty responses use shorter cache lifetimes',async()=>{
+ let now=1000;const cache=createPersistentMetadataCache({...previewMetadataCacheOptions,read:async()=>null,write:async()=>{},now:()=>now});await cache.put('empty',{});await cache.put('provider',{description:'Provider synopsis'});now+=6*60000;assert.equal(await cache.get('empty'),null);assert.equal((await cache.get('provider')).description,'Provider synopsis');now+=8*86400000;assert.equal(await cache.get('provider'),null);await cache.flush();
 });
 test('persisted metadata validates entries, expires old details and obeys the LRU limit',async()=>{
  let now=100,saved;const cache=createPersistentMetadataCache({read:async()=>[['old',{data:0,updatedAt:1}],null,['valid',{data:1,updatedAt:90}],['future',{data:2,updatedAt:999999}]],write:async data=>{saved=data;},capacity:2,ttl:50,now:()=>now});

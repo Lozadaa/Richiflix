@@ -15,7 +15,7 @@
     "test:tizen": "node scripts/pc-experience-smoke.mjs",
     "brand:export": "node scripts/export-brand.mjs",
     "windows:shortcut": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/windows-shortcut.ps1",
-    "test:pc": "npm run build:tizen && node scripts/pc-experience-smoke.mjs && node scripts/card-loading-smoke.mjs && node scripts/banner-artwork-smoke.mjs"
+    "test:pc": "npm run build:tizen && node scripts/pc-experience-smoke.mjs && node scripts/card-loading-smoke.mjs && node scripts/banner-artwork-smoke.mjs && node scripts/artwork-cache-smoke.mjs"
   },
   "dependencies": {
     "hls.js": "^1.6.0",

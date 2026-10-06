@@ -55,6 +55,8 @@ Las listas tienen desplazamiento infinito y ventanas virtuales: los títulos lej
 
 En navegador/Tizen, el catálogo, las fuentes y los metadatos se procesan en un worker; Electron utiliza su proceso principal mediante IPC. El banner conserva la geometría del catálogo, espera una pausa al navegar y reutiliza el reproductor del tráiler. Las imágenes aparecen tras decodificar y validar su resolución. Mientras cargan se muestra un spinner; el arte alternativo se reserva para la ausencia o el fallo confirmado.
 
+Las sinopsis en español se conservan hasta 30 días, con un límite de 2.000 títulos y 6 MiB. Las portadas TMDB se guardan comprimidas en un caché independiente de hasta 48 MiB y 14 días, con limpieza automática y trabajo en segundo plano. Las imágenes ya guardadas se reutilizan tras reiniciar; los vídeos siguen por streaming. [Caché de previews](docs/CACHE-PREVIEWS.md).
+
 ![Perfiles locales](docs/screenshots/perfiles.png)
 
 ## Comprobar en PC

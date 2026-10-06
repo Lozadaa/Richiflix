@@ -3,6 +3,7 @@ import {BrandMark} from './Brand.jsx';
 import {imagePresentation,isVectorSource} from './imageQuality.js';
 import {observeImageBox} from './imageObserver.js';
 import {responsivePosterArtwork} from './responsiveArtwork.js';
+import {useCachedArtwork} from './useCachedArtwork.js';
 
 // A new source gets its own component, so a late decode cannot reveal the old art.
 export function QualityImage(props){return <DecodedImage key={props.src||'empty'} {...props}/>;}
@@ -12,6 +13,7 @@ function DecodedImage({src,className='',fit='cover',eager=false,fallback=true,fa
  const [presentation,setPresentation]=useState({state:src?'loading':'empty',ready:false});
  const [boxSize,setBoxSize]=useState({width:0,dpr:window.devicePixelRatio});
  const responsive=responsivePosterArtwork(src,boxSize.width,boxSize.dpr),imageSource=responsive?.src||src;
+ const cached=useCachedArtwork(imageSource,!responsive?.pending),displaySource=cached.src;
  useLayoutEffect(()=>{
   let active=true;
   const update=()=>{
@@ -32,19 +34,19 @@ function DecodedImage({src,className='',fit='cover',eager=false,fallback=true,fa
   const unobserve=observeImageBox(box.current,update);update();
   return()=>{active=false;measure.current=()=>{};unobserve();};
  },[src,fit,minVisibleSize]);
- useLayoutEffect(()=>{decoded.current=false;setPresentation({state:src?'loading':'empty',ready:false});},[imageSource]);
+ useLayoutEffect(()=>{decoded.current=false;setPresentation({state:src?'loading':'empty',ready:false});},[displaySource,src]);
  useEffect(()=>{onReadyChange?.(presentation.ready);},[onReadyChange,presentation.ready]);
  useEffect(()=>{onStateChange?.(presentation.state);},[onStateChange,presentation.state]);
  const reveal=async event=>{
-  const image=event.currentTarget;
-  try{if(image.decode)await image.decode();}catch{if(picture.current===image)setPresentation({state:'unavailable',ready:false});return;}
-  if(picture.current!==image)return;
-  decoded.current=true;measure.current();
+  const image=event.currentTarget,loadedSource=image.src;
+  try{if(image.decode)await image.decode();}catch{if(picture.current===image&&image.src===loadedSource&&!cached.failed())setPresentation({state:'unavailable',ready:false});return;}
+  if(picture.current!==image||image.src!==loadedSource)return;
+  decoded.current=true;measure.current();cached.remember();
  };
  const waiting=!presentation.ready&&(presentation.state==='loading'||pending);
  return <div ref={box} className={`quality-media ${className} ${fit==='contain'?'quality-logo':''}`} data-image-state={pending&&!src?'pending':presentation.state}>
   {loader&&waiting&&<span className="artwork-spinner" aria-hidden="true"/>}
   {fallback&&!presentation.ready&&!pending&&(fallbackWhileLoading||presentation.state!=='loading')&&<div className="richiflix-art" aria-hidden="true">{fallback===true?<><BrandMark/><i/></>:fallback}</div>}
-  {src&&!responsive?.pending&&<img ref={picture} src={imageSource} alt="" loading={eager?'eager':'lazy'} fetchPriority={eager?'high':'auto'} decoding="async" draggable="false" onLoad={reveal} onError={()=>{decoded.current=false;setPresentation({state:'unavailable',ready:false});}} style={{opacity:presentation.ready?1:0,objectFit:fit,objectPosition:position,width:presentation.width,height:presentation.height}}/>}
+  {displaySource&&!responsive?.pending&&<img ref={picture} src={displaySource} alt="" loading={eager?'eager':'lazy'} fetchPriority={eager?'high':'auto'} decoding="async" draggable="false" onLoad={reveal} onError={()=>{decoded.current=false;if(!cached.failed())setPresentation({state:'unavailable',ready:false});}} style={{opacity:presentation.ready?1:0,objectFit:fit,objectPosition:position,width:presentation.width,height:presentation.height}}/>}
  </div>;
 }
