@@ -12,6 +12,7 @@ import {useRemoteNavigation} from './useRemoteNavigation.js';
 import {installFocusPaintDiagnostics} from './focusPaintDiagnostics.js';
 import './style.css';
 import './tvCardComposition.css';
+import './compositorMotion.css';
 import 'wicg-inert';
 import {isTVBuild,installTVPlatform,uuid} from './platform.js';
 installTVPlatform();

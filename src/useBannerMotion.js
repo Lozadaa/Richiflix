@@ -16,7 +16,7 @@ export function useBannerMotion(enabled,mainRef,pageKey){
   const begin=()=>controller.move();
   const scroll=()=>{if(controller.state.moving)controller.move();};
   const drag=event=>{if(event.target===main)begin();};
-  const focus=event=>{if(event.target.closest('.topbar'))controller.keep(()=>true);else if(!event.target.closest('.card,.focus-stage'))controller.reset();};
+  const focus=event=>{if(event.target.closest('.topbar'))controller.keep(()=>true);else if(!event.target.closest('.card,.card-expansion,.focus-stage'))controller.reset();};
   const visibility=()=>{if(document.hidden)controller.reset();};
   main?.addEventListener('wheel',begin,{passive:true});
   main?.addEventListener('touchmove',begin,{passive:true});

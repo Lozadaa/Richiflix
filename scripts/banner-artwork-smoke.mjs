@@ -26,7 +26,7 @@ try{
  await render(base,true);await blank();assert.equal(await page.locator('.focus-stage-visual img').count(),0);
  await render({...base,backdropImage:good('late')},false);await waitRoute('/fixture/late.svg');await blank();
  await (await waitRoute('/fixture/late.svg')).fulfill({contentType:'image/svg+xml',body:svg});await expect(state).toHaveAttribute('data-artwork-state','ready');assert.equal(await page.locator('.content-identity').count(),0);
- await render({...base,id:'missing'},true);await blank();await render({...base,id:'missing'},false);await expect(state).toHaveAttribute('data-artwork-state','missing');assert.equal(await page.locator('.content-identity').count(),1);
+ await render({...base,id:'missing'},true);await blank();await render({...base,id:'missing'},false);await expect(state).toHaveAttribute('data-artwork-state','missing');assert.equal(await page.locator('.content-identity').count(),0,'missing banners remain empty; the selected card owns its image');
  await render({...base,id:'poster',image:good('poster')},true);await blank();assert.equal(await page.locator('.focus-poster').count(),0);assert.equal(held.has('/fixture/poster.svg'),false);await render({...base,id:'poster',image:good('poster')},false);await expect(state).toHaveAttribute('data-artwork-state','missing');
  await render({...base,id:'failed',backdropImage:good('failed')},false);await waitRoute('/fixture/failed.svg');await blank();await (await waitRoute('/fixture/failed.svg')).abort();await expect(state).toHaveAttribute('data-artwork-state','missing');
  // Hold an old source's decode, replace it, then complete the old decode late.
@@ -34,5 +34,5 @@ try{
  await render({...base,id:'changing',backdropImage:good('old')},false);await (await waitRoute('/fixture/old.svg')).fulfill({contentType:'image/svg+xml',body:svg});await page.waitForFunction(()=>window.releaseOld);await blank();
  await render({...base,id:'changing',backdropImage:good('new')},false);await waitRoute('/fixture/new.svg');await page.evaluate(()=>window.releaseOld());await blank();assert.equal(await page.locator('img[src*="/old.svg"]').count(),0);
  await (await waitRoute('/fixture/new.svg')).fulfill({contentType:'image/svg+xml',body:svg});await expect(state).toHaveAttribute('data-artwork-state','ready');assert.deepEqual(errors,[]);
- console.log(JSON.stringify({passed:true,checks:['metadata pending','download pending','missing metadata','no vertical poster in banner','terminal image error','late decode after replacement']}));
+ console.log(JSON.stringify({passed:true,checks:['metadata pending','download pending','missing metadata without category fallback','no vertical poster in banner','terminal image error','late decode after replacement']}));
 }finally{await browser.close();await server.close();}

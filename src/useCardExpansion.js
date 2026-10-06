@@ -18,7 +18,9 @@ export function useCardExpansion(anchor,selected,instanceId,tv,onOpen,live=false
    timer=undefined;if(!anchor.current?.isConnected||document.hidden||document.querySelector('[role="dialog"]')||(!pointer&&!owned(document.activeElement)))return;
    space?.cleanup();space=undefined;
    const cell=anchor.current.closest('.virtual-rail-cell,.virtual-grid-cell')||anchor.current,box=cell.getBoundingClientRect(),main=anchor.current.closest('main'),bounds=main?.getBoundingClientRect(),rail=Boolean(anchor.current.closest('[data-virtual-kind="rail"]'));
-   const viewport={left:0,top:Math.max(0,bounds?.top||0),width:window.innerWidth,height:Math.min(window.innerHeight,bounds?.bottom||window.innerHeight)-Math.max(0,bounds?.top||0)};
+   const heading=rail?anchor.current.closest('.catalog-row')?.querySelector('.row-heading'):null,headingBottom=heading?.getBoundingClientRect().bottom;
+   const top=Math.max(0,bounds?.top||0,headingBottom!==undefined&&headingBottom<box.top?headingBottom+24:0);
+   const viewport={left:0,top,width:window.innerWidth,height:Math.min(window.innerHeight,bounds?.bottom||window.innerHeight)-top};
    const panel=expandedCardPlacement(box,viewport,{tv,live,alignStart:rail});if(!panel)return;
    ignoreScrollUntil=performance.now()+80;space=reserveCardExpansion(anchor.current,box,panel);
    setPlacement(space.moved?expandedCardPlacement(cell.getBoundingClientRect(),viewport,{tv,live,alignStart:rail}):panel);

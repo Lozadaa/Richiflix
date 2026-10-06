@@ -7,5 +7,5 @@ import {TrailerPreview} from './TrailerPreview.jsx';
 // reloads its browsing context on TV browsers, so only its viewport moves.
 export function CardTrailerPreview(){
  const owner=useCardTrailer(),position=owner?.position;
- return createPortal(<div className="card-trailer-deck" style={position?{left:position.left,top:position.top,width:position.width,height:position.height}: {display:'none'}} aria-hidden="true"><TrailerPreview id={owner?.id} active={Boolean(owner?.id)} card/></div>,document.body);
+ return createPortal(<div className={`card-trailer-deck ${owner?.banner?'card-trailer-banner':''}`} style={position?{left:position.left,top:position.top,width:position.width,height:position.height,'--trailer-height':`${position.width*9/16}px`}: {display:'none'}} aria-hidden="true"><TrailerPreview id={owner?.id} active={Boolean(owner?.id)} card/></div>,document.body);
 }

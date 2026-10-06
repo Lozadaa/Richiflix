@@ -20,12 +20,18 @@ export function SelectedCardExpansion({anchor,controller,...props}){
   controller.current=expansion;const card=anchor.current,button=card?.querySelector('.card-open');card?.classList.toggle('is-expanded',Boolean(expansion.placement));button?.setAttribute('aria-expanded',String(Boolean(expansion.placement)));
   return()=>{controller.current=null;card?.classList.remove('is-expanded');button?.setAttribute('aria-expanded','false');};
  });
- return <ExpandedCard {...props} expansion={expansion}/>;
+ return <ExpandedCard {...props} anchor={anchor} expansion={expansion}/>;
 }
 
-export function ExpandedCard({item,instanceId,expansion,metadataPending,favorite,toggle,open,tv}){
+export function ExpandedCard({item,instanceId,expansion,metadataPending,favorite,toggle,open,tv,anchor}){
  const trailer=useRef();
- useLayoutEffect(()=>{if(expansion.placement&&item.kind!=='iptv')return claimCardTrailer(trailer.current,item.trailerId,expansion.placement);},[expansion.placement,item.kind,item.trailerId]);
+ useLayoutEffect(()=>{
+  if(!expansion.placement||item.kind==='iptv')return;
+  const app=anchor?.current?.closest('.app'),stage=tv?app?.querySelector('.focus-stage.hero'):null,header=app?.querySelector('.topbar');
+  let position=expansion.placement;
+  if(stage&&header){const headerBox=header.getBoundingClientRect();position={left:0,top:headerBox.bottom,width:window.innerWidth,height:Math.max(0,stage.offsetHeight-headerBox.bottom)};}
+  return claimCardTrailer(trailer.current,item.trailerId,position,stage);
+ },[expansion.placement,item.kind,item.trailerId,tv,anchor]);
  const position=expansion.placement;if(!position)return null;
  const live=item.kind==='iptv',matchup=mlbMatchup(item),title=live?channelTitle(item):displayTitle(item),facts=titleFacts(item);
  const artwork=live?(item.imageGeneric?undefined:artworkURL(item.image)):tv?artworkURL(item.image)||artworkURL(item.backdropImage,true):artworkURL(item.backdropImage,true)||artworkURL(item.image);
@@ -35,6 +41,7 @@ export function ExpandedCard({item,instanceId,expansion,metadataPending,favorite
   else if(['Escape','ArrowDown','ArrowUp'].includes(event.key)){event.preventDefault();event.stopPropagation();expansion.restore();}
  };
  return createPortal(<section ref={expansion.surface} className={`card-expansion ${tv?'expansion-tv':''} ${live?'expansion-live':''}`} role="group" aria-label={`Vista previa de ${title}`} data-card-owner={instanceId} data-content-id={item.id} style={{...identityStyle(item),left:position.left,top:position.top,width:position.width,height:position.height,transformOrigin:`${position.originX}% ${position.originY}%`,'--expansion-from-x':position.scaleX,'--expansion-from-y':position.scaleY}} onKeyDown={key} onKeyUp={expansion.keyUp}>
+  <span className="expansion-backplate" aria-hidden="true"/>
   {!live&&<div ref={trailer} className="expansion-trailer" aria-hidden="true"/>}
   <div className="expansion-media" aria-hidden="true" onClick={()=>open(item)}>
    {matchup?<MatchupArtwork matchup={matchup} wide/>:<QualityImage className={live?'expansion-logo':'expansion-art'} src={artwork} fit={live?'contain':'cover'} minVisibleSize={live?72:0} eager pending={!live&&metadataPending&&!artwork} loader fallbackWhileLoading={false} fallback={<ContentIdentity item={item} channel={live} wide/>}/>}

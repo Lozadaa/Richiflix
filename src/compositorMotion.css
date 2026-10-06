@@ -1,0 +1,44 @@
+/* Paint each visual state once; motion changes only its composition. */
+.tv-mode button,.card-expansion button,.samsung-tv .overlay button,.samsung-tv .profile-screen button{transition-property:transform,opacity!important}
+.tv-mode .search,.tv-mode .search input,.tv-mode .topbar,.tv-mode .small-avatar{transition-property:transform,opacity}
+.tv-mode .card,.tv-mode .card.is-previewed{will-change:auto;transition-property:transform,opacity}
+.tv-mode .card.is-previewed:focus-within,.tv-mode .card.is-previewed:hover{will-change:transform}
+.tv-mode .card.is-expanded{will-change:auto}
+.tv-mode .card .poster,.tv-mode .card.is-previewed .poster,.tv-mode .card:focus-within .poster{filter:none;box-shadow:none}
+.tv-mode .card-open{position:relative}
+.tv-mode .card-open:after{content:'';position:absolute;inset:0;border:4px solid #f5d58d;border-radius:15px;pointer-events:none;opacity:0;transition:opacity .12s ease;will-change:auto}
+.tv-mode .card.is-previewed .card-open:after{opacity:1}
+.tv-mode .card.is-expanded .card-open:after,.tv-mode[data-focus-region]:not([data-focus-region='catalogue']) .card-open:after{opacity:0}
+.samsung-tv .tv-mode .card,.samsung-tv .tv-mode .card-open:after{will-change:auto}
+.samsung-tv .tv-mode .card.is-previewed:focus-within,.samsung-tv .tv-mode .card.is-previewed:hover{will-change:transform}
+.samsung-tv .tv-mode .card.is-expanded{will-change:auto}
+/* A fixed halo fades over the existing button instead of animating its shadow. */
+.tv-mode .topbar nav button,.tv-mode .category-chip,.tv-mode .category-picker,.tv-mode .category-option,.tv-mode .discovery-refresh,.card-expansion .expansion-actions button{position:relative}
+.tv-mode .topbar nav button:after,.tv-mode .category-chip:after,.tv-mode .category-picker:after,.tv-mode .category-option:after,.tv-mode .discovery-refresh:after,.card-expansion .expansion-actions button:after{content:'';position:absolute;inset:-3px;border:2px solid #c1b0ee55;border-radius:inherit;box-shadow:0 0 0 4px #c1b0ee12;opacity:0;pointer-events:none;transition:opacity .18s ease}
+.tv-mode .topbar nav button:hover:after,.tv-mode .topbar nav button:focus:after,.tv-mode .category-chip:focus:after,.tv-mode .category-picker:focus:after,.tv-mode .category-option:focus:after,.tv-mode .discovery-refresh:focus:after,.card-expansion .expansion-actions button:focus:after{opacity:1}
+/* The trailer reveals through prepainted backing/gradient layers. */
+.card-expansion,.card-expansion[data-trailer-state='playing']{background:transparent;animation-fill-mode:backwards}
+.expansion-backplate{position:absolute;inset:0;background:#1b2437;opacity:1;pointer-events:none;transition:opacity .25s ease}
+.card-expansion[data-trailer-state='playing'] .expansion-backplate{opacity:0}
+.expansion-body{isolation:isolate;animation-fill-mode:backwards}
+.expansion-body:before{content:'';position:absolute;inset:0;z-index:-1;background:linear-gradient(0deg,#0b101af0,#0b101ad9 70%,#0b101a55);opacity:0;pointer-events:none;transition:opacity .25s ease}
+.expansion-tv .expansion-body:before{background:linear-gradient(90deg,#0b101a55,#0b101ad9 30%,#0b101af0)}
+.card-expansion[data-trailer-state='playing'] .expansion-body{background:transparent}
+.card-expansion[data-trailer-state='playing'] .expansion-body:before{opacity:1}
+.virtual-catalogue.is-visible{animation-fill-mode:backwards}
+@media(prefers-reduced-motion:reduce){.tv-mode button,.card-expansion button,.tv-mode .card-open:after,.tv-mode .topbar nav button:after,.tv-mode .category-chip:after,.tv-mode .category-picker:after,.tv-mode .category-option:after,.tv-mode .discovery-refresh:after,.card-expansion .expansion-actions button:after,.expansion-backplate,.expansion-body:before{transition:none}.tv-mode .card,.samsung-tv .tv-mode .card.is-previewed:focus-within,.samsung-tv .tv-mode .card.is-previewed:hover{will-change:auto}}
+/* Stable TV dimensions: the scene/viewport never resize during animation. */
+.tv-mode .row-heading{margin-bottom:24px}.tv-mode .row-heading h2{line-height:1.25}
+.tv-mode .topbar nav button{font-weight:700;transform:none}
+.tv-stage .focus-stage-copy{width:44%;max-width:800px;padding-right:26px}
+.tv-stage .focus-description{font-size:26px;line-height:1.38;-webkit-line-clamp:3}
+.tv-stage .focus-stage-shade{background:linear-gradient(90deg,#101827ed 0%,#101827c4 23%,#10182740 45%,transparent 66%),linear-gradient(0deg,#101827,transparent 42%)}
+.expansion-tv .expansion-media{flex-basis:46%}.expansion-tv .expansion-body{padding:20px 28px;gap:12px}.expansion-tv .expansion-body h3{font-size:34px}.expansion-tv .expansion-description{font-size:24px;line-height:1.36;-webkit-line-clamp:4}
+.card-trailer-deck iframe{height:var(--trailer-height,100%);min-height:100%}
+.expansion-tv .expansion-body:before{background:linear-gradient(90deg,#0b101a38,#0b101abf 22%,#0b101ad9)}
+@media(max-width:1450px){.tv-stage .focus-stage-copy{width:46%}.tv-stage .focus-description{font-size:22px}.expansion-tv .expansion-body{padding:18px 24px}.expansion-tv .expansion-description{font-size:22px}.expansion-tv .expansion-body h3{font-size:30px}}
+@media(max-width:700px){.expansion-tv .expansion-media{flex-basis:auto}.expansion-tv .expansion-body{padding:12px 20px}.tv-stage .focus-stage-copy{width:64%}.expansion-tv .expansion-description{-webkit-line-clamp:3;font-size:20px}}
+.samsung-tv .tv-mode .card.is-expanded .card-open:after{opacity:0}
+.card-trailer-banner{border-radius:0}.card-trailer-banner:after{content:'';position:absolute;inset:0;background:linear-gradient(0deg,#101827 0%,#10182722 24%,transparent 50%);pointer-events:none}
+.tv-stage[data-card-trailer] .focus-stage-copy,.tv-stage[data-card-trailer] .focus-stage-visual{opacity:0;pointer-events:none;transition:opacity .16s ease}
+@media(prefers-reduced-motion:reduce){.tv-stage[data-card-trailer] .focus-stage-copy,.tv-stage[data-card-trailer] .focus-stage-visual{transition:none}}

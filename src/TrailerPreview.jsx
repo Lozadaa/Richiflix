@@ -63,6 +63,11 @@ export function TrailerPreview({id,active=true,card=false}){
   return()=>{clearPlayback();pause();};
  },[valid,play,initialized]);
  const playing=ready===valid&&play,holding=exiting===valid&&valid&&!failed.current.has(valid);
- useLayoutEffect(()=>{if(card&&owner?.target){owner.target.dataset.trailerState=playing?'playing':'poster';owner.target.parentElement?.setAttribute('data-trailer-state',playing?'playing':'poster');}},[card,owner,playing]);
+ useLayoutEffect(()=>{
+  if(!card||!owner?.target)return;
+  const state=playing&&!owner.banner?'playing':'poster';owner.target.dataset.trailerState=state;owner.target.parentElement?.setAttribute('data-trailer-state',state);
+  owner.banner?.setAttribute('data-card-trailer',playing?'playing':'pending');
+  return()=>owner.banner?.removeAttribute('data-card-trailer');
+ },[card,owner,playing]);
  return <div ref={root} className={'trailer-preview '+(playing?'is-playing':holding?'is-exiting':'')} data-trailer-state={playing?'playing':'poster'} data-trailer-transport={trailerBridgeEnabled?'bridge':'direct'} data-trailer-muted="false" aria-hidden="true"/>;
 }

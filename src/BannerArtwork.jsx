@@ -1,6 +1,5 @@
 import React,{useCallback,useState} from 'react';
 import {QualityImage} from './QualityImage.jsx';
-import {ContentIdentity} from './ContentIdentity.jsx';
 import {artworkURL} from './artwork.js';
 
 function useArtworkState(src){
@@ -19,6 +18,5 @@ export function BannerArtwork({item,metadataPending=false,variant='focus'}){
  const state=ready?'ready':pending?'loading':'missing';
  return <div className={focus?'focus-stage-visual':'hero-visual'} data-artwork-state={state} aria-busy={pending?true:undefined}>
   {backdrop&&<QualityImage className={focus?'focus-backdrop hero-art':'hero-art'} src={backdrop} fit={live?'contain':'cover'} position={focus?undefined:'70% center'} eager fallback={false} fallbackWhileLoading={false} onStateChange={backdropChanged}/>}
-  {state==='missing'&&<div className="banner-missing-art" aria-hidden="true"><ContentIdentity item={item} wide/></div>}
  </div>;
 }

@@ -8,7 +8,7 @@ Tu biblioteca local para Windows y Samsung TV. Películas, series y canales IPTV
 
 - Portada integrada en el fondo, información en español y puntuaciones TMDB cuando están disponibles.
 - Flechas, OK y Volver para recorrer el catálogo; el ratón también funciona en PC.
-- Tarjetas amplias con sinopsis y puntuación: apartan a sus vecinas al seleccionarlas. Mantener OK abre sus acciones y el tráiler disponible aparece como fondo.
+- Tarjetas amplias con sinopsis y puntuación: apartan a sus vecinas al seleccionarlas. Mantener OK abre sus acciones y en TV el tráiler disponible ocupa el banner y la tarjeta mantiene su imagen y sus datos.
 - Carruseles circulares en ambos sentidos y una tarjeta «Ver todo» al final de cada fila, accesible con el mando.
 - Películas y series por categorías, búsqueda, Mi lista e historial por perfil.
 - TOP de películas y series de los últimos 12 meses, con puntuaciones TMDB.
@@ -32,6 +32,8 @@ Tu biblioteca local para Windows y Samsung TV. Películas, series y canales IPTV
 ![Tarjeta ampliada con información y acciones](docs/screenshots/card-expandida.png)
 
 [Tarjetas ampliadas y navegación con el mando](docs/TARJETA-AMPLIADA.md).
+
+[Animaciones y mediciones de rendimiento](docs/ANIMACIONES-RENDIMIENTO.md).
 
 ## Abrir en Windows
 

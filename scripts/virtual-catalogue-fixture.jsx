@@ -5,6 +5,8 @@ import {VirtualCarousel} from '../src/VirtualCarousel.jsx';
 import {useRemoteNavigation} from '../src/useRemoteNavigation.js';
 import {setSelectedCard} from '../src/cardSelectionStore.js';
 import '../src/style.css';
+import '../src/tvCardComposition.css';
+import '../src/compositorMotion.css';
 
 const catalogue=Array.from({length:27000},(_,index)=>({id:`fixture-${index}`,streamId:index,kind:'vod',mediaType:'movie',title:`Película de prueba ${index}`,genre:index%2?'Aventura':'Comedia',description:'Datos artificiales de prueba local.',year:2026}));
 const history={},favorites=[],metadata={};
