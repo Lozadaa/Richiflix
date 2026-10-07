@@ -3,6 +3,7 @@ import {createRoot} from 'react-dom/client';
 import {Plus,Maximize,Minimize} from 'lucide-react';
 import App from './App.jsx';
 import {Boot} from './Boot.jsx';
+import {TVTextInput,installTVInputBoundary} from './TVTextInput.jsx';
 import {saveProfiles} from './profileStorage.js';
 import {Brand} from './Brand.jsx';
 import {QualityImage} from './QualityImage.jsx';
@@ -15,6 +16,8 @@ import './tvCardComposition.css';
 import './compositorMotion.css';
 import 'wicg-inert';
 import {isTVBuild,installTVPlatform,uuid} from './platform.js';
+const disposeInputBoundary=installTVInputBoundary();
+if(import.meta.hot)import.meta.hot.dispose(disposeInputBoundary);
 installTVPlatform();
 const avatar=kind=>`${import.meta.env.BASE_URL}avatars/${kind==='kids'?'kids-kitten':'adult-raccoon'}.png`;
 const read=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))??fallback;}catch{return fallback;}};
@@ -44,4 +47,4 @@ function ProfileGate({initialProfiles}){
 }
 const disposeDiagnostics=installFocusPaintDiagnostics();
 if(import.meta.hot)import.meta.hot.dispose(disposeDiagnostics);
-createRoot(document.getElementById('root')).render(<Boot>{profiles=><ProfileGate initialProfiles={profiles}/>}</Boot>);
+createRoot(document.getElementById('root')).render(<><TVTextInput/><Boot>{profiles=><ProfileGate initialProfiles={profiles}/>}</Boot></>);
