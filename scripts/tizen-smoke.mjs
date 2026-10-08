@@ -85,7 +85,7 @@ try{
  assert.equal(await page.locator('.player-volume,.player-resume').count(),0);
  await page.getByLabel('Pista de audio').focus();await remote(39);assert.equal(await page.getByLabel('Pista de audio').inputValue(),'2');await remote(10009);assert.equal(await page.locator('.playback-menu').count(),0);assert.equal(await page.locator('.player-dialog').count(),1);
  await page.screenshot({path:join(root,'tizen-player-preview.png')});
- await remote(10009);await page.locator('.player-dialog').waitFor({state:'detached'});assert.equal(await page.evaluate(()=>document.documentElement.classList.contains('native-playback')),false);
+ await remote(10009);await page.waitForFunction(()=>document.activeElement.matches('.player-dialog video'));await remote(10009);await page.locator('.player-dialog').waitFor({state:'detached'});assert.equal(await page.evaluate(()=>document.documentElement.classList.contains('native-playback')),false); // D2: Back from the button row returns to the video, Back from the video closes
  assert.deepEqual((await page.evaluate(()=>window.__calls)).filter(call=>call[0]==='screensaver').at(-1),['screensaver',1]);
  await page.getByRole('button',{name:'Series',exact:true}).click();await page.locator('.catalog-grid .card-open').first().focus();await page.waitForFunction(()=>getComputedStyle(document.querySelector('.catalog-grid .card .poster')).visibility==='visible');assert.equal(await page.locator('.card.is-in-banner').count(),0);assert.ok(await page.locator('.catalog-grid .card-open').first().evaluate(button=>button===document.activeElement));await remote(13);
  await page.getByRole('button',{name:'Reproducir Fixture Episode 1',exact:true}).waitFor();assert.equal(await page.locator('.series-detail select,.season-tabs').count(),0);await page.getByRole('button',{name:'Reproducir Fixture Episode 1',exact:true}).focus();await remote(40);await page.waitForFunction(()=>document.activeElement.getAttribute('aria-label')==='Reproducir Fixture Episode 2');await remote(38);await remote(13);
@@ -107,7 +107,7 @@ try{
  await page.waitForFunction(()=>document.querySelector('.player-dialog').classList.contains('chrome-hidden'));
  await remote(40);await page.waitForFunction(()=>document.activeElement.matches('.playback-toggle'));await remote(13);
  await page.getByRole('button',{name:'Reproducir vídeo',exact:true}).waitFor();assert.equal(await page.locator('.player-resume').count(),0);
- await remote(10009);await page.locator('.player-dialog').waitFor({state:'detached'});
+ await remote(10009);await page.waitForFunction(()=>document.activeElement.matches('.player-dialog video'));await remote(10009);await page.locator('.player-dialog').waitFor({state:'detached'});
  await page.getByRole('button',{name:'Cambiar perfil',exact:true}).focus();await remote(13);await page.waitForFunction(()=>document.activeElement.getAttribute('aria-label')==='Adulto');await page.getByRole('button',{name:'Kids',exact:true}).focus();await remote(13);
  await page.getByRole('button',{name:'Ajustes',exact:true}).waitFor();assert.equal(await page.getByRole('button',{name:'TV en vivo',exact:true}).count(),0);assert.equal(await page.getByRole('button',{name:'Añadir contenido',exact:true}).count(),0);
  await remote(10009);await page.getByRole('button',{name:'Adulto',exact:true}).waitFor();await remote(10009);await page.getByRole('dialog',{name:'Salir de Richiflix'}).waitFor();
