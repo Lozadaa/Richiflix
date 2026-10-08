@@ -5,8 +5,12 @@ const history=value=>value&&typeof value==='object'&&!Array.isArray(value)?Objec
 // Fase L7: followed MLB team ids. Older envelopes without `teams` load as [].
 export const TEAM_LIMIT=10;
 const teams=value=>Array.isArray(value)?[...new Set(value.filter(Number.isInteger))].slice(0,TEAM_LIMIT):[];
-const fields={favorites,history,teams};
-const library=value=>({favorites:favorites(value?.favorites),history:history(value?.history),teams:teams(value?.teams)});
+// D4: intro marks learned per `seriesId:season`; older envelopes load as {}. Capped so a long life cannot grow the backup without bound.
+export const INTRO_LIMIT=200;
+const finite=value=>Number.isFinite(value)&&value>=0;
+const intros=value=>value&&typeof value==='object'&&!Array.isArray(value)?Object.fromEntries(Object.entries(value).filter(([key,mark])=>key&&finite(mark?.start)&&finite(mark?.end)&&mark.end>mark.start).slice(-INTRO_LIMIT).map(([key,mark])=>[key,{start:mark.start,end:mark.end,samples:(Array.isArray(mark.samples)?mark.samples:[]).filter(sample=>finite(sample?.start)&&finite(sample?.end)).slice(-3).map(({start,end})=>({start,end}))}])):{};
+const fields={favorites,history,teams,intros};
+const library=value=>({favorites:favorites(value?.favorites),history:history(value?.history),teams:teams(value?.teams),intros:intros(value?.intros)});
 const envelope=value=>value?.version===1&&Number.isFinite(value.updatedAt)&&value.data?value:null;
 
 // Preserve the old keys for migration and for immediate recovery on shutdown.
@@ -40,7 +44,7 @@ export function createProfileLibrary(profileId,{local=globalThis.localStorage,ba
  return {
   get:()=>state,
   subscribe:listener=>{listeners.add(listener);return()=>listeners.delete(listener);},
-  setFavorites:next=>update('favorites',next),setHistory:next=>update('history',next),setTeams:next=>update('teams',next),flush,
+  setFavorites:next=>update('favorites',next),setHistory:next=>update('history',next),setTeams:next=>update('teams',next),setIntros:next=>update('intros',next),flush,
   load:()=>pending??=(async()=>{
    const started=revision,stored=await readBackup();
    if(started!==revision)return state;

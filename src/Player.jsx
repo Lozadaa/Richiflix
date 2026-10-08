@@ -14,6 +14,7 @@ import {channelTitle} from './ContentIdentity.jsx';
 import {createSeekAccumulator,naturalCross} from './seekAccumulator.js';
 import {adjacentEpisode} from './episodeWindow.js';
 import {NextEpisodeCard,episodeLabel} from './NextEpisodeCard.jsx';
+import {useIntroSkip} from './useIntroSkip.js';
 import {playerKeyAction} from './playerKeys.js';
 import './playerLive.css';
 import './playerControls.css';
@@ -27,7 +28,7 @@ const feedQuality=feed=>displayText(feed.item?.title).match(/\b(?:4K|UHD|FHD|HD|
 // L6: ChannelUp/PageUp go to the next signal or channel (TV convention: CH+ = next), ChannelDown/PageDown to the previous.
 const CHANNEL_KEYS={ChannelUp:1,PageUp:1,ChannelDown:-1,PageDown:-1};
 
-export function Player({item,start,save,close,change,seasons,fullscreen,toggleFullscreen,restoreFocus,tvMode=false}){
+export function Player({item,start,save,close,change,seasons,series,intros={},setIntros=()=>{},fullscreen,toggleFullscreen,restoreFocus,tvMode=false}){
  const videoRef=useRef(),nativeRef=useRef(),hlsRef=useRef(),healthRef=useRef(),userPaused=useRef(false),seekingRef=useRef(false),saveRef=useRef(save),menuRef=useRef(),optionsRef=useRef(),lastSaved=useRef(-1),resumeAt=useRef(start),scrubbing=useRef(false),scrubValue=useRef(0),feedbackTimer=useRef(),signalRef=useRef(),signalMenuRef=useRef(),switchTimer=useRef(),tried=useRef(new Set(item.tried));
  saveRef.current=save;
  const accumulator=useRef(null);accumulator.current??=createSeekAccumulator();
@@ -135,7 +136,11 @@ export function Player({item,start,save,close,change,seasons,fullscreen,toggleFu
  const flash=label=>{setFeedback(label);clearTimeout(feedbackTimer.current);feedbackTimer.current=setTimeout(()=>setFeedback(''),700);};
  const skip=seconds=>{if(tv&&!seekable)return;seek(engine().currentTime+seconds);flash(`${seconds>0?'+':''}${seconds} s`);};
  // D1: Left/Right (and the media seek keys) accumulate one burst; the bar previews the target and one seek follows.
- accumulator.current.onApply(target=>{setPendingSeek(null);setScrub(null);seek(from+target);});
+ const intro=useIntroSkip({item,series,seasons,position:media.current,enabled:episodic&&Boolean(series),intros,setIntros}),introButton=useRef();
+ accumulator.current.onApply((target,burst)=>{setPendingSeek(null);setScrub(null);seek(from+target);intro.applied({from:burst.from,to:target});});
+ // D4: «Saltar intro» takes the focus when it appears; OK jumps to the end of the window, an arrow or Back dismisses it.
+ useEffect(()=>{if(intro.offer)introButton.current?.focus({preventScroll:true});else if(document.activeElement?.closest('.skip-intro'))videoRef.current?.focus({preventScroll:true});},[intro.offer?.key]);
+ const introKeys=e=>{if(e.key.startsWith('Arrow')||e.key==='Escape'){e.preventDefault();e.stopPropagation();intro.dismiss();videoRef.current?.focus({preventScroll:true});}};
  const seekBy=({direction,repeat=false,now=false})=>{
   const video=engine();if(!seekable||!video)return;
   const result=accumulator.current.press(direction,{position:video.currentTime-from,duration:to-from,repeat});if(!result)return;
@@ -251,6 +256,7 @@ export function Player({item,start,save,close,change,seasons,fullscreen,toggleFu
    {switching&&<div className="player-switch" role="status">{switching}</div>}
    {feedback&&<div className="seek-feedback" key={feedback} aria-live="polite"><span className="seek-feedback-icon">{feedback.startsWith('-')?<RotateCcw size={34}/>:<RotateCw size={34}/>}</span><strong>{feedback}</strong></div>}
    {error&&<div className="player-state"><span className="player-state-eyebrow">{title}</span><h2>No se pudo reproducir</h2><p role="alert">{displayText(error)}</p><div className="dialog-actions"><button className="primary" onClick={()=>setRetry(prev=>prev+1)}><RotateCcw size={18}/> Reintentar</button>{alternative&&<button className="secondary" onClick={tryAnother}><Antenna size={18}/> Probar otra señal</button>}<button className="secondary" onClick={close}>Volver al catálogo</button></div></div>}
+   {intro.offer&&!error&&<button ref={introButton} className="player-prompt skip-intro" onKeyDown={introKeys} onClick={()=>{const end=intro.skip();if(end!=null)seek(end);videoRef.current?.focus({preventScroll:true});}}>{intro.offer.label}</button>}
    {nextCard&&nextEpisode&&!stillThere&&<NextEpisodeCard key={nextEpisode.id} episode={nextEpisode} running={!paused||ended} onPlay={auto=>toEpisode(nextEpisode,auto)} onDismiss={dismissNext} onLeave={()=>videoRef.current?.focus({preventScroll:true})}/>}
    {stillThere&&<section className="player-prompt still-there" aria-label="¿Sigues ahí?" onKeyDown={e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();e.stopPropagation();const buttons=[...e.currentTarget.querySelectorAll('button')];buttons[(buttons.indexOf(e.target)+1)%buttons.length]?.focus({preventScroll:true});}}}><h2>¿Sigues ahí?</h2><div className="dialog-actions"><button className="primary" autoFocus onClick={()=>{setStillThere(false);toEpisode(nextEpisode);}}><Play fill="currentColor" size={20}/> Seguir viendo</button><button className="secondary" onClick={close}>Volver al catálogo</button></div></section>}
    {ended&&!nextCard&&!stillThere&&<div className="player-state"><span className="player-state-eyebrow">Reproducción terminada</span><h2>{title}</h2><div className="dialog-actions"><button className="primary" onClick={replay}><Play fill="currentColor" size={20}/> Volver a ver</button><button className="secondary" onClick={close}>Volver al catálogo</button></div></div>}

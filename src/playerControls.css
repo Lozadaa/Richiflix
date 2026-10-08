@@ -31,3 +31,6 @@
 .tv-player .player-prompt button{font-size:26px;min-height:72px;padding:0 30px}
 .tv-player .player-prompt button:focus{outline:4px solid #f5d58d;outline-offset:5px}
 .tv-player .still-there h2{font-size:36px}
+.skip-intro{padding:14px 26px;font:800 18px 'Bricolage Grotesque',Arial,sans-serif;color:#fff;cursor:pointer}
+.tv-player .skip-intro{padding:20px 40px;font-size:28px}
+.skip-intro:focus{outline:4px solid #f5d58d;outline-offset:5px;background:#f5d58d;color:#101827}
