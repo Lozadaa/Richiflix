@@ -1,0 +1,5 @@
+/* Samsung keeps a stable layer order and a fixed title colour. Since Fase B the
+   halo (compositorMotion.css) and the poster lift are shared by every .tv-mode. */
+.samsung-tv .tv-mode .card,.samsung-tv .tv-mode .card.is-previewed{z-index:1}
+.samsung-tv .tv-mode .card .poster{box-shadow:none;filter:none}
+.samsung-tv .tv-mode .card .card-title{color:#e8eef9}

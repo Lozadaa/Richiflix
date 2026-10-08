@@ -1,0 +1,8 @@
+/* Fase L7: «Seguir equipo» in the event panel (same round button as Mi lista) and Ajustes chips. */
+.expansion-actions .expansion-follow{font-weight:700;font-size:15px;line-height:1;letter-spacing:.02em}
+.expansion-tv .expansion-actions .expansion-follow{font-size:18px}
+.expansion-actions .expansion-follow[aria-pressed='true']{color:#182037;background:#f5d58d;border-color:#f5d58d}
+.followed-teams{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:18px 0 0}
+.followed-teams h3{flex:0 0 100%;margin:0;font-size:16px;color:#b9c6d8}
+.followed-teams p{margin:0;color:#9caac3}
+.toast .toast-action{padding:6px 14px;border-radius:999px;background:#c1b0ee;color:#182037;font-weight:700}

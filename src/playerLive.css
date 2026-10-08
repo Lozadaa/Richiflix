@@ -1,0 +1,20 @@
+/* Fase L6: live player. Text only; the switch pill fades by opacity. */
+.player-live-line{font-style:normal;color:#dce2ed;font-size:14px;font-weight:700;letter-spacing:.2px}
+.player-signal>.player-tool{gap:8px;width:auto;padding:0 18px}
+.signal-caption{font-size:13px;font-weight:800}
+.signal-menu{display:flex;flex-direction:column;gap:6px}
+.signal-option{display:flex;align-items:center;gap:12px;width:100%;min-height:44px;padding:8px 14px;border-radius:14px;border:1px solid #ffffff12;background:#253047;color:#fff;font:700 14px Arial,sans-serif;text-align:left;cursor:pointer}
+.signal-option>span{flex:1}
+.signal-option>small{color:#b8c3d6;font-size:12px}
+.signal-option[aria-pressed="true"]{color:#ffbba9}
+.signal-option:focus-visible,.signal-option:hover{outline:3px solid #f5d58d;outline-offset:2px}
+.player-switch{position:absolute;top:18%;left:50%;transform:translateX(-50%);padding:14px 26px;border-radius:999px;background:#172133;color:#fff;font:800 20px 'Bricolage Grotesque',Arial,sans-serif;pointer-events:none;z-index:3;animation:player-switch 1.5s linear forwards}
+@keyframes player-switch{0%{opacity:0}10%{opacity:1}80%{opacity:1}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.player-switch{animation:none}}
+.tv-player .player-title>span,.tv-player .player-live-line{font-size:clamp(22px,1.15vw,28px)}
+.tv-player .signal-caption{font-size:22px}
+.tv-player .signal-option{font-size:24px;min-height:64px;padding:12px 20px;border-radius:18px}
+.tv-player .signal-option>small{font-size:22px}
+.tv-player .signal-option:focus{outline:4px solid #f5d58d;outline-offset:3px}
+.tv-player .player-switch{font-size:30px;padding:20px 36px}
+.tv-player .playback-main-controls .player-signal{order:4}

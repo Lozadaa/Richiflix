@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<widget xmlns="http://www.w3.org/ns/widgets" xmlns:tizen="http://tizen.org/ns/widgets" id="https://richiflix.local/tv" version="0.1.0" viewmodes="maximized">
+ <tizen:application id="Richiflix1.Richiflix" package="Richiflix1" required_version="6.5"/>
+ <name>Richiflix</name>
+ <content src="index.html"/>
+ <icon src="icon.png"/>
+ <access origin="*" subdomains="true"/>
+ <tizen:content-security-policy>default-src 'self'; script-src 'self' https://www.youtube.com https://s.ytimg.com file:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https: http: data: blob:; media-src 'self' https: http: blob:; connect-src 'self' https: http:; frame-src https://www.youtube.com https://www.youtube-nocookie.com; worker-src 'self' blob:</tizen:content-security-policy>
+ <tizen:allow-navigation>https://www.youtube.com https://www.youtube-nocookie.com</tizen:allow-navigation>
+ <tizen:profile name="tv-samsung"/>
+ <tizen:feature name="http://tizen.org/feature/screen.size.normal.1080.1920"/>
+ <tizen:privilege name="http://tizen.org/privilege/internet"/>
+ <tizen:privilege name="http://tizen.org/privilege/tv.inputdevice"/>
+ <tizen:privilege name="http://tizen.org/privilege/application.launch"/>
+ <tizen:setting screen-orientation="landscape" context-menu="disable" background-support="disable" encryption="disable" install-location="auto" hwkey-event="enable"/>
+</widget>

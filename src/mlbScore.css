@@ -1,0 +1,13 @@
+/* Fase L5: live score under the crests. Static text (changes at most once a minute); nothing animates. */
+.mlb-score{position:absolute;left:0;right:0;bottom:5%;z-index:2;display:flex;justify-content:center;align-items:baseline;gap:10px;color:#aeb8c9;white-space:nowrap;font-variant-numeric:tabular-nums}
+.mlb-runs{font:800 26px/1 'Bricolage Grotesque',Arial,sans-serif}.mlb-runs b{font-weight:inherit;color:#aeb8c9}.mlb-runs b.is-ahead{color:#fff}
+.mlb-inning{font-size:18px;font-weight:700;line-height:1}
+.mlb-score[data-stale]{opacity:.7}
+/* The score takes the city line's room; crests shrink inside the same card height. */
+.has-score .mlb-location{display:none}.has-score .mlb-teams{bottom:calc(7% + 32px)}
+.tv-mode .mlb-runs{font-size:30px}.tv-mode .has-score .mlb-teams{bottom:calc(7% + 36px)}
+/* Banner only (the PC panel is also `mlb-wide` but keeps card sizes): kept as high as the names allow; the stage shade dims the art layer, names included. */
+.focus-stage-visual .mlb-score{bottom:13%;gap:18px}.focus-stage-visual .mlb-runs{font-size:56px}.focus-stage-visual .mlb-inning{font-size:26px}
+.focus-stage-visual .has-score .mlb-teams{bottom:calc(13% + 72px)}
+/* The PC panel's media is a short strip: crests only there; its copy already says the phase. */
+.card-expansion:not(.expansion-tv) .mlb-score{display:none}.card-expansion:not(.expansion-tv) .has-score .mlb-location{display:inline}.card-expansion:not(.expansion-tv) .has-score .mlb-teams{bottom:16%}

@@ -1,0 +1,15 @@
+{
+  "checkedAt": "2026-10-05T02:17:19.977Z",
+  "check": "HTTP GET of playlist text and EXTINF count; stream playback not tested",
+  "sources": [
+    { "id": "iptv-org-all", "url": "https://iptv-org.github.io/iptv/index.m3u", "status": 200, "entries": 11138 },
+    { "id": "iptv-org-spanish", "url": "https://iptv-org.github.io/iptv/languages/spa.m3u", "status": 200, "entries": 2322 },
+    { "id": "iptv-org-chile", "url": "https://iptv-org.github.io/iptv/countries/cl.m3u", "status": 200, "entries": 242 },
+    { "id": "iptv-org-movies", "url": "https://iptv-org.github.io/iptv/categories/movies.m3u", "status": 200, "entries": 782 },
+    { "id": "iptv-org-sports", "url": "https://iptv-org.github.io/iptv/categories/sports.m3u", "status": 200, "entries": 445 },
+    { "id": "iptv-org-animation", "url": "https://iptv-org.github.io/iptv/categories/animation.m3u", "status": 200, "entries": 160 },
+    { "id": "iptv-org-documentary", "url": "https://iptv-org.github.io/iptv/categories/documentary.m3u", "status": 200, "entries": 254 },
+    { "id": "iptv-org-music", "url": "https://iptv-org.github.io/iptv/categories/music.m3u", "status": 200, "entries": 759 },
+    { "id": "free-tv-all", "url": "https://raw.githubusercontent.com/Free-TV/IPTV/master/playlist.m3u8", "status": 200, "entries": 2080, "checkedAt": "2026-10-05T02:18:10.782Z" }
+  ]
+}

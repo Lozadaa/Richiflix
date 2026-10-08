@@ -1,0 +1,8 @@
+node_modules/
+dist/
+dist-tizen/
+*.log
+*.wgt
+artifacts/
+.env.local
+.env.*.local
