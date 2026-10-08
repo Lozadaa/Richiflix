@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {genreAlternatives} from './searchSuggestions.js';
+import {genreAlternatives,catalogueMatch} from './searchSuggestions.js';
 
 const items=(prefix,count)=>Array.from({length:count},(_,i)=>({id:`${prefix}${i}`}));
 test('genreAlternatives mixes the matching genre collections without duplicates and within the limit',()=>{
@@ -15,4 +15,10 @@ test('genreAlternatives mixes the matching genre collections without duplicates 
 test('genreAlternatives only resolves the item lists of matching genres',()=>{
  let asked=0;const lazy=(name,items)=>({name,items:()=>{asked++;return items;}});
  assert.deepEqual(genreAlternatives({tmdbResult:{genres:['Drama']},collections:[lazy('Drama',[{id:1}]),lazy('Comedia',[{id:2}])]}),[{id:1}]);assert.equal(asked,1);
+});
+test('catalogueMatch finds a TMDB result already in the catalogue by id or by title',()=>{
+ const items=[{id:'a',title:'¿Qué pasó ayer? (2009)',displayTitle:'¿Qué pasó ayer?'},{id:'b',title:'Otra',tmdbId:'1396'}];
+ assert.equal(catalogueMatch({tmdbId:'18785',title:'¿Qué pasó ayer?',originalTitle:'The Hangover'},items)?.id,'a');
+ assert.equal(catalogueMatch({tmdbId:'1396',title:'Breaking Bad'},items)?.id,'b');
+ assert.equal(catalogueMatch({tmdbId:'1',title:'Ausente',originalTitle:'Missing'},items),null);assert.equal(catalogueMatch(null,items),null);
 });

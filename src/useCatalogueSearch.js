@@ -1,10 +1,9 @@
 import {useEffect,useState} from 'react';
 const empty=[];
-// Exact matches first; with fewer than five, the worker adds approximate titles and «¿Quisiste decir…?» names.
-async function searchWithFuzzy(index,items,query,options){
- const found=await index.search(items,query,options);if(found.length>=5)return {items:found,fuzzy:empty,suggestions:empty};
- const exact=new Set(found),near=await index.fuzzy(items,query,options);
- return {items:found,fuzzy:near.items.filter(item=>!exact.has(item)),suggestions:near.suggestions};
+// Exact matches first; only when there are none does the worker add approximate titles and «¿Quisiste decir…?» names.
+export async function searchWithFuzzy(index,items,query,options){
+ const found=await index.search(items,query,options);if(found.length)return {items:found,fuzzy:empty,suggestions:empty};
+ const near=await index.fuzzy(items,query,options);return {items:found,fuzzy:near.items,suggestions:near.suggestions};
 }
 export function useCatalogueSearch(index,items,query,category='Todas'){
  const [result,setResult]=useState({query:'',source:items,category,items:empty,fuzzy:empty,suggestions:empty,loading:false});

@@ -1,6 +1,7 @@
 import {useEffect,useState} from 'react';
 import {normalizeQuery} from './fuzzySearch.js';
 import {xtreamClient} from './xtreamClient.js';
+import {displayTitle} from './artwork.js';
 // «Del mismo género en tu catálogo»: items of the existing genre collections whose name
 // matches a genre of the TMDB result, taken in turns so every matching genre shows up.
 // `items` may be a function so category groups are only filtered when their name matches.
@@ -10,6 +11,11 @@ export function genreAlternatives({tmdbResult,collections=[],limit=12}={}){
  const lists=collections.filter(group=>[group.name,group.label].some(name=>name&&wanted.has(genreKey(name)))).map(group=>(typeof group.items==='function'?group.items():group.items)||[]),out=[],seen=new Set();
  for(let position=0;out.length<limit&&lists.some(list=>position<list.length);position++)for(const list of lists){const item=list[position];if(item&&!seen.has(item.id)&&out.length<limit){seen.add(item.id);out.push(item);}}
  return out;
+}
+// A TMDB result may already be in the catalogue under its Spanish or original title (or id).
+export function catalogueMatch(tmdbResult,items){
+ if(!tmdbResult)return null;const names=new Set([tmdbResult.title,tmdbResult.originalTitle].map(normalizeQuery).filter(Boolean));
+ return items.find(item=>item.tmdbId!=null&&String(item.tmdbId)===tmdbResult.tmdbId||item.title&&names.has(normalizeQuery(displayTitle(item))))||null;
 }
 // The best TMDB match for a search the catalogue cannot answer: 500 ms after the last
 // keystroke, one request at a time, remembered per normalized query (50 at most).
