@@ -1,0 +1,26 @@
+{
+  "propuesta": "Solaria",
+  "tokens": {
+    "fondo": "#0d172b",
+    "superficie": "#1d2d49",
+    "texto": "#fff4e4",
+    "texto-secundario": "#bac8e0",
+    "acento": "#f2b84b",
+    "foco": "#fff1d2"
+  },
+  "kids-acento": "#ff9478",
+  "contrastes": {
+    "texto / fondo": 16.4424,
+    "texto secundario / fondo": 10.5792,
+    "acento / fondo": 9.9895,
+    "foco / fondo": 15.976,
+    "texto / superficie": 12.6739,
+    "texto secundario / superficie": 8.1545,
+    "foco / superficie": 12.3144,
+    "tinta fondo / botón acento": 9.9895,
+    "Kids / fondo": 8.3088,
+    "tinta fondo / botón Kids": 8.3088,
+    "superficie / fondo": 1.2973
+  },
+  "criterio": "Texto normal ≥4.5:1; foco/componentes ≥3:1. Superficie decorativa no requiere 3:1 respecto al fondo; no usarla como único indicador de foco."
+}
