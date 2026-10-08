@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {youtubeID,spanishMetadata,checkMetadataToken,validateMetadataToken,tmdbSeason,tmdbSearch} from './metadata.js';
+import {youtubeID,pickLogo,spanishMetadata,checkMetadataToken,validateMetadataToken,tmdbSeason,tmdbSearch} from './metadata.js';
 import {loadXtreamVideoDetails} from './xtream.js';
 import {composeChannels} from './channelArtwork.js';
-import {artworkURL,displayTitle} from './artwork.js';
+import {artworkURL,displayTitle,logoURL} from './artwork.js';
 import {artworkCategory} from './categoryArtwork.js';
 test('category artwork follows metadata without adding classifications or changing content',()=>{
  assert.equal(artworkCategory({kind:'iptv',title:'MLB 04',genre:'Deportes'}).key,'baseball');
@@ -16,7 +16,7 @@ test('trailers accept actual YouTube IDs and links, reject arbitrary URLs and in
  for(const value of ['short','javascript:alert(1)','https://evil.test/watch?v=TY1lWh20VSw','https://youtube.com.evil.test/embed/TY1lWh20VSw'])assert.equal(youtubeID(value),undefined);
 });
 test('Spanish metadata uses exact provider TMDB ID, es-ES and official Spanish trailer',async()=>{
- const fetcher=async(address,options)=>{const url=new URL(address);assert.equal(url.pathname,'/3/movie/123');assert.equal(url.searchParams.get('language'),'es-ES');assert.equal(url.searchParams.get('append_to_response'),'videos,release_dates');assert.equal(url.searchParams.get('include_video_language'),'es,en,null');assert.equal(options.headers.Authorization,'Bearer '+ 'x'.repeat(30));return new Response(JSON.stringify({title:'Título español',overview:'Una aventura en español.',videos:{results:[{site:'YouTube',type:'Trailer',key:'TY1lWh20VSw',official:true,iso_639_1:'es'}]}}));};
+ const fetcher=async(address,options)=>{const url=new URL(address);assert.equal(url.pathname,'/3/movie/123');assert.equal(url.searchParams.get('language'),'es-ES');assert.equal(url.searchParams.get('append_to_response'),'videos,images,release_dates');assert.equal(url.searchParams.get('include_image_language'),'es,null');assert.equal(url.searchParams.get('include_video_language'),'es,en,null');assert.equal(options.headers.Authorization,'Bearer '+ 'x'.repeat(30));return new Response(JSON.stringify({title:'Título español',overview:'Una aventura en español.',videos:{results:[{site:'YouTube',type:'Trailer',key:'TY1lWh20VSw',official:true,iso_639_1:'es'}]}}));};
  const details=await spanishMetadata('123','movie','x'.repeat(30),fetcher);assert.equal(details.descriptionLanguage,'es');assert.equal(details.localizedTitle,'Título español');assert.equal(details.trailerId,'TY1lWh20VSw');
  assert.deepEqual(await spanishMetadata('../bad','movie','x'.repeat(30),()=>assert.fail()),{});
 });
@@ -101,4 +101,14 @@ test('tmdbSearch uses search/multi in es-ES, keeps movies and series with genre 
  await tmdbSearch('Matrix','a'.repeat(32),fetcher);assert.equal(calls.filter(url=>url.pathname.includes('genre/')).length,2,'Genre lists are fetched once per token.');
  assert.deepEqual(await tmdbSearch('x','a'.repeat(32),fetcher),[]);assert.deepEqual(await tmdbSearch('Matrix','',fetcher),[]);
  assert.deepEqual(await tmdbSearch('Matrix','b'.repeat(32),async()=>({ok:false})),[]);
+});
+test('title logo: Spanish before no-language, PNG before SVG within a language, SVG alone accepted',async()=>{
+ const logo=(iso_639_1,file_path)=>({iso_639_1,file_path});
+ assert.equal(pickLogo({logos:[logo(null,'/neutral.png'),logo('en','/english.png'),logo('es','/spanish.svg'),logo('es','/spanish.png')]}),'/spanish.png');
+ assert.equal(pickLogo({logos:[logo('en','/english.png'),logo(null,'/neutral.svg'),logo(null,'/neutral.png')]}),'/neutral.png');
+ assert.equal(pickLogo({logos:[logo('es','/only.svg')]}),'/only.svg');
+ for(const images of [undefined,{},{logos:[]},{logos:[logo('en','/english.png')]},{logos:[logo('es','../bad.png')]}])assert.equal(pickLogo(images),undefined);
+ const details=await spanishMetadata(123,'movie','x'.repeat(30),async()=>new Response(JSON.stringify({title:'T',images:{logos:[logo('es','/logo.png')]}})));
+ assert.equal(details.logoImage,'/logo.png');assert.equal(logoURL(details.logoImage),'https://image.tmdb.org/t/p/w300/logo.png');assert.equal(logoURL(undefined),'');
+ assert.equal('logoImage' in await spanishMetadata(123,'movie','x'.repeat(30),async()=>new Response(JSON.stringify({title:'T'}))),false);
 });

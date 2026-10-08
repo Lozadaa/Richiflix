@@ -16,7 +16,7 @@ test('TV regional ratings use exact labels and unknown or unrated classification
 });
 test('certifications share the metadata request and survive a persistent cache restart including confirmed absence',async()=>{
  let requests=0,saved;const load=async(id,type)=>spanishMetadata(id,type,'x'.repeat(30),async address=>{
-  requests++;assert.equal(new URL(address).searchParams.get('append_to_response'),`videos,${type==='series'?'content_ratings':'release_dates'}`);
+  requests++;assert.equal(new URL(address).searchParams.get('append_to_response'),`videos,images,${type==='series'?'content_ratings':'release_dates'}`);
   return new Response(JSON.stringify({name:'Una serie',overview:'Sinopsis española',content_ratings:{results:[{iso_3166_1:'CL',rating:'18'}]}}));
  });
  const options={...previewMetadataCacheOptions,read:async()=>saved,write:async value=>{saved=structuredClone(value);}};

@@ -8,6 +8,8 @@ export function artworkURL(value,backdrop=false,tv=isTVBuild){
  if(!value)return value;
  try{const url=new URL(value);if(url.hostname==='image.tmdb.org'&&/^\/t\/p\/[^/]+\/[^/]+\.(?:jpg|png|webp)$/i.test(url.pathname))url.pathname=url.pathname.replace(/^\/t\/p\/[^/]+\//,`/t/p/${backdrop?tv?TV_BACKDROP_SIZE:'original':'w780'}/`);return url.href;}catch{return value;}
 }
+// Title logos (TMDB path from metadata.pickLogo). artworkURL only resizes full jpg/png/webp URLs, so logos build their own.
+export const logoURL=path=>path?`https://image.tmdb.org/t/p/w300${path}`:'';
 export function displayTitle(item){
  if(item.eventDisplayTitle)return displayText(item.eventDisplayTitle);
  if(item.localizedTitle)return displayText(item.localizedTitle);

@@ -27,20 +27,27 @@ export function tmdbRating(data){
  const score=Number(data.vote_average),votes=Number(data.vote_count);
  return Number.isFinite(score)&&score>0&&score<=10&&Number.isSafeInteger(votes)&&votes>0?{tmdbScore:score,tmdbVotes:votes}:{};
 }
+// Title logo: TMDB path of the first Spanish logo, else the first without language; PNG before SVG within each group.
+export function pickLogo(images){
+ const logos=Array.isArray(images?.logos)?images.logos.filter(logo=>typeof logo?.file_path==='string'&&/^\/[\w.-]+\.(?:png|svg)$/i.test(logo.file_path)):[];
+ for(const language of ['es',null]){const group=logos.filter(logo=>logo.iso_639_1===language),logo=group.find(logo=>/\.png$/i.test(logo.file_path))||group[0];if(logo)return logo.file_path;}
+}
 export async function spanishMetadata(tmdbId,type,token,fetcher=fetch){
  if(!token||!/^\d{1,10}$/.test(String(tmdbId)))return {};
  try{
   // Video languages are independent of the Spanish title and synopsis. Fetch
   // English fallbacks with the same request instead of another network round trip.
-  const data=await tmdbRequest(`${type==='series'?'tv':'movie'}/${tmdbId}?append_to_response=videos,${type==='series'?'content_ratings':'release_dates'}&include_video_language=es,en,null`,token,fetcher);
+  const data=await tmdbRequest(`${type==='series'?'tv':'movie'}/${tmdbId}?append_to_response=videos,images,${type==='series'?'content_ratings':'release_dates'}&include_image_language=es,null&include_video_language=es,en,null`,token,fetcher);
   if(data.adult===true)return {isPornographic:true};
   const languageRank=video=>video.iso_639_1==='es'?0:video.iso_639_1==='en'?1:video.iso_639_1==null||video.iso_639_1===''?2:3;
   const videos=Array.isArray(data.videos?.results)?data.videos.results:[];
   const trailer=videos.filter(video=>video&&video.site==='YouTube'&&video.type==='Trailer'&&languageRank(video)<3&&youtubeID(video.key))
    .sort((a,b)=>languageRank(a)-languageRank(b)||Number(Boolean(b.official))-Number(Boolean(a.official)))[0];
+  const logoImage=pickLogo(data.images);
   return {...tmdbRating(data),ageClassification:tmdbAgeClassification(data,type,tmdbId),tmdbId:String(tmdbId),...(Array.isArray(data.genres)?{tmdbGenres:data.genres.map(genre=>genre.name).filter(name=>typeof name==='string'),contentGenre:data.genres.map(genre=>genre.name).filter(name=>typeof name==='string').join(', ')}:{}),...(data.overview?.trim()?{description:data.overview.slice(0,5000),descriptionLanguage:'es'}:{}),
    ...(data.title||data.name?{localizedTitle:data.title||data.name}:{}),
    ...(data.backdrop_path?{backdropImage:`https://image.tmdb.org/t/p/original${data.backdrop_path}`} :{}),
+   ...(logoImage?{logoImage}:{}),
    ...(data.poster_path?{image:`https://image.tmdb.org/t/p/w780${data.poster_path}`} :{}),
    ...(trailer?{trailerId:youtubeID(trailer.key)}:{}),metadataCredit:'TMDB'};
  }catch{return {};}
