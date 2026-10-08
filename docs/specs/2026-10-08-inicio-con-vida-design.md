@@ -50,3 +50,21 @@ Halo que respira, brillo tras la fila enfocada, marcador en vivo con refresco en
 - Build: `npm test`, `npm run build`, `npm run build:tizen`, `npm run test:tizen`.
 - TV (55", inspector): capturas del Inicio en las diapositivas 0 y 1 (tinte distinto, logo, puntos con progreso), fila Top 10, fila Nuevo esta semana, tarjeta con NUEVO y audio; `measure:tv` ×3; recuento de capas ≤ 91; `tv-trace-report.mjs` sin `Layout` en los cambios de diapositiva.
 - Sin smokes de Playwright/Electron.
+
+## Resultado (8 oct 2026, 55")
+
+Integrado en `main` (lotes H1–H3 + ajustes de integración), instalado en el UN55M75 y verificado por el inspector.
+
+| Criterio | Resultado |
+|---|---|
+| Ken Burns, tinte, punto con progreso, texto escalonado | Activos sólo mientras el foco está en el banner. Al bajar a las filas el Ken Burns se congela como `transform` estático y el punto deja de pintarse: en reposo en las filas no queda ninguna capa nueva del banner (`vida-55-banner-{0,1}.png`). |
+| Tinte ambiental | Desviación respecto al diseño inicial: se pinta como `::after` dentro de la capa del arte de cada diapositiva (el fundido lo lleva solo), no como dos capas propias. Cero capas, cero transiciones. |
+| Logo del título | En el panel ampliado (`vida-55-peliculas-insignias.png`, «Terror en Shelby Oaks»). En el banner aparece cuando el título tiene `logoImage` en caché; los títulos cacheados antes del cambio lo reciben al caducar su caché (30 d / 7 d). |
+| Top 10 | Números en contorno, fila con celda de 300 px; el panel ampliado se ancla al póster y el número queda visible (número 77–144, panel desde 176; `vida-55-top10-foco-2.png`). El número vive dentro de la capa del botón: 0 capas extra (antes 10). |
+| Nuevo esta semana, insignias | `addedAt` se guarda al normalizar; la fila e insignia NUEVO aparecen cuando el catálogo se recarga. Insignia de audio y NUEVO abajo a la derecha del póster (arriba chocaban con la nota). |
+| Nombres limpios | «Michael (LAT/ENG/CAST)» → «Michael» + «LAT · ENG · CAST» en toda la app (tarjeta, banner, panel). |
+| Columna de foco fija | Intacta: x=80 en índices 0–3 de Películas tras el cambio del Top 10. |
+| Latencia (`measure:tv`, 350 ms, fase de traza) | Build de la mañana (sin Inicio con vida): P50 100–118 / P95 147–178. Final: P50 109–113 / P95 143–212 (3 corridas; la de 212 arranca a mitad de fila y decodifica más portadas). Mismo camino de teclas que por la mañana (Top 10 oculto): P95 157–188. Sin regresión atribuible fuera del ruido. |
+| Capas tras 20 teclas | 83–84 (mañana 86–88) en las corridas comparables; 121 en la primera corrida tras arrancar (ventana de tarjetas más amplia). En reposo en las filas: 90. |
+
+Correcciones durante la verificación: `z-index:-1` del número (10 capas), panel del Top 10 tapando el número (reporte de Richard), tinte y Ken Burns como capas permanentes (+8 capas y texto del banner compuesto mientras se navega), insignias sobre la nota.

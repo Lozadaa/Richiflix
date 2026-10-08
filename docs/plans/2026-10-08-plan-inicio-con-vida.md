@@ -109,3 +109,7 @@
 2. `npm test`, `npm run build`, `npm run build:tizen`, `npm run test:tizen`.
 3. Con autorización de Richard: instalar en el 55", `measure:tv` ×3 (tope P95 178 ms, capas ≤ 91), capturas de diapositivas 0 y 1, Top 10, Nuevo esta semana, insignias; `tv-trace-report.mjs` sin `Layout` en el cambio de diapositiva.
 4. Sección «Resultado» aquí y en el spec; push a `origin/kingdom-main`.
+
+## Resultado (8 oct 2026)
+
+Lotes H1, H2, H3 ejecutados por tres Opus en worktrees (informes `informe-H1/H2/H3.md`), integrados en `main` sin conflictos; H1-T4 (logo en el banner) y `paused` del carrusel cerrados en la integración. Ajustes posteriores a la medición en el 55": tinte dentro de la capa del arte (sin `ambientSlots`), Ken Burns congelado sin capa al pausar, número del Top 10 dentro del botón y panel anclado al póster (`insetAnchorBox`), insignias abajo a la derecha. Cifras y capturas en la sección «Resultado» del spec. Los worktrees del Agent tool nacen de `origin/main` (historia pública): hay que resetearlos a `main` local antes de empezar (los cuatro agentes lo hicieron o se les indicó).

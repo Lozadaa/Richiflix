@@ -364,3 +364,7 @@ Instalar en el 55" (`scripts/tizen-install.ps1 -TvIP 192.168.1.25 -CertificatePr
 - **Cobertura del diseño aprobado:** corona saltando + sombra + frases + reduced-motion → Tareas 1–2 (arranque) y 5 (reproductor); cursor con OK / auto 2 s / Volver → Tareas 3–5; arreglo del «+10 → +7» → Tarea 3 (`lastTarget`) y Tarea 5 (`settled` en `seeked`); sin miniatura (arte del título atenuado) → Tarea 5 paso 4.
 - **Nombres consistentes:** `loaderPhrase`/`LOADER_PHRASES` (1→2,5); `KingdomLoader({phrase,label,className})` (2→5); `pending()`/`settle()` (3→5); `commitSeek`/`cancelSeek` + parámetro `pending` (4→5).
 - **Enfoque de revisión:** los cinco casos tienen prueba o comprobación nombrada (3, 4, 4, acumulador existente + 4, 2 + verificación final).
+
+## Resultado (8 oct 2026, 55")
+
+Ejecutado por un Opus en worktree (`docs/plans/informe-loader-cursor.md`), integrado en `main`. Verificado por el inspector en el 55": loader de arranque con la corona saltando y frases rotando («Despertando a los heraldos…», «Desenrollando los pergaminos del catálogo…»; `artifacts/vida-55-boot-2.png`); en el reproductor, tres Derecha seguidas muestran el cursor «1:40 · +1:40 · OK para saltar» sin ningún `seekTo` hasta OK (contador sobre `webapis.avplay.seekTo`); a los 2 s sin pulsar salta solo; con los controles ocultos, Izquierda los despierta y muestra el cursor; Volver con cursor no cierra el reproductor. Pendiente de probar con el mando real la sensación del auto-salto de 2 s.
