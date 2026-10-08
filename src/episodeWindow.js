@@ -11,3 +11,9 @@ export function episodeWindow({offsets,offset=0,height,focusedIndex=-1,overscan=
  if(focusedIndex>=0&&focusedIndex<count&&(focusedIndex<start||focusedIndex>=end))indices.push(focusedIndex);
  return indices.sort((a,b)=>a-b);
 }
+// D3: previous/next episode across seasons; specials (season 0) only step among themselves.
+export function adjacentEpisode(seasons,episodeId,direction){
+ const special=seasons?.find(group=>group.episodes.some(episode=>episode.id===episodeId))?.season==='0';
+ const list=(seasons||[]).filter(group=>(group.season==='0')===special).flatMap(group=>group.episodes),index=list.findIndex(episode=>episode.id===episodeId);
+ return index<0?null:list[index+direction]||null;
+}
