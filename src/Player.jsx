@@ -16,6 +16,7 @@ import {adjacentEpisode} from './episodeWindow.js';
 import {NextEpisodeCard,episodeLabel} from './NextEpisodeCard.jsx';
 import {useIntroSkip} from './useIntroSkip.js';
 import {playerKeyAction} from './playerKeys.js';
+import {trackNames} from './trackNames.js';
 import './playerLive.css';
 import './playerControls.css';
 
@@ -23,6 +24,8 @@ const clamp=(value,min,max)=>Math.min(max,Math.max(min,value));
 const time=value=>{if(!Number.isFinite(value))return '—:—';const seconds=Math.max(0,Math.floor(value));const hours=Math.floor(seconds/3600);return `${hours?hours+':':''}${hours?String(Math.floor(seconds/60)%60).padStart(2,'0'):Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`;};
 const preference=(key,fallback)=>{try{const value=Number(localStorage.getItem(key));return localStorage.getItem(key)!==null&&Number.isFinite(value)?value:fallback;}catch{return fallback;}};
 const emptyMedia={current:0,duration:0,buffered:0,from:0,to:0};
+// E1: {index, language, label, codec} → {index, label} with readable Spanish names («Español (Latinoamérica)», «Inglés (2)»).
+const named=(tracks,kind)=>{const names=trackNames(tracks,kind);return tracks.map((track,position)=>({index:track.index,label:names[position]}));};
 
 const feedQuality=feed=>displayText(feed.item?.title).match(/\b(?:4K|UHD|FHD|HD|SD)\b/)?.[0];
 // L6: ChannelUp/PageUp go to the next signal or channel (TV convention: CH+ = next), ChannelDown/PageDown to the previous.
@@ -83,7 +86,7 @@ export function Player({item,start,save,close,change,seasons,series,intros={},se
   if(isTizen){
    document.documentElement.classList.add('native-playback');
    if(!window.webapis?.avplay){setLoading(false);setError('El reproductor Samsung no est\u00e1 disponible.');return()=>{clearHealth();document.documentElement.classList.remove('native-playback');};}
-   const driver=createAVPlayer(window.webapis.avplay,{url:item.url,live:item.kind==='iptv',start:resumeAt.current,onTracks:tracks=>{setAudioTracks(tracks);if(tracks.length)setAudio(tracks[0].index);},onEvent:type=>{
+   const driver=createAVPlayer(window.webapis.avplay,{url:item.url,live:item.kind==='iptv',start:resumeAt.current,onTracks:tracks=>{setAudioTracks(named(tracks,'audio'));if(tracks.length)setAudio(tracks[0].index);},onEvent:type=>{
     if(type==='waiting')health.waiting();
     if(['canplay','seeked'].includes(type)){if(type==='seeked'){health.reposition();if(engine()?.paused)setLoading(false);}sync();}
     // AVPlay's play() callback is a request, not proof of a displayed frame.
@@ -100,7 +103,7 @@ export function Player({item,start,save,close,change,seasons,series,intros={},se
    const visibility=()=>driver.visibility(document.hidden);document.addEventListener('visibilitychange',visibility);
    return()=>{clearHealth();if(item.kind!=='iptv'&&driver.currentTime>0&&!driver.ended)saveRef.current(Math.floor(driver.currentTime),item.id,{duration:driver.duration});driver.close();nativeRef.current=null;document.removeEventListener('visibilitychange',visibility);document.documentElement.classList.remove('native-playback');};
   }
-  const tracks=()=>setCaptions(Array.from(video.textTracks).map((track,index)=>({index,label:track.label||track.language||`Subtítulos ${index+1}`})));
+  const tracks=()=>setCaptions(named(Array.from(video.textTracks,(track,index)=>({index,language:track.language,label:track.label})),'subtitle'));
   const resume=()=>{
    if(!video.seeking)seekingRef.current=false;
    if(userPaused.current){video.pause();setLoading(false);return;}
@@ -115,7 +118,7 @@ export function Player({item,start,save,close,change,seasons,series,intros={},se
     if(Hls.isSupported()){
      hls=new Hls();hlsRef.current=hls;
      recovery=createHlsRecovery({hls,health,url:item.url,live:item.kind==='iptv',readPosition:()=>video.currentTime,readMediaError:()=>video.error,networkType:Hls.ErrorTypes.NETWORK_ERROR,mediaType:Hls.ErrorTypes.MEDIA_ERROR});
-     hls.on(Hls.Events.MANIFEST_PARSED,()=>{recovery.manifestParsed();setLevels(hls.levels.map((level,index)=>({index,label:level.height?`${level.height}p`:`${Math.round(level.bitrate/1000)} kbps`})));setAudioTracks(hls.audioTracks.map((track,index)=>({index,label:track.name||track.lang||`Audio ${index+1}`})));setAudio(Math.max(0,hls.audioTrack));});
+     hls.on(Hls.Events.MANIFEST_PARSED,()=>{recovery.manifestParsed();setLevels(hls.levels.map((level,index)=>({index,label:level.height?`${level.height}p`:`${Math.round(level.bitrate/1000)} kbps`})));setAudioTracks(named(hls.audioTracks.map((track,index)=>({index,language:track.lang,label:track.name,codec:track.audioCodec})),'audio'));setAudio(Math.max(0,hls.audioTrack));});
      hls.on(Hls.Events.ERROR,recovery.error);hls.on(Hls.Events.FRAG_BUFFERED,recovery.buffered);
      hls.loadSource(item.url);hls.attachMedia(video);return;
     }

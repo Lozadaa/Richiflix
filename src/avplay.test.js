@@ -5,24 +5,24 @@ import {registerRemote,remoteKeys,mediaKeyNames} from './platform.js';
 
 function fixture(options={}){
  let state='NONE',listener,ready,seekDone,restored;
- const calls=[],events=[],tracks=[];
+ const calls=[],events=[],tracks=[],subtitles=[];
  const api={getState:()=>state,close(){calls.push(['close']);state='NONE';},open(url){calls.push(['open',url]);state='IDLE';},
   setDisplayRect(...args){calls.push(['rect',...args]);},setDisplayMethod(value){calls.push(['display',value]);},setListener(value){listener=value;},
   prepareAsync(callback){calls.push(['prepare']);ready=()=>{state='READY';callback();};},getDuration:()=>120000,
-  getTotalTrackInfo:()=>[{type:'AUDIO',index:2,extra_info:'{"language":"es"}'},{type:'VIDEO',index:0}],
+  getTotalTrackInfo:()=>[{type:'AUDIO',index:2,extra_info:'{"language":"es","fourCC":"AAC"}'},{type:'VIDEO',index:0},{type:'TEXT',index:3,extra_info:'{"track_lang":"en"}'}],
   play(){assert.ok(['READY','PAUSED','PLAYING'].includes(state));state='PLAYING';calls.push(['play']);},
   pause(){assert.equal(state,'PLAYING');state='PAUSED';calls.push(['pause']);},
   seekTo(value,callback){calls.push(['seek',value]);seekDone=callback;},
   setSelectTrack(type,index){assert.equal(state,'PLAYING');calls.push(['track',type,index]);},
   suspend(){calls.push(['suspend']);},restoreAsync(url,time,prepare,callback){calls.push(['restore',url,time,prepare]);restored=callback;},stop(){calls.push(['stop']);state='IDLE';},
  };
- const driver=createAVPlayer(api,{url:'https://example.com/movie.m3u8',onEvent:type=>events.push(type),onTracks:value=>tracks.push(...value),...options});
- return {driver,calls,events,tracks,ready:()=>ready(),seekDone:()=>seekDone(),restored:()=>restored(),listener:()=>listener};
+ const driver=createAVPlayer(api,{url:'https://example.com/movie.m3u8',onEvent:(type,value)=>events.push(value===undefined?type:[type,value]),onTracks:(audio,text)=>{tracks.push(...audio);subtitles.push(...text);},...options});
+ return {driver,calls,events,tracks,subtitles,ready:()=>ready(),seekDone:()=>seekDone(),restored:()=>restored(),listener:()=>listener};
 }
 test('AVPlay prepara antes de play, usa rectángulo Samsung y convierte ms a segundos',async()=>{
  const f=fixture({start:30});assert.equal(f.calls.some(c=>c[0]==='play'),false);f.ready();await Promise.resolve();
  assert.deepEqual(f.calls.find(c=>c[0]==='rect'),['rect',0,0,1920,1080]);assert.equal(f.driver.duration,120);
- assert.deepEqual(f.tracks,[{index:2,label:'es'}]);assert.deepEqual(f.calls.find(c=>c[0]==='seek'),['seek',30000]);
+ assert.deepEqual(f.tracks,[{index:2,language:'es',codec:'AAC'}]);assert.deepEqual(f.subtitles,[{index:3,language:'en',codec:''}]);assert.deepEqual(f.calls.find(c=>c[0]==='seek'),['seek',30000]);
  f.seekDone();assert.equal(f.driver.currentTime,30);f.listener().oncurrentplaytime(35500);assert.equal(f.driver.currentTime,35.5);
 });
 test('seek serializado, acotado y sin inventar un buffer',async()=>{
@@ -50,6 +50,10 @@ test('preparación oculta no reproduce en segundo plano y retoma historial/pista
 test('selección de audio en pausa se aplica al reanudar en estado válido',async()=>{
  const f=fixture();f.ready();await Promise.resolve();f.driver.pause();f.driver.selectAudio(2);assert.equal(f.calls.some(c=>c[0]==='track'),false);
  await f.driver.play();assert.deepEqual(f.calls.find(c=>c[0]==='track'),['track','AUDIO',2]);
+});
+test('E1: subtítulos AVPlay: elegir pista y recibir el texto',async()=>{
+ const f=fixture();f.ready();await Promise.resolve();f.driver.selectSubtitle(3);assert.deepEqual(f.calls.at(-1),['track','TEXT',3]);
+ f.listener().onsubtitlechange(1500,'Hola');assert.deepEqual(f.events.at(-1),['subtitle',{text:'Hola',duration:1500}]);
 });
 test('un error transitorio no deja el decoder marcado como pausado si sigue reproduciendo',async()=>{
  const f=fixture();f.ready();await Promise.resolve();f.listener().oncurrentplaytime(1000);f.listener().onerror();assert.equal(f.driver.paused,true);f.listener().oncurrentplaytime(1500);assert.equal(f.driver.paused,false);f.driver.pause();assert.equal(f.driver.paused,true);assert.deepEqual(f.calls.at(-1),['pause']);

@@ -19,6 +19,8 @@ export function createAVPlayer(api,{url,live=false,start=0,onEvent=()=>{},onTrac
    const complete=()=>{if(closed)return;seeking=false;current=next;ended=false;emit('seeked');emit('timeupdate');if(pendingSeek!==null){const pending=pendingSeek;pendingSeek=null;driver.seek(pending);}};
    try{api.seekTo(Math.round(next*1000),complete,()=>{seeking=false;pendingSeek=null;emit('seeked');});}catch{seeking=false;emit('seeked');}
   },
+  // E2: AVPlay hands the subtitle text to the app (onsubtitlechange); the player draws it only while a track is chosen.
+  selectSubtitle(index){try{if(!closed&&!suspended&&['PLAYING','PAUSED'].includes(state()))api.setSelectTrack('TEXT',index);}catch{emit('trackerror');}},
   selectAudio(index){try{if(closed||suspended)return;if(state()==='PAUSED')pendingAudio=index;else if(state()==='PLAYING')api.setSelectTrack('AUDIO',index);}catch{emit('trackerror');}},
   visibility(isHidden){
    if(closed)return;
@@ -34,10 +36,11 @@ export function createAVPlayer(api,{url,live=false,start=0,onEvent=()=>{},onTrac
    driver.play().then(()=>{
     if(closed)return;
     // Track queries after play avoid READY restrictions with prepareAsync.
-    try{onTracks(api.getTotalTrackInfo().filter(track=>track.type==='AUDIO').map(track=>{
+    // E1: language and codec of each audio/subtitle track; trackNames.js turns them into readable names.
+    try{const info=api.getTotalTrackInfo(),list=type=>info.filter(track=>track.type===type).map(track=>{
      let extra={};try{extra=JSON.parse(track.extra_info);}catch{}
-     return {index:track.index,label:extra.language||`Audio ${track.index+1}`};
-    }));}catch{}
+     return {index:track.index,language:extra.language||extra.track_lang||'',codec:extra.fourCC||''};
+    });onTracks(list('AUDIO'),list('TEXT'));}catch{}
     emit('durationchange');if(!live&&start>0&&start<duration-5)driver.seek(start);
    }).catch(()=>{});
  }
@@ -45,7 +48,7 @@ export function createAVPlayer(api,{url,live=false,start=0,onEvent=()=>{},onTrac
   // Do not inherit a decoder session from another source or a previous retry.
   if(state()!=='NONE')api.close();api.open(url);
   api.setDisplayRect(0,0,1920,1080);api.setDisplayMethod('PLAYER_DISPLAY_MODE_LETTER_BOX');
-  api.setListener({onbufferingstart:()=>emit('waiting'),onbufferingcomplete:()=>emit('canplay'),oncurrentplaytime:milliseconds=>{const next=milliseconds/1000;try{if(!closed&&!hidden&&!suspended&&next>current+.025&&state()==='PLAYING')paused=false;}catch{}current=next;emit('timeupdate');},onstreamcompleted:()=>{paused=true;ended=true;emit('ended');},onerror:failure});
+  api.setListener({onbufferingstart:()=>emit('waiting'),onbufferingcomplete:()=>emit('canplay'),oncurrentplaytime:milliseconds=>{const next=milliseconds/1000;try{if(!closed&&!hidden&&!suspended&&next>current+.025&&state()==='PLAYING')paused=false;}catch{}current=next;emit('timeupdate');},onsubtitlechange:(duration,text)=>emit('subtitle',{text:String(text||''),duration:Number(duration)||0}),onstreamcompleted:()=>{paused=true;ended=true;emit('ended');},onerror:failure});
   api.prepareAsync(()=>{
    if(closed)return;
    duration=Math.max(0,api.getDuration()/1000);
