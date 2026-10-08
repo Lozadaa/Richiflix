@@ -1,0 +1,22 @@
+{
+  "nombre": "Umbral",
+  "tokens": {
+    "fondo": "#15171e",
+    "superficie": "#8d909e",
+    "texto": "#f5f1ed",
+    "texto-secundario": "#b9b5c2",
+    "acento": "#c4c0ce",
+    "foco": "#9fd9c7"
+  },
+  "kids-acento": "#f4be8b",
+  "contraste-sobre-fondo": {
+    "fondo": 1.0,
+    "superficie": 5.639,
+    "texto": 15.9288,
+    "texto-secundario": 8.9085,
+    "acento": 10.0395,
+    "foco": 11.2718
+  },
+  "kids-contraste-sobre-fondo": 10.727,
+  "formula": "WCAG 2.x: (L mayor + 0.05) / (L menor + 0.05); sRGB linealizado; pesos 0.2126, 0.7152, 0.0722."
+}
