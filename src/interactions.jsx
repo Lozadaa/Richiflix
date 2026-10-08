@@ -45,13 +45,13 @@ export const Card=memo(function Card({item:original,instanceId,metadata:fallback
     {item.kind==='provider'&&<span className="provider-label">{displayText(item.genre)}</span>}
     {!matchup&&<div className="poster-title">{item.kind==='iptv'?channelTitle(item):displayTitle(item)}</div>}
     {!tv&&<div className="card-play">{item.kind==='provider'?<ArrowUpRight className="card-play-icon" size={24}/>:<Play className="card-play-icon" fill="currentColor" size={20}/>}</div>}
-    {progress>0&&duration>0&&<div className="progress"><i style={{width:`${Math.min(progress/duration*100,100)}%`}}/></div>}
+    {item.resumeFraction>0?<div className="progress"><i style={{width:`${Math.min(item.resumeFraction*100,100)}%`}}/></div>:progress>0&&duration>0&&<div className="progress"><i style={{width:`${Math.min(progress/duration*100,100)}%`}}/></div>}
    </div>
 
   </button>
   {!(isTVBuild&&tv)&&<button className="card-save" tabIndex={tv?-1:0} aria-label={`${favorite?'Quitar':'Guardar'} ${displayText(item.title)} ${favorite?'de':'en'} Mi lista`} aria-pressed={favorite} onPointerDown={event=>{if(event.button===0&&event.pointerType==='mouse'){event.preventDefault();event.currentTarget.focus({preventScroll:true});}}} onClick={()=>toggle(item)}>{favorite?<Check size={18}/>:<Heart size={18}/>}</button>}
-  <span className="card-caption" aria-hidden="true"><span className="card-title">{displayTitle(item)}</span>{item.kind==='iptv'&&<span className={`card-meta category-caption ${guideLine?'has-guide':''}`}><CategoryMark item={item}/>{guideLine?<span className="caption-guide">{displayText(guideLine)}</span>:item.isEvent?eventCaption(item):displayText(item.genre)}</span>}</span>
-  {selected&&<SelectedCardExpansion anchor={anchor} controller={expansion} item={item} instanceId={instanceId} metadataPending={metadataPending} favorite={favorite} toggle={toggle} open={open} tv={tv} index={index} total={total} remaining={remainingLabel(progress,duration)} profileId={profileId} kids={kids}/>}
+  <span className="card-caption" aria-hidden="true"><span className="card-title">{displayTitle(item)}</span>{item.resumeLabel&&<span className="card-meta card-resume">{item.resumeLabel}</span>}{item.kind==='iptv'&&<span className={`card-meta category-caption ${guideLine?'has-guide':''}`}><CategoryMark item={item}/>{guideLine?<span className="caption-guide">{displayText(guideLine)}</span>:item.isEvent?eventCaption(item):displayText(item.genre)}</span>}</span>
+  {selected&&<SelectedCardExpansion anchor={anchor} controller={expansion} item={item} instanceId={instanceId} metadataPending={metadataPending} favorite={favorite} toggle={toggle} open={open} tv={tv} index={index} total={total} remaining={item.resumeLabel||remainingLabel(progress,duration)} profileId={profileId} kids={kids}/>}
  </div>;
 });
 

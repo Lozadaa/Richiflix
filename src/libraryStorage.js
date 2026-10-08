@@ -9,8 +9,16 @@ const teams=value=>Array.isArray(value)?[...new Set(value.filter(Number.isIntege
 export const INTRO_LIMIT=200;
 const finite=value=>Number.isFinite(value)&&value>=0;
 const intros=value=>value&&typeof value==='object'&&!Array.isArray(value)?Object.fromEntries(Object.entries(value).filter(([key,mark])=>key&&finite(mark?.start)&&finite(mark?.end)&&mark.end>mark.start).slice(-INTRO_LIMIT).map(([key,mark])=>[key,{start:mark.start,end:mark.end,samples:(Array.isArray(mark.samples)?mark.samples:[]).filter(sample=>finite(sample?.start)&&finite(sample?.end)).slice(-3).map(({start,end})=>({start,end}))}])):{};
-const fields={favorites,history,teams,intros};
-const library=value=>({favorites:favorites(value?.favorites),history:history(value?.history),teams:teams(value?.teams),intros:intros(value?.intros)});
+// D5: explicit watched marks (true, or false for «no visto»), known durations in seconds and, per series,
+// the last episode played with the one after it (for «Continuar viendo»). Older envelopes load empty.
+export const WATCH_LIMIT=5000,RECENT_LIMIT=100;
+const record=(value,keep)=>value&&typeof value==='object'&&!Array.isArray(value)?Object.entries(value).filter(([key,entry])=>key&&keep(entry)):[];
+const watched=value=>Object.fromEntries(record(value,entry=>typeof entry==='boolean').slice(-WATCH_LIMIT));
+const durations=value=>Object.fromEntries(record(value,entry=>Number.isFinite(entry)&&entry>0).slice(-WATCH_LIMIT));
+const episodeRef=value=>value&&typeof value.id==='string'?{id:value.id,season:String(value.season??''),episodeNumber:Number(value.episodeNumber)||0}:null;
+const recent=value=>Object.fromEntries(record(value,entry=>typeof entry?.episodeId==='string'&&Number.isFinite(entry.at)).sort((a,b)=>a[1].at-b[1].at).slice(-RECENT_LIMIT).map(([key,entry])=>[key,{episodeId:entry.episodeId,season:String(entry.season??''),episodeNumber:Number(entry.episodeNumber)||0,next:episodeRef(entry.next),at:entry.at}]));
+const fields={favorites,history,teams,intros,watched,durations,recent};
+const library=value=>Object.fromEntries(Object.entries(fields).map(([name,clean])=>[name,clean(value?.[name])]));
 const envelope=value=>value?.version===1&&Number.isFinite(value.updatedAt)&&value.data?value:null;
 
 // Preserve the old keys for migration and for immediate recovery on shutdown.
@@ -44,7 +52,7 @@ export function createProfileLibrary(profileId,{local=globalThis.localStorage,ba
  return {
   get:()=>state,
   subscribe:listener=>{listeners.add(listener);return()=>listeners.delete(listener);},
-  setFavorites:next=>update('favorites',next),setHistory:next=>update('history',next),setTeams:next=>update('teams',next),setIntros:next=>update('intros',next),flush,
+  setFavorites:next=>update('favorites',next),setHistory:next=>update('history',next),setTeams:next=>update('teams',next),setIntros:next=>update('intros',next),setWatched:next=>update('watched',next),setDurations:next=>update('durations',next),setRecent:next=>update('recent',next),flush,
   load:()=>pending??=(async()=>{
    const started=revision,stored=await readBackup();
    if(started!==revision)return state;

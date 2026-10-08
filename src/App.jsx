@@ -54,6 +54,8 @@ import {genreAlternatives,catalogueMatch,useTmdbSuggestion} from './searchSugges
 import {EmptyState} from './EmptyState.jsx';
 import {setSelectedCard} from './cardSelectionStore.js';
 import {useProfileLibrary} from './useProfileLibrary.js';
+import {continueWatchingEntries,WATCHED_FRACTION} from './watchProgress.js';
+import {adjacentEpisode} from './episodeWindow.js';
 import {loadHlsLibrary} from './hlsLibrary.js';
 import {registerPerformanceStats,recordAppRender} from './focusPaintDiagnostics.js';
 import {publishMetadata,setMetadataLayer,getMetadata,getPreviewDetails,resetMetadata,setMetadataPriority,getMetadataPriority,metadataStats,trackMetadataPending,useMetadataEntry} from './metadataStore.js';
@@ -69,7 +71,7 @@ export default function App({profile,changeProfile}){
  recordAppRender();
  const isKids=profile.kind==='kids',catalogue=useContent(!isKids);
  const [page,setPage]=useState('Inicio'),[query,setQuery]=useState(''),[collectionView,setCollectionView]=useState(null);
- const {favorites,history,teams,intros,setFavorites,setHistory,setTeams,setIntros}=useProfileLibrary(profile.id);
+ const {favorites,history,teams,intros,watched,durations,recent,setFavorites,setHistory,setTeams,setIntros,setWatched,setDurations,setRecent}=useProfileLibrary(profile.id);
  const [playing,setPlaying]=useState(null),[details,setDetails]=useState(null),[modal,setModal]=useState(null);
  const [notice,setNotice]=useState(''),[tv,setTv]=useState(isTVBuild||read('rf-tv-mode',true));
  const [autoTrailers,setAutoTrailers]=useState(readAutoTrailers),[cardFocus,setCardFocus]=useState(false),previewPlaying=usePreviewPlayback();
@@ -112,7 +114,8 @@ export default function App({profile,changeProfile}){
   setPreviewItem(null);setPreviewActive(false);setMetadataPriority(null);setSelectedCard(null);
  },[previewCache]);
  const favoriteIds=useMemo(()=>new Set(favorites),[favorites]);
- const continuing=useMemo(()=>all.filter(item=>history[item.id]>0),[all,history]);
+ // D5: one entry per series, with the episode in progress or the next one.
+ const continuing=useMemo(()=>continueWatchingEntries(all,history,watched,durations,recent),[all,history,watched,durations,recent]);
  const savedItems=useMemo(()=>all.filter(item=>favoriteIds.has(item.id)),[all,favoriteIds]);
  const featured=featuredBase;// R6: Hero and the stage merge their own metadata from the store.
  const featureKey=featuredBase.map(item=>item.id).join(',');
@@ -261,6 +264,18 @@ export default function App({profile,changeProfile}){
    else setPlaying({...target,url,siblings:current.siblings});
    return true;}catch{return false;}
  });
+ // D5: playback position per id, plus the known duration, the watched mark (≥ 90 % or the end) and, for an episode, its series' latest episode.
+ const savePlayback=useStableEvent((seconds,id,{duration,ended}={})=>{
+  setHistory(previous=>({...previous,[id]:seconds}));
+  const known=Number.isFinite(duration)&&duration>0?Math.round(duration):0;
+  if(known)setDurations(previous=>previous[id]===known?previous:{...previous,[id]:known});
+  if(ended||known&&seconds>=known*WATCHED_FRACTION)setWatched(previous=>previous[id]===true?previous:{...previous,[id]:true});
+  const origin=episodeOrigin.current,episode=origin?.seasons?.flatMap(group=>group.episodes).find(entry=>entry.id===id);if(!episode)return;
+  const next=adjacentEpisode(origin.seasons,id,1),ref=entry=>entry&&{id:entry.id,season:entry.season,episodeNumber:entry.episodeNumber};
+  setRecent(previous=>previous[origin.item.id]?.episodeId===id?previous:{...previous,[origin.item.id]:{episodeId:id,season:episode.season,episodeNumber:episode.episodeNumber,next:ref(next),at:Date.now()}});
+ });
+ const markWatched=useStableEvent((ids,value)=>{setWatched(previous=>({...previous,...Object.fromEntries(ids.map(id=>[id,value]))}));if(!value)setHistory(previous=>Object.fromEntries(Object.entries(previous).filter(([id])=>!ids.includes(id))));});
+ const seriesProgress=useMemo(()=>({watched,durations,recent,onMark:markWatched}),[watched,durations,recent,markWatched]);
  const playEpisode=useStableEvent((episode,selection)=>{if(!allowed(episode)||!details)return;episodeOrigin.current={item:details,...selection};open(episode);});
  const destination=item=>item.mediaType==='series'?'Series':item.mediaType==='live'?'TV en vivo':'Películas';
  const rowActionFocus=useStableEvent(()=>{banner.reset();clearTimeout(previewTimer.current);clearTimeout(leaveTimer.current);previewCandidate.current=null;previewCard.current=null;previewContext.current=null;setPreviewActive(false);setSelectedCard(null);});
@@ -380,8 +395,8 @@ export default function App({profile,changeProfile}){
     </>}
    </div>
   </main>
-  {details&&allowed(details)&&(details.mediaType==='series'?<SeriesDetail item={details} close={closeExperience} play={playEpisode} favorite={favorites.includes(details.id)} toggle={toggle} history={history} selection={episodeOrigin.current?.item.id===details.id?episodeOrigin.current:undefined} tv={tv}/>:<Dialog immersive close={closeExperience} label={displayText(details.title)} restoreFocus={experienceOrigin.current}><QualityImage className="detail-image" src={details.kind==='iptv'?(details.imageGeneric?undefined:details.image):artworkURL(details.backdropImage,true)} fit={details.kind==='iptv'?'contain':'cover'} eager position="65% center"/>{details.kind!=='iptv'&&!details.backdropImage&&<QualityImage className="detail-poster" src={artworkURL(details.image)} eager fit="contain" fallback={false}/>}<div className="detail-atmosphere"/><div className="dialog-body detail-copy"><span className="pill">{displayText(details.genre)}{ratingFor(details)&&` · ${ratingFor(details).label}`}</span><h2>{displayTitle(details)}</h2><p>{displayText(details.description)}</p><TitleFacts item={details}/><small>{displayText(details.credit)}{details.kind==='iptv'?' · En vivo':''}</small><div className="dialog-actions">{details.mediaType!=='series'&&<button className="primary" onClick={()=>open(details)}><Play fill="currentColor" size={22}/> Reproducir</button>}<button className={`secondary favorite-action ${favorites.includes(details.id)?'saved':''}`} aria-pressed={favorites.includes(details.id)} onClick={()=>toggle(details)}>{favorites.includes(details.id)?<Check size={20}/>:<Plus size={20}/>} Mi lista</button></div></div></Dialog>)}
-  {playing&&allowed(playing)&&<Player tvMode={tv} item={playing} start={history[playing.id]||0} save={(seconds,id=playing.id)=>setHistory(previous=>({...previous,[id]:seconds}))} close={closeExperience} change={changeSource} seasons={playing.mediaType==='episode'?episodeOrigin.current?.seasons:undefined} series={playing.mediaType==='episode'?episodeOrigin.current?.item:undefined} intros={intros} setIntros={setIntros} fullscreen={fullscreen} toggleFullscreen={toggleFullscreen} restoreFocus={experienceOrigin.current}/>}
+  {details&&allowed(details)&&(details.mediaType==='series'?<SeriesDetail item={details} close={closeExperience} play={playEpisode} favorite={favorites.includes(details.id)} toggle={toggle} history={history} progress={seriesProgress} selection={episodeOrigin.current?.item.id===details.id?episodeOrigin.current:undefined} tv={tv}/>:<Dialog immersive close={closeExperience} label={displayText(details.title)} restoreFocus={experienceOrigin.current}><QualityImage className="detail-image" src={details.kind==='iptv'?(details.imageGeneric?undefined:details.image):artworkURL(details.backdropImage,true)} fit={details.kind==='iptv'?'contain':'cover'} eager position="65% center"/>{details.kind!=='iptv'&&!details.backdropImage&&<QualityImage className="detail-poster" src={artworkURL(details.image)} eager fit="contain" fallback={false}/>}<div className="detail-atmosphere"/><div className="dialog-body detail-copy"><span className="pill">{displayText(details.genre)}{ratingFor(details)&&` · ${ratingFor(details).label}`}</span><h2>{displayTitle(details)}</h2><p>{displayText(details.description)}</p><TitleFacts item={details}/><small>{displayText(details.credit)}{details.kind==='iptv'?' · En vivo':''}</small><div className="dialog-actions">{details.mediaType!=='series'&&<button className="primary" onClick={()=>open(details)}><Play fill="currentColor" size={22}/> Reproducir</button>}<button className={`secondary favorite-action ${favorites.includes(details.id)?'saved':''}`} aria-pressed={favorites.includes(details.id)} onClick={()=>toggle(details)}>{favorites.includes(details.id)?<Check size={20}/>:<Plus size={20}/>} Mi lista</button></div></div></Dialog>)}
+  {playing&&allowed(playing)&&<Player tvMode={tv} item={playing} start={watched[playing.id]===true?0:history[playing.id]||0} save={(seconds,id=playing.id,extra)=>savePlayback(seconds,id,extra)} close={closeExperience} change={changeSource} seasons={playing.mediaType==='episode'?episodeOrigin.current?.seasons:undefined} series={playing.mediaType==='episode'?episodeOrigin.current?.item:undefined} intros={intros} setIntros={setIntros} fullscreen={fullscreen} toggleFullscreen={toggleFullscreen} restoreFocus={experienceOrigin.current}/>}
   {modal&&<Dialog immersive utility label="Ajustes" close={()=>setModal(null)}><div className="dialog-body settings-body"><span className="pill">TU RICHIFLIX</span><h2>Ajustes</h2><p>{displayText(profile.name)} · {isKids?'Kids · hasta 10 años':'Adulto'}</p>{!isKids&&<><XtreamSettings catalogue={catalogue}/><MetadataSettings changed={()=>setMetadataRevision(previous=>previous+1)}/></>}{!isKids&&teams.length>0&&<section className="followed-teams" aria-label="Equipos seguidos"><h3>Equipos seguidos</h3>{teams.map(id=><button key={id} className="secondary" aria-label={`Dejar de seguir a ${teamLabel(id)}`} onClick={event=>{const list=event.currentTarget.parentElement;toggleTeam(id);requestAnimationFrame(()=>(list.isConnected&&list.querySelector('button')||document.querySelector('.profile-settings-actions button'))?.focus({preventScroll:true}));}}>{teamAbbreviation(id)} · {teamLabel(id)} · Dejar de seguir</button>)}</section>}<div className="profile-settings-actions">{!isTVBuild&&<button className="secondary" onClick={toggleFullscreen}>{fullscreen?<Minimize/>:<Maximize/>}{fullscreen?'Salir de pantalla completa':'Pantalla completa'}</button>}<button className="secondary" onClick={changeProfile}>Cambiar perfil</button><button className="secondary" aria-pressed={autoTrailers} onClick={()=>setAutoTrailers(!autoTrailers)}>Tráilers automáticos: {autoTrailers?'activados':'desactivados'}</button>{!isTVBuild&&<button className="secondary" onClick={()=>setTv(!tv)}><Monitor/>Modo TV: {tv?'activado':'desactivado'}</button>}<button className="secondary" onClick={()=>{setHistory({});setFavorites([]);setNotice('Historial y lista de este perfil eliminados.');}}>Borrar historial y Mi lista</button></div>{isKids&&<p className="small-print">El contenido sin clasificación confirmada se oculta.</p>}</div></Dialog>}
   {showTop&&!details&&!playing&&!modal&&<button className="back-top circle" aria-label="Volver arriba" onClick={()=>window.scrollTo({top:0,behavior:motionAllowed()?'smooth':'instant'})}><ArrowUp size={21}/></button>}
   {!isKids&&followedEvents.length>0&&<FollowAlerts events={followedEvents} paused={Boolean(details||playing||modal)} check={showAlert}/>}

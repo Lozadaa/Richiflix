@@ -92,13 +92,13 @@ export function Player({item,start,save,close,change,seasons,series,intros={},se
     if(type==='suspended'){setLoading(false);setPaused(true);}
     if(type==='error')health.fault('No pudimos reproducir esta fuente en Samsung TV.');
     if(type==='trackerror')flash('Esta pista no est\u00e1 disponible');
-    if(type==='ended'){health.ended();saveRef.current(0,item.id);setEnded(true);setLoading(false);setPaused(true);}
+    if(type==='ended'){health.ended();saveRef.current(0,item.id,{ended:true});setEnded(true);setLoading(false);setPaused(true);}
     if(type==='durationchange')sync();
-    if(type==='timeupdate'){health.progress();sync();const seconds=Math.floor(nativeRef.current?.currentTime||0);resumeAt.current=seconds;if(item.kind!=='iptv'&&seconds%5===0&&seconds!==lastSaved.current){lastSaved.current=seconds;saveRef.current(seconds,item.id);}}
+    if(type==='timeupdate'){health.progress();sync();const seconds=Math.floor(nativeRef.current?.currentTime||0);resumeAt.current=seconds;if(item.kind!=='iptv'&&seconds%5===0&&seconds!==lastSaved.current){lastSaved.current=seconds;saveRef.current(seconds,item.id,{duration:nativeRef.current?.duration});}}
    }});
    nativeRef.current=driver;
    const visibility=()=>driver.visibility(document.hidden);document.addEventListener('visibilitychange',visibility);
-   return()=>{clearHealth();if(item.kind!=='iptv'&&driver.currentTime>0&&!driver.ended)saveRef.current(Math.floor(driver.currentTime),item.id);driver.close();nativeRef.current=null;document.removeEventListener('visibilitychange',visibility);document.documentElement.classList.remove('native-playback');};
+   return()=>{clearHealth();if(item.kind!=='iptv'&&driver.currentTime>0&&!driver.ended)saveRef.current(Math.floor(driver.currentTime),item.id,{duration:driver.duration});driver.close();nativeRef.current=null;document.removeEventListener('visibilitychange',visibility);document.documentElement.classList.remove('native-playback');};
   }
   const tracks=()=>setCaptions(Array.from(video.textTracks).map((track,index)=>({index,label:track.label||track.language||`Subtítulos ${index+1}`})));
   const resume=()=>{
@@ -125,7 +125,7 @@ export function Player({item,start,save,close,change,seasons,series,intros={},se
   startVideo().catch(()=>{if(!stopped){setLoading(false);health.fault('No pudimos preparar el reproductor.');}});
   return()=>{
    stopped=true;clearHealth();recovery?.dispose();
-   if(item.kind!=='iptv'&&video.currentTime>0&&!video.ended)saveRef.current(Math.floor(video.currentTime),item.id);
+   if(item.kind!=='iptv'&&video.currentTime>0&&!video.ended)saveRef.current(Math.floor(video.currentTime),item.id,{duration:video.duration});
    video.removeEventListener('loadedmetadata',resume);video.textTracks.removeEventListener('addtrack',tracks);hls?.destroy();hlsRef.current=null;video.pause();video.removeAttribute('src');video.load();
   };
  },[item.url,item.feedId,item.id,retry]);
@@ -249,7 +249,7 @@ export function Player({item,start,save,close,change,seasons,series,intros={},se
 
  return <Dialog immersive player tvMode={tv} chromeHidden={chromeHidden} close={close} label={`Reproduciendo ${title}`} restoreFocus={restoreFocus} onKeyDownCapture={keyboard}>
   <div className="video-stage">
-   <video ref={videoRef} controls={false} autoPlay playsInline tabIndex={0} aria-label={`Vídeo: ${title}`} onClick={play} onKeyUpCapture={e=>{if(e.code==='Space'){e.preventDefault();e.stopPropagation();}}} onWaiting={()=>healthRef.current?.waiting()} onSeeking={()=>{seekingRef.current=true;healthRef.current?.waiting();}} onSeeked={()=>{healthRef.current?.reposition();seekingRef.current=false;if(videoRef.current.paused)setLoading(false);sync();}} onEmptied={()=>{seekingRef.current=false;healthRef.current?.reposition();}} onPlaying={()=>healthRef.current?.playing()} onPause={()=>setPaused(true)} onCanPlay={sync} onProgress={sync} onDurationChange={sync} onVolumeChange={e=>{if(tv)return;setVolume(e.currentTarget.volume);setMuted(e.currentTarget.muted);}} onTimeUpdate={()=>{healthRef.current?.progress();sync();resumeAt.current=videoRef.current.currentTime;const seconds=Math.floor(videoRef.current.currentTime);if(item.kind!=='iptv'&&seconds%5===0&&seconds!==lastSaved.current){lastSaved.current=seconds;saveRef.current(seconds,item.id);}}} onError={()=>{if(!isTizen)healthRef.current?.fault('No pudimos reproducir esta fuente.');}} onEnded={()=>{healthRef.current?.ended();saveRef.current(0,item.id);setEnded(true);setLoading(false);}}/>
+   <video ref={videoRef} controls={false} autoPlay playsInline tabIndex={0} aria-label={`Vídeo: ${title}`} onClick={play} onKeyUpCapture={e=>{if(e.code==='Space'){e.preventDefault();e.stopPropagation();}}} onWaiting={()=>healthRef.current?.waiting()} onSeeking={()=>{seekingRef.current=true;healthRef.current?.waiting();}} onSeeked={()=>{healthRef.current?.reposition();seekingRef.current=false;if(videoRef.current.paused)setLoading(false);sync();}} onEmptied={()=>{seekingRef.current=false;healthRef.current?.reposition();}} onPlaying={()=>healthRef.current?.playing()} onPause={()=>setPaused(true)} onCanPlay={sync} onProgress={sync} onDurationChange={sync} onVolumeChange={e=>{if(tv)return;setVolume(e.currentTarget.volume);setMuted(e.currentTarget.muted);}} onTimeUpdate={()=>{healthRef.current?.progress();sync();resumeAt.current=videoRef.current.currentTime;const seconds=Math.floor(videoRef.current.currentTime);if(item.kind!=='iptv'&&seconds%5===0&&seconds!==lastSaved.current){lastSaved.current=seconds;saveRef.current(seconds,item.id,{duration:videoRef.current.duration});}}} onError={()=>{if(!isTizen)healthRef.current?.fault('No pudimos reproducir esta fuente.');}} onEnded={()=>{healthRef.current?.ended();saveRef.current(0,item.id,{ended:true});setEnded(true);setLoading(false);}}/>
    {isTizen&&<object className="avplay-surface" type="application/avplayer" aria-hidden="true"/>}
    {showLoader&&loading&&!error&&!ended&&<div className="player-loading" role="status" aria-label="Cargando vídeo"><div className="cinema-loader"><BrandGlyph/></div><span>{item.trying&&media.current===0?'Probando otra señal…':media.current>0?'Cargando…':title}</span></div>}
    {!tv&&paused&&!loading&&!error&&!ended&&<button className="player-resume" aria-label="Reanudar reproducción" onClick={play}><Play size={36} fill="currentColor"/></button>}
