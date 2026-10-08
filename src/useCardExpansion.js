@@ -47,7 +47,7 @@ export function useCardExpansion(anchor,selected,instanceId,tv,onOpen,live=false
    const scene=anchor.current.closest('main');if(scene&&viewportIsGliding(scene)){queue();return;}
    // One batch: reservations retired by a card left behind are cancelled before this one measures and animates.
    hub.flushRetired();space?.cleanup(true);space=undefined;
-   const cell=anchor.current.closest('.virtual-rail-cell,.virtual-grid-cell')||anchor.current,box=insetAnchorBox(cellAnchorBox(cell),anchor.current.closest('.is-ranked')?parseFloat(getComputedStyle(anchor.current).paddingLeft)||0:0),main=anchor.current.closest('main'),bounds=main?.getBoundingClientRect(),railNode=anchor.current.closest('[data-virtual-kind="rail"]'),rail=Boolean(railNode);
+   const cell=anchor.current.closest('.virtual-rail-cell,.virtual-grid-cell')||anchor.current,box=insetAnchorBox(cellAnchorBox(cell),anchor.current.closest('.is-ranked')?parseFloat(getComputedStyle(anchor.current.querySelector('.card-open')||anchor.current).paddingLeft)||0:0),main=anchor.current.closest('main'),bounds=main?.getBoundingClientRect(),railNode=anchor.current.closest('[data-virtual-kind="rail"]'),rail=Boolean(railNode);
    const heading=rail?anchor.current.closest('.catalog-row')?.querySelector('.row-heading'):null,grid=rail?null:anchor.current.closest('.catalog-grid'),controls=grid?main?.querySelector('.catalog-controls'):null;
    const top=expansionViewportTop({mainTop:bounds?.top||0,boxTop:box.top,headingBottom:heading?.getBoundingClientRect().bottom,gridTop:grid?.getBoundingClientRect().top,controlsBottom:controls?.getBoundingClientRect().bottom});
    const viewport={left:0,top,width:window.innerWidth,height:Math.min(window.innerHeight,bounds?.bottom||window.innerHeight)-top};
