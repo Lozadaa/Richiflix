@@ -842,4 +842,4 @@ button.playback-toggle svg.lucide-play{margin-left:3px}
 .card-caption.has-facts .card-title,.tv-mode .cards .portrait-card .card-caption.has-facts .card-title{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:1;overflow:hidden;max-width:100%}
 .card-facts{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-2);font-size:12px;line-height:1.3}
 .tv-mode .card-facts{font-size:15px}
-.card-rank{position:absolute;left:-90px;bottom:-4px;z-index:-1;font:800 120px/1 'Bricolage Grotesque',Arial,sans-serif;letter-spacing:-.08em;color:transparent;-webkit-text-stroke:2px var(--text-2);pointer-events:none}
+.card-rank{position:absolute;left:-90px;bottom:-4px;font:800 120px/1 'Bricolage Grotesque',Arial,sans-serif;letter-spacing:-.08em;color:transparent;-webkit-text-stroke:2px var(--text-2);pointer-events:none}
