@@ -1,0 +1,22 @@
+{
+  "nombre": "Almena",
+  "tokens": {
+    "fondo": "#10191c",
+    "superficie": "#819394",
+    "texto": "#f2f3ed",
+    "texto-secundario": "#a8b8b6",
+    "acento": "#b5c6b8",
+    "foco": "#b8ceff"
+  },
+  "kids-acento": "#f0bb82",
+  "contraste-sobre-fondo": {
+    "fondo": 1.0,
+    "superficie": 5.5478,
+    "texto": 15.977,
+    "texto-secundario": 8.657,
+    "acento": 9.9626,
+    "foco": 11.3007
+  },
+  "kids-contraste-sobre-fondo": 10.3031,
+  "formula": "WCAG 2.x: (L mayor + 0.05) / (L menor + 0.05); sRGB linealizado; pesos 0.2126, 0.7152, 0.0722."
+}
