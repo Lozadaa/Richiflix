@@ -1,0 +1,26 @@
+{
+  "propuesta": "Brasa",
+  "tokens": {
+    "fondo": "#101827",
+    "superficie": "#23344e",
+    "texto": "#fff2e8",
+    "texto-secundario": "#b8c9e5",
+    "acento": "#ff7a59",
+    "foco": "#f5d58d"
+  },
+  "kids-acento": "#f6c45a",
+  "contrastes": {
+    "texto / fondo": 16.1746,
+    "texto secundario / fondo": 10.5959,
+    "acento / fondo": 6.9206,
+    "foco / fondo": 12.5085,
+    "texto / superficie": 11.4297,
+    "texto secundario / superficie": 7.4875,
+    "foco / superficie": 8.839,
+    "tinta fondo / botón acento": 6.9206,
+    "Kids / fondo": 10.9665,
+    "tinta fondo / botón Kids": 10.9665,
+    "superficie / fondo": 1.4151
+  },
+  "criterio": "Texto normal ≥4.5:1; foco/componentes ≥3:1. Superficie decorativa no requiere 3:1 respecto al fondo; no usarla como único indicador de foco."
+}
