@@ -18,7 +18,7 @@ html=html.replace('</head>','<script src="$WEBAPIS/webapis/webapis.js"></script>
 await writeFile(join(directory,'index.html'),html);
 
 // The TV launcher uses the same master mark as Windows and the interface.
-await copyFile(join(root,'public/brand/richiflix-117.png'),join(directory,'icon.png'));
+await copyFile(join(root,'tizen/icon.png'),join(directory,'icon.png'));
 
 const files={};async function collect(folder){for(const entry of await readdir(folder,{withFileTypes:true})){const path=join(folder,entry.name);if(entry.isDirectory())await collect(path);else files[relative(directory,path).replaceAll('\\','/')]=new Uint8Array(await readFile(path));}}
 await collect(directory);await mkdir(join(root,'artifacts'),{recursive:true});

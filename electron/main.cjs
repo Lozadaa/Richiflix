@@ -4,7 +4,7 @@ const fs=require('node:fs/promises');
 const {pathToFileURL}=require('node:url');
 const {randomUUID}=require('node:crypto');
 const {providerDestinations}=require('./sources.cjs');
-const icon=path.join(__dirname,'../public/brand/richiflix.ico');
+const icon=path.join(__dirname,'../public/brand/kingdom.ico');
 if(process.platform==='win32')app.setAppUserModelId('local.richiflix');
 if(process.env.RICHIFLIX_USER_DATA)app.setPath('userData',process.env.RICHIFLIX_USER_DATA);
 protocol.registerSchemesAsPrivileged([{scheme:'richiflix',privileges:{standard:true,secure:true,supportFetchAPI:true,stream:true,corsEnabled:true}}]);

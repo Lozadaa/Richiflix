@@ -8,9 +8,9 @@ const {addTestSource}=require('./test-source.cjs');
 (async()=>{
  const root=path.resolve(__dirname,'..'),userData=await fs.mkdtemp(path.join(os.tmpdir(),'richiflix-images-'));let app;
  try{
-  const original=await fs.readFile(path.join(root,'public/brand/richiflix-1024.png'));
-  const tiny=await fs.readFile(path.join(root,'public/brand/richiflix-16.png'));
-  const ico=await fs.readFile(path.join(root,'public/brand/richiflix.ico'));
+  const original=await fs.readFile(path.join(root,'public/brand/kingdom-1024.png'));
+  const tiny=await fs.readFile(path.join(root,'public/brand/kingdom-16.png'));
+  const ico=await fs.readFile(path.join(root,'public/brand/kingdom.ico'));
   assert.equal(ico.readUInt16LE(2),1);assert.equal(ico.readUInt16LE(4),7);
   for(let i=0;i<7;i++){const at=6+i*16,offset=ico.readUInt32LE(at+12);assert.equal(ico.readUInt16LE(at+6),32);assert.equal(ico.subarray(offset,offset+8).toString('hex'),'89504e470d0a1a0a');}
   app=await electron.launch({executablePath:require('electron'),args:[path.join(__dirname,'main.cjs')],env:{...process.env,RICHIFLIX_TEST_EMPTY_SOURCE:'1',RICHIFLIX_USER_DATA:userData}});

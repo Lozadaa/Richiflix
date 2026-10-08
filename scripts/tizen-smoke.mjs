@@ -13,7 +13,7 @@ assert.ok(zip['config.xml']&&zip['icon.png']&&zip['assets/richiflix.js']);
 assert.equal(Object.keys(zip).filter(name=>/^assets\/catalogueWorker-.*\.js$/.test(name)).length,1);
 assert.ok(new TextDecoder().decode(zip['config.xml']).includes('<tizen:allow-navigation>https://www.youtube.com https://www.youtube-nocookie.com</tizen:allow-navigation>'));
 assert.ok(zip['fonts/manrope-latin.woff2']&&zip['fonts/bricolage-latin.woff2']);
-assert.deepEqual(Buffer.from(zip['icon.png']),await readFile(join(root,'public/brand/richiflix-117.png')));
+assert.deepEqual(Buffer.from(zip['icon.png']),await readFile(join(root,'public/brand/kingdom-117.png')));
 assert.equal(Buffer.from(zip['icon.png']).readUInt32BE(16),117);
 assert.equal(Buffer.from(zip['icon.png']).readUInt32BE(20),117);
 const html=new TextDecoder().decode(zip['index.html']);assert.ok(!html.includes('type="module"'));assert.ok(html.includes('$WEBAPIS/webapis/webapis.js'));assert.ok(html.includes('.css'));
@@ -67,7 +67,7 @@ try{
  const movie=page.locator('.cards[aria-label="Películas"] .card-open').first();await movie.focus();await remote(13);await page.locator('.player-dialog').waitFor();
  await page.getByRole('status',{name:'Cargando vídeo'}).waitFor();assert.equal(await page.getByRole('status',{name:'Cargando vídeo'}).count(),1);
  assert.equal(await page.locator('.cinema-loader').evaluate(el=>getComputedStyle(el).borderRadius),'50%');
- assert.ok((await page.locator('.cinema-loader img').getAttribute('src')).endsWith('richiflix-glyph.svg'));
+ assert.ok((await page.locator('.cinema-loader img').getAttribute('src')).endsWith('kingdom-glyph.svg'));
  await page.waitForFunction(()=>document.querySelector('.cinema-loader img')?.naturalWidth>0);
  // Chromium has no Samsung video plane. Use a black simulated plane rather
  // than the browser's unsupported-plugin placeholder in visual QA captures.
