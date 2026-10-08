@@ -57,7 +57,7 @@ export const VirtualCarousel=memo(function VirtualCarousel({title,items,metadata
  const pointedPreview=useStableEvent((item,event,id)=>pointerPreview?.(item,event,id,{items:snapshot.current.items,index:virtualCardIndex(event.currentTarget),columns:snapshot.current.layout.columns||1,kind:'rail',loop:true}));
  // R5.1/R5.5: the window moves only past the hysteresis band (railWindow `previous`) and state is set only on a
  // real change, so a scroll inside the window (a key's own scrollTo included) renders nothing.
- const placeHalo=index=>{const node=halo.current,{layout}=snapshot.current,at=node&&haloPlacement({index,width:layout.width,gap:layout.gap,paddingLeft:layout.haloX,paddingTop:layout.haloY});if(!at)return;const key=`${at.x},${at.y}`;if(haloAt.current===key)return;haloAt.current=key;liftHalo(node,haloFrames(at,motion.current.scale),motion.current.duration);};
+ const placeHalo=(index,offset)=>{const node=halo.current,{layout}=snapshot.current,at=node&&haloPlacement({index,width:layout.width,gap:layout.gap,paddingLeft:layout.haloX,paddingTop:layout.haloY,offset});if(!at)return;const key=`${at.x},${at.y}`;if(haloAt.current===key)return;haloAt.current=key;liftHalo(node,haloFrames(at,motion.current.scale),motion.current.duration);};
  const commit=(next,recycle)=>{win.current=next;const pinned=pinWindowFocus(next.indices,focused.current,snapshot.current.count);if(sameIndices(shown.current,pinned))return false;reuse.current=recycle;shown.current=pinned;setIndices(pinned);return true;};
  // Ola 3-F(a): a refresh driven by the rail's own scroll publishes in a transition (never inside the key's frame).
  const refresh=defer=>{
@@ -108,7 +108,7 @@ export const VirtualCarousel=memo(function VirtualCarousel({title,items,metadata
   const schedule=()=>{if(selfScroll.current)selfScroll.current=false;else railOffset.current=null;if(pending.current)return;pending.current=requestAnimationFrame(()=>{pending.current=null;refresh(true);});};
   const focus=event=>{const index=virtualCardIndex(event.target);if(index>=0){focused.current=index;if(tv)placeHalo(index);if(!nearRef.current)setPin(index);}};
   const blur=event=>{if(event.relatedTarget&&!element.contains(event.relatedTarget)){focused.current=-1;haloAt.current=null;setPin(-1);schedule();}};
-  const point=event=>{const index=virtualCardIndex(event.target);if(index>=0&&index<snapshot.current.items.length)placeHalo(index);};
+  const point=event=>{const index=virtualCardIndex(event.target);if(index>=0&&index<snapshot.current.items.length)placeHalo(index,railOffset.current??element.scrollLeft);};
   watchRows();element.addEventListener('scroll',schedule,{passive:true});element.addEventListener('focusin',focus);element.addEventListener('focusout',blur);if(tv)element.addEventListener('pointerover',point);
   // Ola 4 (R1.6 for rails): one instant scrollTo to the destination and, in the same task, the track slides from the
   // drawn offset (translate3d compensating the jump) to 0 on the compositor, --tv-base long. A key mid-glide starts
