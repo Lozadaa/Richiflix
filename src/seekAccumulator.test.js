@@ -29,6 +29,21 @@ test('flush applies at once and the next press keeps accelerating from the burst
  assert.deepEqual(applied,[[110,100],[140,100]]);
  acc.press(-1,{position:140,duration:3600});acc.cancel();acc.flush();assert.equal(applied.length,2);
 });
+test('una ráfaga nueva parte del destino anterior hasta que el vídeo confirma el salto',()=>{
+ let t=0;const applied=[];const acc=createSeekAccumulator({now:()=>t,schedule:()=>1,cancel:()=>{}});acc.onApply(target=>applied.push(target));
+ acc.press(1,{position:100,duration:3600});acc.flush();          // salta a 110, el vídeo aún informa 100
+ t+=1000;assert.equal(acc.press(1,{position:100,duration:3600}).target,120); // parte de 110, no de 100
+ acc.flush();assert.deepEqual(applied,[110,120]);
+ acc.settle();t+=1000;assert.equal(acc.press(1,{position:120,duration:3600}).target,130);
+ acc.settle();t+=1000;assert.equal(acc.press(1,{position:117,duration:3600}).target,127); // tras confirmar, manda el vídeo (fotograma clave)
+});
+test('pending expone el cursor y se vacía al aplicar o cancelar',()=>{
+ let t=0;const acc=createSeekAccumulator({now:()=>t,schedule:()=>1,cancel:()=>{}});
+ assert.equal(acc.pending(),null);
+ acc.press(-1,{position:100,duration:3600});assert.deepEqual(acc.pending(),{target:90,delta:10,direction:-1});
+ acc.flush();assert.equal(acc.pending(),null);
+ acc.press(1,{position:90,duration:3600});acc.cancel();assert.equal(acc.pending(),null);
+});
 test('next-episode card only fires when playback crosses the threshold, not on a jump',()=>{
  assert.equal(naturalCross({previous:3569,position:3570.5,duration:3600}),true);
  assert.equal(naturalCross({previous:3480,position:3599,duration:3600}),false); // 120 s jump near the end

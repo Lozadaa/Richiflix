@@ -6,8 +6,14 @@
 .player-tool.has-caption{gap:6px;width:auto;padding:0 18px}
 .tv-player .player-tool.has-caption{padding:0 22px}
 
-/* D1: accumulated seek target over the bar («+1:30 · 23:45»). */
-.seek-preview.seek-pending{font-weight:800;pointer-events:none}
+/* D1: seek cursor over the bar: target time, delta and «OK para saltar» on TV, over the dimmed title art. Only transform/opacity animate. */
+.seek-cursor{position:absolute;bottom:55px;transform:translateX(-50%);display:grid;justify-items:center;gap:4px;min-width:200px;padding:14px 18px;border-radius:18px;overflow:hidden;background:rgba(var(--surface-rgb),0.92);border:1px solid rgba(var(--focus-rgb),0.35);box-shadow:0 10px 40px #0007;font-variant-numeric:tabular-nums;pointer-events:none;animation:seek-cursor-in .12s ease-out;will-change:transform}
+.seek-cursor-art{position:absolute;top:0;right:0;bottom:0;left:0;width:100%;height:100%;object-fit:cover;opacity:.18;z-index:0}
+.seek-cursor>strong{position:relative;font-size:clamp(22px,1.6vw,36px);font-weight:800;color:var(--text)}
+.seek-cursor>span{position:relative;font-size:clamp(14px,1vw,22px);color:var(--accent);font-weight:700}
+.seek-cursor>em{position:relative;font-style:normal;font-size:clamp(12px,.8vw,17px);color:var(--text-2);letter-spacing:.4px;text-transform:uppercase}
+@keyframes seek-cursor-in{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){.seek-cursor{animation:none}}
 
 /* D3/D4: prompts over the video, bottom right, above the controls. Only opacity animates. */
 .player-prompt{position:absolute;right:5%;bottom:calc(var(--control-size,50px) + 150px);z-index:4;display:flex;align-items:center;gap:18px;padding:16px;border-radius:22px;background:rgba(var(--bg-rgb),0.93);border:1px solid #ffffff1c;box-shadow:0 18px 45px #0007;color:#fff;animation:player-prompt-in .18s ease-out}
