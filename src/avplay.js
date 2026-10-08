@@ -48,7 +48,7 @@ export function createAVPlayer(api,{url,live=false,start=0,onEvent=()=>{},onTrac
   // Do not inherit a decoder session from another source or a previous retry.
   if(state()!=='NONE')api.close();api.open(url);
   api.setDisplayRect(0,0,1920,1080);api.setDisplayMethod('PLAYER_DISPLAY_MODE_LETTER_BOX');
-  api.setListener({onbufferingstart:()=>emit('waiting'),onbufferingcomplete:()=>emit('canplay'),oncurrentplaytime:milliseconds=>{const next=milliseconds/1000;try{if(!closed&&!hidden&&!suspended&&next>current+.025&&state()==='PLAYING')paused=false;}catch{}current=next;emit('timeupdate');},onsubtitlechange:(duration,text)=>emit('subtitle',{text:String(text||''),duration:Number(duration)||0}),onstreamcompleted:()=>{paused=true;ended=true;emit('ended');},onerror:failure});
+  api.setListener({onbufferingstart:()=>emit('waiting'),onbufferingcomplete:()=>emit('canplay'),oncurrentplaytime:milliseconds=>{const next=milliseconds/1000;try{if(!closed&&!hidden&&!suspended&&next>current+.025&&state()==='PLAYING')paused=false;}catch{}current=next;emit('timeupdate');},onsubtitlechange:(duration,text)=>emit('subtitle',{text:String(text||'').replace(/<[^>]*>/g,''),duration:Number(duration)||0}),onstreamcompleted:()=>{paused=true;ended=true;emit('ended');},onerror:failure});
   api.prepareAsync(()=>{
    if(closed)return;
    duration=Math.max(0,api.getDuration()/1000);

@@ -80,10 +80,20 @@ try{
  await remote(10252);await page.getByRole('button',{name:'Reproducir vídeo',exact:true}).waitFor();await remote(415);await page.getByRole('button',{name:'Pausar vídeo',exact:true}).waitFor();
  await remote(417);assert.ok((await page.evaluate(()=>window.__calls)).some(call=>call[0]==='seek'&&call[1]===11000));
  await remote(40);await page.waitForFunction(()=>document.activeElement.matches('.playback-toggle'));await remote(13);await page.getByRole('button',{name:'Reproducir vídeo',exact:true}).waitFor();
- await page.getByRole('button',{name:'Opciones de reproducción'}).focus();await remote(13);await page.getByLabel('Pista de audio').waitFor();
- assert.equal(await page.getByLabel('Velocidad de reproducción').count(),0);assert.equal(await page.getByLabel('Volumen',{exact:true}).count(),0);
+ // E2: «Idioma y subtítulos» opens the side panel (buttons, never <select>); Down walks, OK applies and keeps it open, Back/Left close it on the button.
+ const languageButton=page.getByRole('button',{name:'Idioma y subtítulos',exact:true});await languageButton.focus();await remote(13);await page.locator('.playback-sidebar').waitFor();
+ const audioGroup=page.getByRole('radiogroup',{name:'Audio',exact:true});assert.deepEqual(await audioGroup.getByRole('radio').allTextContents(),['Español','Inglés']);
+ await page.waitForFunction(()=>document.activeElement.matches('.playback-sidebar [role="radio"][aria-checked="true"]')&&document.activeElement.textContent==='Español');
+ assert.equal(await page.locator('.player-dialog select').count(),0);assert.equal(await page.getByRole('radiogroup',{name:'Velocidad'}).count(),0);assert.equal(await page.getByLabel('Volumen',{exact:true}).count(),0);
  assert.equal(await page.locator('.player-volume,.player-resume').count(),0);
- await page.getByLabel('Pista de audio').focus();await remote(39);assert.equal(await page.getByLabel('Pista de audio').inputValue(),'2');await remote(10009);assert.equal(await page.locator('.playback-menu').count(),0);assert.equal(await page.locator('.player-dialog').count(),1);
+ await remote(40);await page.waitForFunction(()=>document.activeElement.textContent==='Inglés');await remote(40);await page.waitForFunction(()=>document.activeElement.textContent==='Inglés'); // the last option holds
+ await remote(13);await page.waitForFunction(()=>document.activeElement.getAttribute('aria-checked')==='true'&&document.activeElement.textContent==='Inglés');assert.equal(await page.locator('.playback-sidebar').count(),1);
+ assert.equal(await page.evaluate(()=>document.activeElement.matches('.seek-track input')),false);
+ await remote(38);await page.waitForFunction(()=>document.activeElement.textContent==='Español');assert.equal(await page.getByRole('radio',{name:'Español',exact:true}).getAttribute('aria-checked'),'false');
+ await remote(37);await page.locator('.playback-sidebar').waitFor({state:'detached'});await page.waitForFunction(()=>document.activeElement.getAttribute('aria-label')==='Idioma y subtítulos');
+ await remote(13);await page.locator('.playback-sidebar').waitFor();await page.waitForFunction(()=>document.activeElement.textContent==='Inglés');
+ await remote(10009);await page.locator('.playback-sidebar').waitFor({state:'detached'});await page.waitForFunction(()=>document.activeElement.getAttribute('aria-label')==='Idioma y subtítulos');assert.equal(await page.locator('.player-dialog').count(),1);
+ await remote(415);await page.getByRole('button',{name:'Pausar vídeo',exact:true}).waitFor();assert.ok((await page.evaluate(()=>window.__calls)).some(call=>call[0]==='track'&&call[1]==='AUDIO'&&call[2]===2)); // chosen while paused, applied on play
  await page.screenshot({path:join(root,'tizen-player-preview.png')});
  await remote(10009);await page.waitForFunction(()=>document.activeElement.matches('.player-dialog video'));await remote(10009);await page.locator('.player-dialog').waitFor({state:'detached'});assert.equal(await page.evaluate(()=>document.documentElement.classList.contains('native-playback')),false); // D2: Back from the button row returns to the video, Back from the video closes
  assert.deepEqual((await page.evaluate(()=>window.__calls)).filter(call=>call[0]==='screensaver').at(-1),['screensaver',1]);

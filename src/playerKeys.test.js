@@ -31,3 +31,13 @@ test('media seek keys accelerate from anywhere; anything else (the bar included)
  for(const key of ['ArrowLeft','ArrowUp','Enter'])assert.deepEqual(playerKeyAction({focus:'other',key,seekable:true}),{type:'focusVideo'});
  assert.equal(playerKeyAction({focus:'other',key:'Escape'}),null);
 });
+test('E2 sidebar focus: Up/Down walk every option, Left/Back close it, OK belongs to the option',()=>{
+ const sidebar={focus:'sidebar',seekable:true};
+ assert.deepEqual(playerKeyAction({...sidebar,key:'ArrowDown'}),{type:'moveOption',direction:1});
+ assert.deepEqual(playerKeyAction({...sidebar,key:'ArrowUp',repeat:true}),{type:'moveOption',direction:-1});
+ assert.deepEqual(playerKeyAction({...sidebar,key:'ArrowLeft'}),{type:'closeSidebar'});
+ assert.deepEqual(playerKeyAction({...sidebar,key:'Escape'}),{type:'closeSidebar'});
+ assert.equal(playerKeyAction({...sidebar,key:'ArrowRight'}),null);
+ assert.equal(playerKeyAction({...sidebar,key:'Enter'}),null);
+ assert.deepEqual(playerKeyAction({...sidebar,key:'MediaFastForward'}),{type:'seek',direction:1,repeat:false,now:true});
+});

@@ -1,0 +1,29 @@
+/* E2: side panel over the dimmed video (no backdrop-filter). Only transform and opacity animate, 180 ms. */
+.playback-sidebar{position:absolute;top:0;right:0;bottom:0;left:0;z-index:6;background:rgba(16,24,39,.55);animation:sidebar-dim .18s ease-out}
+.playback-sidebar-panel{position:absolute;top:0;right:0;bottom:0;width:420px;max-width:100%;overflow-y:auto;padding:32px 24px;background:#172133;box-shadow:-18px 0 60px #0008;outline:none;scrollbar-width:none;animation:sidebar-in .18s ease-out}
+.playback-sidebar-panel::-webkit-scrollbar{display:none}
+@keyframes sidebar-dim{from{opacity:0}to{opacity:1}}
+@keyframes sidebar-in{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+@media (prefers-reduced-motion:reduce){.playback-sidebar,.playback-sidebar-panel{animation:none}}
+.playback-sidebar-panel section+section{margin-top:26px}
+.playback-sidebar-panel h3{margin:0 0 10px;color:#b8c3d6;font:800 13px 'Bricolage Grotesque',Arial,sans-serif;letter-spacing:.6px;text-transform:uppercase}
+.sidebar-option{display:flex;align-items:center;gap:12px;width:100%;min-height:46px;padding:8px 14px;border-radius:14px;color:#e3e7f1;font:700 15px Manrope,Arial,sans-serif;text-align:left}
+.sidebar-option>span{flex:1;min-width:0}
+.sidebar-option>small{color:#b8c3d6;font-size:12px}
+.sidebar-option>svg{flex-shrink:0;width:20px;height:20px}
+.sidebar-option[aria-checked="true"]{color:#ffbba9}
+.sidebar-option:hover{background:#ffffff10}
+.sidebar-option:focus{outline:none;background:#f5d58d;color:#101827}
+.sidebar-option:focus>small{color:#101827}
+.playback-sidebar-panel p{color:#b8c3d6;font-size:14px;line-height:1.6;margin:0}
+.tv-player .playback-sidebar-panel{width:520px;padding:56px 36px}
+.tv-player .playback-sidebar-panel h3{font-size:20px;margin-bottom:14px}
+.tv-player .playback-sidebar-panel section+section{margin-top:36px}
+.tv-player .sidebar-option{min-height:68px;padding:12px 22px;border-radius:18px;font-size:26px;gap:16px}
+.tv-player .sidebar-option>small{font-size:20px}
+.tv-player .sidebar-option>svg{width:30px;height:30px}
+.tv-player .playback-sidebar-panel p{font-size:24px}
+
+/* E2: AVPlay hands subtitle text to the app; drawn above the controls. */
+.player-subtitle{position:absolute;left:10%;right:10%;bottom:16%;z-index:2;text-align:center;pointer-events:none;color:#fff;font:700 28px/1.35 Manrope,Arial,sans-serif;text-shadow:0 0 6px #000,0 2px 4px #000;white-space:pre-line}
+.tv-player .player-subtitle{font-size:44px}

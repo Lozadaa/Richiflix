@@ -9,6 +9,11 @@ export function playerKeyAction({key,focus,repeat=false,seekable=false,chromeVis
   if(key==='Enter')return chromeVisible?{type:'focusButtons',togglePlay:true}:{type:'focusButtons'};
   return key==='Escape'?{type:'close'}:null;
  }
+ // E2: the side panel is one vertical list; Left or Back close it, Right does nothing.
+ if(focus==='sidebar'){
+  if(key==='ArrowUp'||key==='ArrowDown')return {type:'moveOption',direction:key==='ArrowDown'?1:-1};
+  return key==='ArrowLeft'||key==='Escape'?{type:'closeSidebar'}:null;
+ }
  if(focus==='buttons'){
   if(SEEK[key])return {type:'moveButton',direction:SEEK[key]};
   return key==='ArrowUp'||key==='Escape'?{type:'focusVideo'}:null;

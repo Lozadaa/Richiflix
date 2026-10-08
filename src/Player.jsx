@@ -2,7 +2,7 @@ import React,{useEffect,useRef,useState} from 'react';
 import {loadHlsLibrary} from './hlsLibrary.js';
 import {isTizen,isTVBuild} from './platform.js';
 import {createAVPlayer} from './avplay.js';
-import {Play,Pause,Volume2,Volume1,VolumeX,RotateCcw,RotateCw,Maximize,Minimize,Settings2,Check,Radio,Antenna,SkipBack,SkipForward,RefreshCcw} from 'lucide-react';
+import {Play,Pause,Volume2,Volume1,VolumeX,RotateCcw,RotateCw,Maximize,Minimize,MessageSquareText,Radio,Antenna,SkipBack,SkipForward,RefreshCcw} from 'lucide-react';
 import {Dialog} from './Dialog.jsx';
 import {Brand,BrandGlyph} from './Brand.jsx';
 import {displayText} from './displayText.js';
@@ -17,6 +17,7 @@ import {NextEpisodeCard,episodeLabel} from './NextEpisodeCard.jsx';
 import {useIntroSkip} from './useIntroSkip.js';
 import {playerKeyAction} from './playerKeys.js';
 import {trackNames} from './trackNames.js';
+import {PlaybackSidebar} from './PlaybackSidebar.jsx';
 import './playerLive.css';
 import './playerControls.css';
 
@@ -32,7 +33,7 @@ const feedQuality=feed=>displayText(feed.item?.title).match(/\b(?:4K|UHD|FHD|HD|
 const CHANNEL_KEYS={ChannelUp:1,PageUp:1,ChannelDown:-1,PageDown:-1};
 
 export function Player({item,start,save,close,change,seasons,series,intros={},setIntros=()=>{},fullscreen,toggleFullscreen,restoreFocus,tvMode=false}){
- const videoRef=useRef(),nativeRef=useRef(),hlsRef=useRef(),healthRef=useRef(),userPaused=useRef(false),seekingRef=useRef(false),saveRef=useRef(save),menuRef=useRef(),optionsRef=useRef(),lastSaved=useRef(-1),resumeAt=useRef(start),scrubbing=useRef(false),scrubValue=useRef(0),feedbackTimer=useRef(),signalRef=useRef(),signalMenuRef=useRef(),switchTimer=useRef(),tried=useRef(new Set(item.tried));
+ const videoRef=useRef(),nativeRef=useRef(),hlsRef=useRef(),healthRef=useRef(),userPaused=useRef(false),seekingRef=useRef(false),saveRef=useRef(save),optionsRef=useRef(),lastSaved=useRef(-1),resumeAt=useRef(start),scrubbing=useRef(false),scrubValue=useRef(0),feedbackTimer=useRef(),cueTimer=useRef(),switchTimer=useRef(),tried=useRef(new Set(item.tried));
  saveRef.current=save;
  const accumulator=useRef(null);accumulator.current??=createSeekAccumulator();
  // D3: consecutive episodes started by the countdown; any key resets it, the fourth asks «¿Sigues ahí?».
@@ -40,9 +41,9 @@ export function Player({item,start,save,close,change,seasons,series,intros={},se
  const tv=tvMode||isTVBuild;
  const [error,setError]=useState(''),[loading,setLoading]=useState(true),[showLoader,setShowLoader]=useState(false),[paused,setPaused]=useState(true),[ended,setEnded]=useState(false),[retry,setRetry]=useState(0);
  const [media,setMedia]=useState(emptyMedia),[scrub,setScrub]=useState(null),[preview,setPreview]=useState(null),[feedback,setFeedback]=useState(''),[pendingSeek,setPendingSeek]=useState(null),[nextCard,setNextCard]=useState(false),[stillThere,setStillThere]=useState(false);
- const [volume,setVolume]=useState(()=>clamp(preference('rf-player-volume',.8),0,1)),[muted,setMuted]=useState(false),[rate,setRate]=useState(1),[options,setOptions]=useState(false);
+ const [volume,setVolume]=useState(()=>clamp(preference('rf-player-volume',.8),0,1)),[muted,setMuted]=useState(false),[rate,setRate]=useState(1),[options,setOptions]=useState(false),[cue,setCue]=useState('');
  const [levels,setLevels]=useState([]),[quality,setQuality]=useState(-1),[audioTracks,setAudioTracks]=useState([]),[audio,setAudio]=useState(0),[captions,setCaptions]=useState([]),[caption,setCaption]=useState(-1);
- const [signals,setSignals]=useState(false),[switching,setSwitching]=useState('');
+ const [switching,setSwitching]=useState('');
  const event=item.event,feeds=feedsOf(event),feed=feeds.find(entry=>entry.id===item.feedId);const title=item.kind==='iptv'?channelTitle(event||item):displayTitle(item);if(feed)tried.current.add(feed.id);
  const alternative=event&&nextFeed(event,item.feedId,1,[...tried.current]);
  const chooseQuality=tv?levels.length>1:levels.length>0;
@@ -69,15 +70,13 @@ export function Player({item,start,save,close,change,seasons,series,intros={},se
  useEffect(()=>{if(!loading){setShowLoader(false);return;}const timer=setTimeout(()=>setShowLoader(true),250);return()=>clearTimeout(timer);},[loading]);
  useEffect(()=>{if(isTizen)return;const video=videoRef.current;if(tv){video.volume=1;video.muted=false;return;}video.volume=volume;video.muted=muted;try{localStorage.setItem('rf-player-volume',String(volume));}catch{}},[volume,muted,tv]);
  useEffect(()=>{if(!isTizen)videoRef.current.playbackRate=tv?1:rate;},[rate,tv]);
- useEffect(()=>{if(options)menuRef.current?.querySelector('select')?.focus({preventScroll:true});},[options]);
- useEffect(()=>{if(signals)signalMenuRef.current?.querySelector('[aria-pressed="true"]')?.focus({preventScroll:true});},[signals]);
- useEffect(()=>()=>{clearTimeout(feedbackTimer.current);clearTimeout(switchTimer.current);accumulator.current.cancel();},[]);
+ useEffect(()=>()=>{clearTimeout(feedbackTimer.current);clearTimeout(cueTimer.current);clearTimeout(switchTimer.current);accumulator.current.cancel();},[]);
  useEffect(()=>{if(error||ended)document.querySelector('.player-dialog .player-state button')?.focus({preventScroll:true});},[error,ended]);
 
  useEffect(()=>{
   const video=videoRef.current;let hls,stopped=false;
   userPaused.current=false;seekingRef.current=false;video.autoplay=true;
-  setError('');setLoading(true);setShowLoader(false);setEnded(false);setPaused(true);setMedia(emptyMedia);setLevels([]);setQuality(-1);setAudioTracks([]);setCaptions([]);setCaption(-1);setOptions(false);setSignals(false);lastSaved.current=-1;accumulator.current.cancel();setPendingSeek(null);setScrub(null);
+  setError('');setLoading(true);setShowLoader(false);setEnded(false);setPaused(true);setMedia(emptyMedia);setLevels([]);setQuality(-1);setAudioTracks([]);setCaptions([]);setCaption(-1);setCue('');if(document.activeElement?.closest('.playback-sidebar'))videoRef.current?.focus({preventScroll:true});setOptions(false);lastSaved.current=-1;accumulator.current.cancel();setPendingSeek(null);setScrub(null);
   // A new episode in the same dialog resumes from its own history entry.
   if(startFor.current!==item.id){startFor.current=item.id;resumeAt.current=start;}setNextCard(false);setStillThere(false);nextDismissed.current=false;lastPosition.current=0;
   const health=createPlaybackHealth({readPosition:()=>engine()?.currentTime||0,readSeeking:()=>!isTizen&&(video.seeking||seekingRef.current),onFailure:message=>{setLoading(false);setError(message);},onHealthy:()=>{const restore=document.activeElement?.closest('.player-state');setError('');setLoading(false);setPaused(false);setEnded(false);if(restore)requestAnimationFrame(()=>{if(healthRef.current===health)document.querySelector('.player-dialog .playback-toggle')?.focus({preventScroll:true});});},onWaiting:()=>setLoading(true)});healthRef.current=health;
@@ -86,7 +85,7 @@ export function Player({item,start,save,close,change,seasons,series,intros={},se
   if(isTizen){
    document.documentElement.classList.add('native-playback');
    if(!window.webapis?.avplay){setLoading(false);setError('El reproductor Samsung no est\u00e1 disponible.');return()=>{clearHealth();document.documentElement.classList.remove('native-playback');};}
-   const driver=createAVPlayer(window.webapis.avplay,{url:item.url,live:item.kind==='iptv',start:resumeAt.current,onTracks:tracks=>{setAudioTracks(named(tracks,'audio'));if(tracks.length)setAudio(tracks[0].index);},onEvent:type=>{
+   const driver=createAVPlayer(window.webapis.avplay,{url:item.url,live:item.kind==='iptv',start:resumeAt.current,onTracks:(tracks,subtitles)=>{setAudioTracks(named(tracks,'audio'));if(tracks.length)setAudio(tracks[0].index);setCaptions(named(subtitles,'subtitle'));},onEvent:(type,value)=>{
     if(type==='waiting')health.waiting();
     if(['canplay','seeked'].includes(type)){if(type==='seeked'){health.reposition();if(engine()?.paused)setLoading(false);}sync();}
     // AVPlay's play() callback is a request, not proof of a displayed frame.
@@ -94,6 +93,7 @@ export function Player({item,start,save,close,change,seasons,series,intros={},se
     if(type==='pause'){health.pause();setLoading(false);setPaused(true);}
     if(type==='suspended'){setLoading(false);setPaused(true);}
     if(type==='error')health.fault('No pudimos reproducir esta fuente en Samsung TV.');
+    if(type==='subtitle'){setCue(value.text);clearTimeout(cueTimer.current);cueTimer.current=setTimeout(()=>setCue(''),value.duration||3000);}
     if(type==='trackerror')flash('Esta pista no est\u00e1 disponible');
     if(type==='ended'){health.ended();saveRef.current(0,item.id,{ended:true});setEnded(true);setLoading(false);setPaused(true);}
     if(type==='durationchange')sync();
@@ -162,23 +162,31 @@ export function Player({item,start,save,close,change,seasons,series,intros={},se
  const dismissNext=()=>{nextDismissed.current=true;setNextCard(false);videoRef.current?.focus({preventScroll:true});};
  const changeVolume=value=>{setVolume(value);setMuted(value===0);};
  const replay=()=>{if(isTizen){resumeAt.current=0;setRetry(prev=>prev+1);return;}seek(from);setEnded(false);engine().play().catch(()=>{});};
+ // E2: one side panel for language, subtitles, quality, speed and signal; closing returns the focus to the button that opened it.
+ const openOptions=(e,section)=>{optionsRef.current=e.currentTarget;setOptions(prev=>prev?false:section);};
  const closeOptions=()=>{setOptions(false);optionsRef.current?.focus({preventScroll:true});};
- const closeSignals=()=>{setSignals(false);signalRef.current?.focus({preventScroll:true});};
+ const selectAudio=index=>{setAudio(index);if(isTizen)nativeRef.current?.selectAudio(index);else if(hlsRef.current)hlsRef.current.audioTrack=index;};
+ const selectCaption=index=>{setCaption(index);setCue('');if(isTizen){if(index>=0)nativeRef.current?.selectSubtitle(index);}else Array.from(videoRef.current.textTracks).forEach((track,position)=>track.mode=position===index?'showing':'disabled');};
+ const selectQuality=index=>{setQuality(index);if(hlsRef.current)hlsRef.current.currentLevel=index;};
  // One route for menu, error state and channel keys: App resolves the URL and replaces `item`; this dialog stays mounted.
  const pill=label=>{setSwitching(label);clearTimeout(switchTimer.current);switchTimer.current=setTimeout(()=>setSwitching(''),1500);};
  const switchTo=async(target,label,trying=false)=>{if(!target)return;pill(label);if(!await change?.({...target,trying}))pill('Señal no disponible');};
- const chooseFeed=entry=>{closeSignals();if(entry.id!==item.feedId)switchTo({feed:entry},entry.label);};
+ const chooseFeed=entry=>{closeOptions();if(entry.id!==item.feedId)switchTo({feed:entry},entry.label);};
  const tryAnother=()=>{videoRef.current?.focus({preventScroll:true});switchTo({feed:alternative},alternative.label,true);};
- const signalKeys=e=>{
-  const choices=[...e.currentTarget.querySelectorAll('button')],index=choices.indexOf(e.target);
-  if(e.key==='ArrowUp'||e.key==='ArrowDown'){e.preventDefault();e.stopPropagation();choices[clamp(index+(e.key==='ArrowDown'?1:-1),0,choices.length-1)]?.focus({preventScroll:true});}
-  else if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();e.stopPropagation();}
- };
  const keyboard=e=>{
   autoplays.current=0;
+  // E2: Up/Down walk every option of every section (focus scrolls the panel), Left/Back close it.
+  if(e.target.closest('.playback-sidebar')){
+   const action=playerKeyAction({key:e.key,focus:'sidebar',repeat:e.repeat,seekable});
+   if(e.key.startsWith('Arrow'))e.preventDefault();
+   if(!action||action.type==='seek')return;
+   e.preventDefault();e.stopPropagation();
+   if(action.type==='closeSidebar')closeOptions();
+   else{const choices=[...e.currentTarget.querySelectorAll('.playback-sidebar [role="radio"]')];choices[clamp(choices.indexOf(e.target)+action.direction,0,choices.length-1)]?.focus();}
+   return;
+  }
   if(e.key==='Escape'&&options){e.preventDefault();e.stopPropagation();closeOptions();return;}
-  if(e.key==='Escape'&&signals){e.preventDefault();e.stopPropagation();closeSignals();return;}
-  if(e.altKey||e.ctrlKey||e.metaKey||e.target.closest('.playback-menu,.player-state,.player-prompt'))return;
+  if(e.altKey||e.ctrlKey||e.metaKey||e.target.closest('.player-state,.player-prompt'))return;
   const key=e.key.toLowerCase(),target=e.target,dialog=e.currentTarget;
   const focus=element=>{if(element)requestAnimationFrame(()=>element.focus({preventScroll:true}));};
   // D2: in TV the focus lives on the video or on the button row; the media seek keys go through the window listener.
@@ -191,10 +199,10 @@ export function Player({item,start,save,close,change,seasons,series,intros={},se
    if(action.type==='seek')seekBy(action);
    else if(action.type==='focusVideo')videoRef.current?.focus({preventScroll:true});
    else if(action.type==='focusButtons'){if(action.togglePlay&&!e.repeat)play();focus(dialog.querySelector('.playback-toggle:not(:disabled)')||dialog.querySelector('.playback-toolbar button:not(:disabled)'));}
-   else{const row=[...dialog.querySelectorAll('.playback-toolbar button:not(:disabled)')].filter(element=>!element.closest('.playback-menu,[inert]'));focus(row[clamp(row.indexOf(target)+action.direction,0,row.length-1)]);}
+   else{const row=[...dialog.querySelectorAll('.playback-toolbar button:not(:disabled)')].filter(element=>!element.closest('[inert]'));focus(row[clamp(row.indexOf(target)+action.direction,0,row.length-1)]);}
    return;
   }
-  const toolbar=[...dialog.querySelectorAll('.playback-toolbar button:not(:disabled)')].filter(element=>!element.closest('.playback-menu')&&element.getBoundingClientRect().width>0);
+  const toolbar=[...dialog.querySelectorAll('.playback-toolbar button:not(:disabled)')].filter(element=>element.getBoundingClientRect().width>0);
   const playControl=toolbar.find(button=>button.classList.contains('playback-toggle'));
   const skips=toolbar.filter(button=>button.classList.contains('skip-tool'));
   const timeline=dialog.querySelector('.seek-track input'),back=dialog.querySelector('.back-button');
@@ -243,12 +251,15 @@ export function Player({item,start,save,close,change,seasons,series,intros={},se
  const toggle=<button className="playback-toggle" aria-label={paused?'Reproducir vídeo':'Pausar vídeo'} disabled={Boolean(error)||ended} onClick={play}>{paused?<Play size={27} fill="currentColor"/>:<Pause size={27} fill="currentColor"/>}</button>;
  const back10=(!tv||seekable)&&<button className="player-tool skip-tool" aria-label="Retroceder 10 segundos" disabled={!seekable||Boolean(error)} onClick={()=>skip(-10)}><span className="skip-glyph" aria-hidden="true"><RotateCcw size={36}/><span className="skip-seconds">10</span></span></button>;
  const forward10=(!tv||seekable)&&<button className="player-tool skip-tool" aria-label="Adelantar 10 segundos" disabled={!seekable||Boolean(error)} onClick={()=>skip(10)}><span className="skip-glyph" aria-hidden="true"><RotateCw size={36}/><span className="skip-seconds">10</span></span></button>;
- const signal=feeds.length>1&&<div className="playback-options player-signal"><button ref={signalRef} className={`player-tool ${signals?'is-selected':''}`} aria-label="Señal" aria-expanded={signals} onClick={()=>setSignals(prev=>!prev)}><Antenna size={25}/><span className="signal-caption">Señal</span></button>
-      {signals&&<div ref={signalMenuRef} className="playback-menu signal-menu" role="group" aria-label="Señales del evento" onKeyDown={signalKeys}>
-       <div className="playback-menu-title">Señal <Antenna size={15}/></div>
-       {feeds.map(entry=><button key={entry.id} className="signal-option" aria-pressed={entry.id===item.feedId} onClick={()=>chooseFeed(entry)}><span>{entry.label}</span>{feedQuality(entry)&&<small>{feedQuality(entry)}</small>}{entry.id===item.feedId&&<Check size={20} aria-hidden="true"/>}</button>)}
-      </div>}
-     </div>;
+ const signal=feeds.length>1&&<div className="playback-options player-signal"><button className={`player-tool ${options==='Señal'?'is-selected':''}`} aria-label="Señal" aria-expanded={options==='Señal'} onClick={e=>openOptions(e,'Señal')}><Antenna size={25}/><span className="signal-caption">Señal</span></button></div>;
+ const choice=(id,label,active,onSelect,detail)=>({id,label:displayText(label),active,onSelect,detail});
+ const sections=options?[
+  audioTracks.length>1&&{title:'Audio',options:audioTracks.map(track=>choice(track.index,track.label,track.index===audio,()=>selectAudio(track.index)))},
+  captions.length>0&&{title:'Subtítulos',options:[choice(-1,'Desactivados',caption<0,()=>selectCaption(-1)),...captions.map(track=>choice(track.index,track.label,track.index===caption,()=>selectCaption(track.index)))]},
+  chooseQuality&&{title:'Calidad',options:[{index:-1,label:'Automática'},...levels].map(level=>choice(level.index,level.label,level.index===quality,()=>selectQuality(level.index)))},
+  !live&&!tv&&{title:'Velocidad',options:[.5,.75,1,1.25,1.5,2].map(value=>choice(value,value===1?'Normal':`${value}×`,value===rate,()=>setRate(value)))},
+  feeds.length>1&&{title:'Señal',options:feeds.map(entry=>choice(entry.id,entry.label,entry.id===item.feedId,()=>chooseFeed(entry),feedQuality(entry)))},
+ ].filter(Boolean):[];
 
  return <Dialog immersive player tvMode={tv} chromeHidden={chromeHidden} close={close} label={`Reproduciendo ${title}`} restoreFocus={restoreFocus} onKeyDownCapture={keyboard}>
   <div className="video-stage">
@@ -262,6 +273,7 @@ export function Player({item,start,save,close,change,seasons,series,intros={},se
    {intro.offer&&!error&&<button ref={introButton} className="player-prompt skip-intro" onKeyDown={introKeys} onClick={()=>{const end=intro.skip();if(end!=null)seek(end);videoRef.current?.focus({preventScroll:true});}}>{intro.offer.label}</button>}
    {nextCard&&nextEpisode&&!stillThere&&<NextEpisodeCard key={nextEpisode.id} episode={nextEpisode} running={!paused||ended} onPlay={auto=>toEpisode(nextEpisode,auto)} onDismiss={dismissNext} onLeave={()=>videoRef.current?.focus({preventScroll:true})}/>}
    {stillThere&&<section className="player-prompt still-there" aria-label="¿Sigues ahí?" onKeyDown={e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();e.stopPropagation();const buttons=[...e.currentTarget.querySelectorAll('button')];buttons[(buttons.indexOf(e.target)+1)%buttons.length]?.focus({preventScroll:true});}}}><h2>¿Sigues ahí?</h2><div className="dialog-actions"><button className="primary" autoFocus onClick={()=>{setStillThere(false);toEpisode(nextEpisode);}}><Play fill="currentColor" size={20}/> Seguir viendo</button><button className="secondary" onClick={close}>Volver al catálogo</button></div></section>}
+   {caption>=0&&cue&&<div className="player-subtitle">{cue}</div>}
    {ended&&!nextCard&&!stillThere&&<div className="player-state"><span className="player-state-eyebrow">Reproducción terminada</span><h2>{title}</h2><div className="dialog-actions"><button className="primary" onClick={replay}><Play fill="currentColor" size={20}/> Volver a ver</button><button className="secondary" onClick={close}>Volver al catálogo</button></div></div>}
   </div>
   <div className="player-heading" inert={chromeHidden}><div className="player-title"><span>{event?eventPhaseLine(event,eventPhaseLabel(event))||'En directo':live?['En directo',displayText(item.genre)].filter(Boolean).join(' · '):displayText(item.genre)||'Tu biblioteca'}</span><strong>{title}</strong>{feed?<em className="player-live-line">{feed.label}</em>:guideNow&&<em className="player-live-line">Ahora · {displayText(guideNow)}</em>}</div><span className="player-wordmark" aria-hidden="true"><Brand/></span></div>
@@ -286,21 +298,13 @@ export function Player({item,start,save,close,change,seasons,series,intros={},se
      
     </div>
     {(!tv||hasOptions||feeds.length>1)&&<div className="playback-extra-controls">
-     {hasOptions&&<div className="playback-options"><button ref={optionsRef} className={`player-tool ${options?'is-selected':''}`} aria-label="Opciones de reproducción" aria-expanded={options} onClick={()=>setOptions(prev=>!prev)}><Settings2 size={25}/>{rate!==1&&<span className="rate-badge">{rate}×</span>}</button>
-      {options&&<div ref={menuRef} className="playback-menu" role="group" aria-label="Opciones de reproducción" onKeyDown={e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();closeOptions();}}}>
-       <div className="playback-menu-title">A tu ritmo <Check size={15}/></div>
-       {!live&&!tv&&<label>Velocidad<select aria-label="Velocidad de reproducción" value={rate} onChange={e=>setRate(Number(e.target.value))}>{[.5,.75,1,1.25,1.5,2].map(value=><option key={value} value={value}>{value===1?'Normal':`${value}×`}</option>)}</select></label>}
-       {chooseQuality&&<label>Calidad<select aria-label="Calidad de vídeo" value={quality} onChange={e=>{const value=Number(e.target.value);setQuality(value);if(hlsRef.current)hlsRef.current.currentLevel=value;}}><option value={-1}>Automática</option>{levels.map(level=><option key={level.index} value={level.index}>{displayText(level.label)}</option>)}</select></label>}
-       {audioTracks.length>1&&<label>Audio<select aria-label="Pista de audio" value={audio} onChange={e=>{const value=Number(e.target.value);setAudio(value);if(isTizen)nativeRef.current?.selectAudio(value);else if(hlsRef.current)hlsRef.current.audioTrack=value;}}>{audioTracks.map(track=><option key={track.index} value={track.index}>{displayText(track.label)}</option>)}</select></label>}
-       {captions.length>0&&<label>Subtítulos<select aria-label="Subtítulos" value={caption} onChange={e=>{const value=Number(e.target.value);setCaption(value);Array.from(videoRef.current.textTracks).forEach((track,index)=>track.mode=index===value?'showing':'disabled');}}><option value={-1}>Desactivados</option>{captions.map(track=><option key={track.index} value={track.index}>{displayText(track.label)}</option>)}</select></label>}
-       {(live||isTizen)&&levels.length===0&&audioTracks.length<2&&captions.length===0&&<p>Esta señal usa su calidad original.</p>}
-      </div>}
-     </div>}
+     {hasOptions&&<div className="playback-options"><button className={`player-tool ${options&&options!=='Señal'?'is-selected':''}`} aria-label="Idioma y subtítulos" aria-expanded={Boolean(options)&&options!=='Señal'} onClick={e=>openOptions(e,'Audio')}><MessageSquareText size={25}/>{rate!==1&&<span className="rate-badge">{rate}×</span>}</button></div>}
      {tv&&signal}
      {!tv&&<button className="player-tool" aria-label={fullscreen?'Salir de pantalla completa':'Entrar en pantalla completa'} aria-pressed={fullscreen} onClick={toggleFullscreen}>{fullscreen?<Minimize size={25}/>:<Maximize size={25}/>}</button>}
     </div>}
    </div>
   </div>}
+  {options&&!error&&!ended&&<PlaybackSidebar sections={sections} focusSection={options} onClose={closeOptions}/>}
  </Dialog>;
 }
 
