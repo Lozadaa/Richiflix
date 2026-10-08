@@ -738,8 +738,18 @@ button.playback-toggle svg.lucide-play{margin-left:3px}
 .samsung-tv .card:focus-within .poster{filter:none}
 .samsung-tv .catalog-row{contain:layout style}
 .boot-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;background:radial-gradient(ellipse at 50% 45%,#24324b 0%,var(--bg) 62%);color:#e8eef9}
-.boot-screen .brand{font-size:56px}.boot-orbit{position:relative;width:112px;height:112px;border-radius:50%;display:grid;place-items:center;background:var(--surface)}
-.boot-orbit img{width:62px;height:62px}.boot-orbit:after{content:'';position:absolute;inset:0;border:3px solid rgba(var(--text-2-rgb),0.15);border-top-color:var(--accent);border-radius:50%;animation:boot-spin 1s linear infinite}
+.boot-screen .brand{font-size:56px}
+.kingdom-loader{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
+.kingdom-loader-stage{position:relative;width:112px;height:132px}
+.kingdom-loader-stage .kingdom-glyph{position:absolute;left:24px;top:8px;width:64px;height:64px;transform-origin:50% 100%;animation:kingdom-bounce 1.2s cubic-bezier(.3,0,.2,1) infinite;will-change:transform}
+.kingdom-loader-shadow{position:absolute;left:26px;bottom:14px;width:60px;height:14px;border-radius:50%;background:radial-gradient(closest-side,rgba(var(--accent-rgb),0.34),rgba(var(--accent-rgb),0));transform-origin:50% 50%;animation:kingdom-shadow 1.2s cubic-bezier(.3,0,.2,1) infinite;will-change:transform,opacity}
+.kingdom-loader-label{font-size:24px;margin:0;color:var(--text-2)}
+.kingdom-loader-phrase{font-size:17px;color:rgba(var(--text-2-rgb),0.75);animation:kingdom-phrase .35s ease-out}
+@keyframes kingdom-bounce{0%,100%{transform:translateY(42px) scale(1.18,.82)}18%{transform:translateY(30px) scale(.94,1.1)}50%{transform:translateY(0) scale(1,1)}82%{transform:translateY(30px) scale(.98,1.04)}}
+@keyframes kingdom-shadow{0%,100%{transform:scale(1.15,1);opacity:.9}50%{transform:scale(.55,.7);opacity:.35}}
+@keyframes kingdom-phrase{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes kingdom-pulse{0%,100%{opacity:1}50%{opacity:.45}}
+@media(prefers-reduced-motion:reduce){.kingdom-loader-stage .kingdom-glyph{animation:kingdom-pulse 1.6s ease-in-out infinite;transform:translateY(42px)}.kingdom-loader-shadow{animation:none;opacity:.6}.kingdom-loader-phrase{animation:none}}
 .boot-screen p{font-size:24px;margin:0;color:#bdc8db}.boot-screen small{font-size:17px;color:#8496b2}
 @keyframes boot-spin{to{transform:rotate(360deg)}}
 /* Pointer actions remain available while their button owns focus. */
