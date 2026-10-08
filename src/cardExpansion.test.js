@@ -81,6 +81,9 @@ test('F2: past the middle a rail panel opens left, with half a card of hysteresi
  assert.equal(at(4,'end'),'end');assert.equal(at(4,'end',150),'end','coming back near the middle (within half a card) does not flip');assert.equal(at(4,'start',150),'start');assert.equal(at(3,'end'),'start','more than half a card back flips');
  assert.equal(at(12,'start',1920),'start','the rail scroll is part of the centre');assert.equal(at(14,'start',1920),'end');
  assert.equal(expansionAlignFor({cellLeft:700,cellWidth:210,scrollLeft:0,viewportWidth:1000,panelWidth:1120}),'start','end needs room left of the card');
+ // Kingdom A3: TV rails keep the focus at the fixed column (anchoredRailOffset), so the panel always grows right; F2 is PC only.
+ assert.equal(expansionAlignFor({cellLeft:7*240,cellWidth:210,scrollLeft:7*240,viewportWidth:1920,previous:'end',tv:true}),'start');
+ for(const index of [4,14,39])assert.equal(expansionAlignFor({cellLeft:index*240,cellWidth:210,scrollLeft:0,viewportWidth:1920,previous:'end',panelWidth:1000,tv:true}),'start','TV never flips, even past the middle');
  const viewport={left:0,top:0,width:1920,height:1080},anchor={left:1440,top:300,width:210,height:380,bottom:680},end=expandedCardPlacement(anchor,viewport,{tv:true,align:'end'});
  assert.equal(end.left+end.width,1650,'the right edge sits on the card');assert.deepEqual(expandedCardPlacement(anchor,viewport,{tv:true,alignStart:true}),expandedCardPlacement(anchor,viewport,{tv:true,align:'start'}));
  assert.equal(expandedCardPlacement({...anchor,left:200},viewport,{tv:true,align:'end'}).left,16,'clamped to the viewport');

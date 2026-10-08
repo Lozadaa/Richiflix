@@ -31,8 +31,9 @@ export function cellAnchorBox(cell){
 // Fase F2: a rail panel opens toward the side already seen. Past the rail's middle (card centre relative to
 // its viewport) it opens left ('end'); ±half a card of hysteresis around the middle keeps the previous side, so
 // one key near the middle never flips it. 'end' needs room: the panel must fit left of the card's right edge.
-export function expansionAlignFor({cellLeft,cellWidth,scrollLeft,viewportWidth,previous,panelWidth=0}){
- if(cellLeft+cellWidth<panelWidth)return 'start';
+// Kingdom A3: F2 is PC only. A TV rail keeps every focused card at the fixed column, so its panel always grows right.
+export function expansionAlignFor({cellLeft,cellWidth,scrollLeft,viewportWidth,previous,panelWidth=0,tv=false}){
+ if(tv||cellLeft+cellWidth<panelWidth)return 'start';
  const offset=cellLeft-scrollLeft+cellWidth/2-viewportWidth/2;
  return offset>(previous==='end'?-cellWidth/2:previous==='start'?cellWidth/2:0)?'end':'start';
 }

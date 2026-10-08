@@ -52,8 +52,8 @@ export function useCardExpansion(anchor,selected,instanceId,tv,onOpen,live=false
    const top=expansionViewportTop({mainTop:bounds?.top||0,boxTop:box.top,headingBottom:heading?.getBoundingClientRect().bottom,gridTop:grid?.getBoundingClientRect().top,controlsBottom:controls?.getBoundingClientRect().bottom});
    const viewport={left:0,top,width:window.innerWidth,height:Math.min(window.innerHeight,bounds?.bottom||window.innerHeight)-top};
    const options={tv,live,tall,align:rail||tv?'start':'center'};let panel=expandedCardPlacement(box,viewport,options);if(!panel)return;
-   // TV navigation keeps the card anchored left, including the final items. Never flip its expansion side.
-   // Pointer browsing on desktop retains its near-edge placement.
+   // Kingdom A3: a TV rail keeps the card at the fixed column, first and last items included, so expansionAlignFor
+   // never flips its side (expansionAlignFor tv:true; here TV skips it and its scrollLeft read). Pointer browsing on desktop retains its near-edge placement (F2).
    if(rail&&!tv){options.align=railNode.dataset.expansionAlign=expansionAlignFor({cellLeft:parseFloat(cell.style.left)||0,cellWidth:box.width,scrollLeft:railNode.scrollLeft,viewportWidth:railNode.clientWidth,previous:railNode.dataset.expansionAlign,panelWidth:panel.width});if(options.align==='end')panel=expandedCardPlacement(box,viewport,options);}
    // The rail scroll depends only on the panel width; place once from the model shifted by that scroll.
    ignoreScrollUntil=performance.now()+80;space=reserveCardExpansion(anchor.current,box,panel,tv,options.align);
