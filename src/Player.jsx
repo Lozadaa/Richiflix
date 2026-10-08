@@ -11,6 +11,8 @@ import {usePlaybackChrome} from './usePlaybackChrome.js';
 import {createPlaybackHealth,createHlsRecovery} from './playbackRecovery.js';
 import {feedsOf,nextFeed,siblingChannel,eventPhaseLabel,eventPhaseLine} from './liveEvents.js';
 import {channelTitle} from './ContentIdentity.jsx';
+import {createSeekAccumulator} from './seekAccumulator.js';
+import {playerKeyAction} from './playerKeys.js';
 import './playerLive.css';
 
 const clamp=(value,min,max)=>Math.min(max,Math.max(min,value));
@@ -25,9 +27,10 @@ const CHANNEL_KEYS={ChannelUp:1,PageUp:1,ChannelDown:-1,PageDown:-1};
 export function Player({item,start,save,close,change,fullscreen,toggleFullscreen,restoreFocus,tvMode=false}){
  const videoRef=useRef(),nativeRef=useRef(),hlsRef=useRef(),healthRef=useRef(),userPaused=useRef(false),seekingRef=useRef(false),saveRef=useRef(save),menuRef=useRef(),optionsRef=useRef(),lastSaved=useRef(-1),resumeAt=useRef(start),scrubbing=useRef(false),scrubValue=useRef(0),feedbackTimer=useRef(),signalRef=useRef(),signalMenuRef=useRef(),switchTimer=useRef(),tried=useRef(new Set(item.tried));
  saveRef.current=save;
+ const accumulator=useRef(null);accumulator.current??=createSeekAccumulator();
  const tv=tvMode||isTVBuild;
  const [error,setError]=useState(''),[loading,setLoading]=useState(true),[showLoader,setShowLoader]=useState(false),[paused,setPaused]=useState(true),[ended,setEnded]=useState(false),[retry,setRetry]=useState(0);
- const [media,setMedia]=useState(emptyMedia),[scrub,setScrub]=useState(null),[preview,setPreview]=useState(null),[feedback,setFeedback]=useState('');
+ const [media,setMedia]=useState(emptyMedia),[scrub,setScrub]=useState(null),[preview,setPreview]=useState(null),[feedback,setFeedback]=useState(''),[pendingSeek,setPendingSeek]=useState(null);
  const [volume,setVolume]=useState(()=>clamp(preference('rf-player-volume',.8),0,1)),[muted,setMuted]=useState(false),[rate,setRate]=useState(1),[options,setOptions]=useState(false);
  const [levels,setLevels]=useState([]),[quality,setQuality]=useState(-1),[audioTracks,setAudioTracks]=useState([]),[audio,setAudio]=useState(0),[captions,setCaptions]=useState([]),[caption,setCaption]=useState(-1);
  const [signals,setSignals]=useState(false),[switching,setSwitching]=useState('');
@@ -58,13 +61,13 @@ export function Player({item,start,save,close,change,fullscreen,toggleFullscreen
  useEffect(()=>{if(!isTizen)videoRef.current.playbackRate=tv?1:rate;},[rate,tv]);
  useEffect(()=>{if(options)menuRef.current?.querySelector('select')?.focus({preventScroll:true});},[options]);
  useEffect(()=>{if(signals)signalMenuRef.current?.querySelector('[aria-pressed="true"]')?.focus({preventScroll:true});},[signals]);
- useEffect(()=>()=>{clearTimeout(feedbackTimer.current);clearTimeout(switchTimer.current);},[]);
+ useEffect(()=>()=>{clearTimeout(feedbackTimer.current);clearTimeout(switchTimer.current);accumulator.current.cancel();},[]);
  useEffect(()=>{if(error||ended)document.querySelector('.player-dialog .player-state button')?.focus({preventScroll:true});},[error,ended]);
 
  useEffect(()=>{
   const video=videoRef.current;let hls,stopped=false;
   userPaused.current=false;seekingRef.current=false;video.autoplay=true;
-  setError('');setLoading(true);setShowLoader(false);setEnded(false);setPaused(true);setMedia(emptyMedia);setLevels([]);setQuality(-1);setAudioTracks([]);setCaptions([]);setCaption(-1);setOptions(false);setSignals(false);lastSaved.current=-1;
+  setError('');setLoading(true);setShowLoader(false);setEnded(false);setPaused(true);setMedia(emptyMedia);setLevels([]);setQuality(-1);setAudioTracks([]);setCaptions([]);setCaption(-1);setOptions(false);setSignals(false);lastSaved.current=-1;accumulator.current.cancel();setPendingSeek(null);setScrub(null);
   const health=createPlaybackHealth({readPosition:()=>engine()?.currentTime||0,readSeeking:()=>!isTizen&&(video.seeking||seekingRef.current),onFailure:message=>{setLoading(false);setError(message);},onHealthy:()=>{const restore=document.activeElement?.closest('.player-state');setError('');setLoading(false);setPaused(false);setEnded(false);if(restore)requestAnimationFrame(()=>{if(healthRef.current===health)document.querySelector('.player-dialog .playback-toggle')?.focus({preventScroll:true});});},onWaiting:()=>setLoading(true)});healthRef.current=health;
   const visibility=()=>health.visibility(document.hidden);document.addEventListener('visibilitychange',visibility);visibility();
   const clearHealth=()=>{health.dispose();if(healthRef.current===health)healthRef.current=null;document.removeEventListener('visibilitychange',visibility);};
@@ -123,6 +126,14 @@ export function Player({item,start,save,close,change,fullscreen,toggleFullscreen
  const seek=value=>{if(!seekable)return;engine().currentTime=clamp(value,from,Math.max(from,to-.1));resumeAt.current=engine().currentTime;setEnded(false);sync();};
  const flash=label=>{setFeedback(label);clearTimeout(feedbackTimer.current);feedbackTimer.current=setTimeout(()=>setFeedback(''),700);};
  const skip=seconds=>{if(tv&&!seekable)return;seek(engine().currentTime+seconds);flash(`${seconds>0?'+':''}${seconds} s`);};
+ // D1: Left/Right (and the media seek keys) accumulate one burst; the bar previews the target and one seek follows.
+ accumulator.current.onApply(target=>{setPendingSeek(null);setScrub(null);seek(from+target);});
+ const seekBy=({direction,repeat=false,now=false})=>{
+  const video=engine();if(!seekable||!video)return;
+  const result=accumulator.current.press(direction,{position:video.currentTime-from,duration:to-from,repeat});if(!result)return;
+  setPendingSeek({...result,direction});setScrub(from+result.target);flash(`${direction>0?'+':'-'}${result.delta<60?`${result.delta} s`:time(result.delta)}`);
+  if(now)accumulator.current.flush();
+ };
  const changeVolume=value=>{setVolume(value);setMuted(value===0);};
  const replay=()=>{if(isTizen){resumeAt.current=0;setRetry(prev=>prev+1);return;}seek(from);setEnded(false);engine().play().catch(()=>{});};
  const closeOptions=()=>{setOptions(false);optionsRef.current?.focus({preventScroll:true});};
@@ -140,27 +151,38 @@ export function Player({item,start,save,close,change,fullscreen,toggleFullscreen
  const keyboard=e=>{
   if(e.key==='Escape'&&options){e.preventDefault();e.stopPropagation();closeOptions();return;}
   if(e.key==='Escape'&&signals){e.preventDefault();e.stopPropagation();closeSignals();return;}
-  if(e.altKey||e.ctrlKey||e.metaKey||e.target.closest('.playback-menu,.player-state'))return;
+  if(e.altKey||e.ctrlKey||e.metaKey||e.target.closest('.playback-menu,.player-state,.player-prompt'))return;
   const key=e.key.toLowerCase(),target=e.target,dialog=e.currentTarget;
+  const focus=element=>{if(element)requestAnimationFrame(()=>element.focus({preventScroll:true}));};
+  // D2: in TV the focus lives on the video or on the button row; the media seek keys go through the window listener.
+  if(tv){
+   if(e.key.startsWith('Media'))return;
+   const action=playerKeyAction({key:e.key,focus:target===videoRef.current?'video':target.closest('.playback-toolbar')?'buttons':'other',repeat:e.repeat,seekable,chromeVisible:!chromeHidden});
+   if(key.startsWith('arrow'))e.preventDefault();
+   if(!action||action.type==='close')return;
+   e.preventDefault();e.stopPropagation();
+   if(action.type==='seek')seekBy(action);
+   else if(action.type==='focusVideo')videoRef.current?.focus({preventScroll:true});
+   else if(action.type==='focusButtons'){if(action.togglePlay&&!e.repeat)play();focus(dialog.querySelector('.playback-toggle:not(:disabled)')||dialog.querySelector('.playback-toolbar button:not(:disabled)'));}
+   else{const row=[...dialog.querySelectorAll('.playback-toolbar button:not(:disabled)')].filter(element=>!element.closest('.playback-menu,[inert]'));focus(row[clamp(row.indexOf(target)+action.direction,0,row.length-1)]);}
+   return;
+  }
   const toolbar=[...dialog.querySelectorAll('.playback-toolbar button:not(:disabled)')].filter(element=>!element.closest('.playback-menu')&&element.getBoundingClientRect().width>0);
-  if(tv)toolbar.sort((a,b)=>a.getBoundingClientRect().left-b.getBoundingClientRect().left);
   const playControl=toolbar.find(button=>button.classList.contains('playback-toggle'));
   const skips=toolbar.filter(button=>button.classList.contains('skip-tool'));
-  const timeline=dialog.querySelector('.seek-track input'),back=dialog.querySelector('.back-button'),liveEdge=dialog.querySelector('.live-edge:not(:disabled)');
-  const focus=element=>{if(element)requestAnimationFrame(()=>element.focus({preventScroll:true}));};
+  const timeline=dialog.querySelector('.seek-track input'),back=dialog.querySelector('.back-button');
   if(key.startsWith('arrow')){
    if(target.matches('.player-volume input')&&(key==='arrowleft'||key==='arrowright'))return;
    e.preventDefault();e.stopPropagation();
    if((target===videoRef.current||target.matches('.player-resume'))){focus(key==='arrowup'?timeline||playControl||toolbar[0]:key==='arrowleft'?skips[0]||playControl||toolbar[0]:key==='arrowright'?skips[1]||toolbar[toolbar.length-1]:playControl||toolbar[0]);return;}
-   if(target===timeline){if(key==='arrowleft'||key==='arrowright'){if(seekable)skip(key==='arrowleft'?-10:10);}else focus(key==='arrowup'?(tv&&liveEdge)||back:playControl||toolbar[0]);return;}
-   if(tv&&target===liveEdge){focus(key==='arrowup'?back:timeline||playControl);return;}
-   if(target===back){if(key==='arrowdown')focus((tv&&liveEdge)||timeline||playControl||toolbar[0]);return;}
+   if(target===timeline){if(key==='arrowleft'||key==='arrowright'){if(seekable)skip(key==='arrowleft'?-10:10);}else focus(key==='arrowup'?back:playControl||toolbar[0]);return;}
+   if(target===back){if(key==='arrowdown')focus(timeline||playControl||toolbar[0]);return;}
    if(target.matches('.player-volume input')){focus(key==='arrowup'?timeline||back:videoRef.current);return;}
    const index=toolbar.indexOf(target);
-   if(index>=0){if(key==='arrowup')focus(timeline||(tv&&target===playControl&&signalRef.current)||back);else if(key==='arrowdown')focus(videoRef.current);else focus(toolbar[clamp(index+(key==='arrowright'?1:-1),0,toolbar.length-1)]);}
+   if(index>=0){if(key==='arrowup')focus(timeline||back);else if(key==='arrowdown')focus(videoRef.current);else focus(toolbar[clamp(index+(key==='arrowright'?1:-1),0,toolbar.length-1)]);}
    return;
   }
-  if(target!==videoRef.current||![' ','enter','k',...(!tv?['m','f']:[])].includes(key))return;
+  if(target!==videoRef.current||![' ','enter','k','m','f'].includes(key))return;
   e.preventDefault();e.stopPropagation();if(e.repeat)return;
   if(key===' '||key==='enter'||key==='k')play();else if(key==='m')setMuted(prev=>!prev);else toggleFullscreen();
  };
@@ -168,12 +190,12 @@ export function Player({item,start,save,close,change,fullscreen,toggleFullscreen
   if(!tv)return;
   const remote=event=>{
    if(!['MediaPlay','MediaPause','MediaPlayPause','MediaStop','MediaRewind','MediaFastForward'].includes(event.key))return;
-   event.preventDefault();if(event.repeat)return;
+   event.preventDefault();
+   const seekKey=playerKeyAction({key:event.key,repeat:event.repeat,seekable});if(seekKey){seekBy(seekKey);return;}if(event.repeat)return;
    if(event.key==='MediaPlay'){userPaused.current=false;if(!isTizen)videoRef.current.autoplay=true;healthRef.current?.resume();engine().play().catch(()=>{});}
    else if(event.key==='MediaPause')pausePlayback();
    else if(event.key==='MediaPlayPause')play();
    else if(event.key==='MediaStop')close();
-   else skip(event.key==='MediaRewind'?-10:10);
   };
   window.addEventListener('keydown',remote);return()=>window.removeEventListener('keydown',remote);
  });
@@ -204,10 +226,11 @@ export function Player({item,start,save,close,change,fullscreen,toggleFullscreen
   </div>
   <div className="player-heading" inert={chromeHidden}><div className="player-title"><span>{event?eventPhaseLine(event,eventPhaseLabel(event))||'En directo':live?['En directo',displayText(item.genre)].filter(Boolean).join(' · '):displayText(item.genre)||'Tu biblioteca'}</span><strong>{title}</strong>{feed?<em className="player-live-line">{feed.label}</em>:guideNow&&<em className="player-live-line">Ahora · {displayText(guideNow)}</em>}</div><span className="player-wordmark" aria-hidden="true"><Brand/></span></div>
   {(!tv||(!error&&!ended))&&<div className="player-controls" inert={chromeHidden} aria-label="Controles de reproducción">
-   <div className="playback-meta"><div className="playback-meta-copy"><span className="playback-clock">{live?'En directo':`${time(position)} / ${time(media.duration||NaN)}`}</span>{!tv&&<span className="playback-credit">{displayText(item.credit)||'Tu biblioteca personal'}</span>}</div>{live?(!tv||(seekable&&to-position>=3))&&<button className={`live-edge ${to-position<3?'at-live':''}`} aria-label="Ir al directo" disabled={!seekable} onClick={()=>seek(to-.5)}><Radio size={28} aria-hidden="true"/></button>:!tv&&<span className="remaining-time">{seekable?`${time(Math.max(0,to-position))} restantes`:''}</span>}</div>
+   <div className="playback-meta"><div className="playback-meta-copy"><span className="playback-clock">{live?'En directo':`${time(position)} / ${time(media.duration||NaN)}`}</span>{!tv&&<span className="playback-credit">{displayText(item.credit)||'Tu biblioteca personal'}</span>}</div>{live?!tv&&<button className={`live-edge ${to-position<3?'at-live':''}`} aria-label="Ir al directo" disabled={!seekable} onClick={()=>seek(to-.5)}><Radio size={28} aria-hidden="true"/></button>:!tv&&<span className="remaining-time">{seekable?`${time(Math.max(0,to-position))} restantes`:''}</span>}</div>
    {seekable&&<div className="seek-track" onPointerMove={e=>{const box=e.currentTarget.getBoundingClientRect();setPreview({value:from+clamp((e.clientX-box.left)/box.width,0,1)*(to-from),percent:clamp((e.clientX-box.left)/box.width*100,3,97)});}} onPointerLeave={()=>setPreview(null)}>
     {!tv&&preview&&<output className="seek-preview" style={{left:`${preview.percent}%`}}>{time(live?to-preview.value:preview.value)}</output>}
-    <input type="range" aria-label="Posición de reproducción" aria-valuetext={live?`${time(Math.max(0,to-position))} detrás del directo`:`${time(position)} de ${time(to)}`} min={from} max={to} step="0.1" value={clamp(position,from,to)} style={{'--played':`${percent}%`,'--buffered':`${buffered}%`}} onPointerDown={e=>{scrubbing.current=true;scrubValue.current=position;e.currentTarget.setPointerCapture(e.pointerId);setScrub(position);}} onChange={e=>{const value=Number(e.target.value);if(scrubbing.current){scrubValue.current=value;setScrub(value);}else seek(value);}} onPointerUp={finishScrub} onPointerCancel={()=>{scrubbing.current=false;setScrub(null);}} onLostPointerCapture={finishScrub}/>
+    {pendingSeek&&<output className="seek-preview seek-pending" style={{left:`${clamp(percent,3,97)}%`}}>{`${pendingSeek.direction>0?'+':'-'}${time(pendingSeek.delta)} · ${time(from+pendingSeek.target)}`}</output>}
+    <input type="range" tabIndex={tv?-1:0} aria-hidden={tv||undefined} onFocus={tv?()=>videoRef.current?.focus({preventScroll:true}):undefined} aria-label="Posición de reproducción" aria-valuetext={live?`${time(Math.max(0,to-position))} detrás del directo`:`${time(position)} de ${time(to)}`} min={from} max={to} step="0.1" value={clamp(position,from,to)} style={{'--played':`${percent}%`,'--buffered':`${buffered}%`}} onPointerDown={e=>{scrubbing.current=true;scrubValue.current=position;e.currentTarget.setPointerCapture(e.pointerId);setScrub(position);}} onChange={e=>{const value=Number(e.target.value);if(scrubbing.current){scrubValue.current=value;setScrub(value);}else seek(value);}} onPointerUp={finishScrub} onPointerCancel={()=>{scrubbing.current=false;setScrub(null);}} onLostPointerCapture={finishScrub}/>
    </div>}
    <div className="playback-toolbar">
     <div className="playback-main-controls">

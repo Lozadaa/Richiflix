@@ -41,10 +41,13 @@ export function installTVPlatform(){
  document.documentElement.classList.add('samsung-tv');
  if(isTizen){
   try{registerRemote(window.tizen.tvinputdevice);}catch{}
+  // D2: some firmware repeats a held key without `repeat`; a second keydown of the same key within 180 ms (no keyup between) is a repeat.
+  let heldKey=0,heldAt=0;window.addEventListener('keyup',event=>{if(event.keyCode===heldKey)heldKey=0;},true);
   // Preserve Samsung's volume and power keys: the TV handles those itself.
   window.addEventListener('keydown',event=>{
    if(event.richiflixRemote)return;
    const key=remoteKeys[event.keyCode];if(!key)return;
+   const at=performance.now(),repeat=event.repeat||(event.keyCode===heldKey&&at-heldAt<180);heldKey=event.keyCode;heldAt=at;
    if(event.target.tagName==='SELECT'&&[37,39,13].includes(event.keyCode)){
     event.preventDefault();event.stopImmediatePropagation();const select=event.target;
     if(event.keyCode!==13){
@@ -67,7 +70,7 @@ export function installTVPlatform(){
    // Text fields must keep native arrow/Enter handling for Samsung's IME.
    if(event.keyCode!==10009&&['INPUT','TEXTAREA'].includes(event.target.tagName)&&event.target.type!=='range'&&!/^(?:Media|Channel)/.test(key))return;
    event.preventDefault();event.stopImmediatePropagation();
-   const normalized=new KeyboardEvent('keydown',{key,bubbles:true,cancelable:true,repeat:event.repeat});
+   const normalized=new KeyboardEvent('keydown',{key,bubbles:true,cancelable:true,repeat});
    const dialog=document.querySelector('[role="dialog"]');
    const target=dialog&&['BODY','HTML'].includes(event.target.tagName)?dialog.querySelector('video,button:not(:disabled)')||dialog:event.target;
    if(target!==event.target)target.focus();
