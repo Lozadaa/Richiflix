@@ -20,6 +20,12 @@ export function topTen(collections,metadata={}){
  const ranked=type=>(collections.find(group=>group.name===TMDB_BEST&&group.type===type)?.items||[]).map((item,position)=>({item,film:type==='movie',rank:Number(metadata[item.id]?.tmdbRank??item.tmdbRank)||position+1}));
  return [...ranked('movie'),...ranked('series')].sort((a,b)=>a.rank-b.rank||b.film-a.film).slice(0,10).map(({item},index)=>({...item,rank:index+1}));
 }
+// H2-T4: eyebrow over each Inicio row title (static paint). Discovery rows pass their own («PARA TI»); unknown → ''.
+const EYEBROWS={'Películas':'TU CATÁLOGO','Series':'TU CATÁLOGO','Una gran aventura':'TU CATÁLOGO','Continuar viendo':'SIGUE DONDE LO DEJASTE','Top 10 en Kingdom':'TOP 10','Nuevo esta semana':'NOVEDADES'};
+export function rowEyebrow(title){
+ const text=String(title||'');
+ return EYEBROWS[text]||(text.startsWith('Ahora en vivo')?'EN DIRECTO':/· TMDB$/.test(text)?'SELECCIÓN TMDB':'');
+}
 // Back (Escape / Tizen 10009) in TV (nothing focused counts as header): content (cards and their expanded panel, banner,
 // filters, empty-state actions) -> header; header -> clear search -> Inicio -> profiles.
 // The panel's action buttons (long press) first return to their card (ExpandedCard).

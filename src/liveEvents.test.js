@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {eventKey,groupLiveEvents,eventPhase,eventPhaseLabel,splitLiveEvents,homeLiveEvents,eventCaption,rememberFeed,preferredFeed,feedLanguage,liveHubRows,liveChipItems} from './liveEvents.js';
+import {eventKey,groupLiveEvents,eventPhase,eventPhaseLabel,splitLiveEvents,homeLiveEvents,liveNowCount,eventCaption,rememberFeed,preferredFeed,feedLanguage,liveHubRows,liveChipItems} from './liveEvents.js';
 import {createCatalogueIndex} from './catalogueIndex.js';
 import {reconcileMLBEvent} from './mlbSchedule.js';
 import {prepareChannels} from './channelPreparation.js';
@@ -93,6 +93,9 @@ test('ended events hide later and give their signals back; home shows live first
  const {events}=splitLiveEvents(groupLiveEvents(games),start-3*H);
  assert.deepEqual(events.map(event=>eventPhase(event,start-3*H)),['live','live','soon','upcoming','upcoming','upcoming','upcoming']);
  assert.equal(homeLiveEvents(events,start-3*H).length,6);
+ // H2-T4: «Ahora en vivo · 2 en juego»; channels and soon/upcoming events never count, none → 0 (no suffix).
+ assert.equal(liveNowCount([...homeLiveEvents(events,start-3*H),network],start-3*H),2);
+ assert.equal(liveNowCount([network],start-3*H),0);assert.equal(liveNowCount([],start),0);
 });
 
 test('search finds an event by any signal and returns it once',async()=>{

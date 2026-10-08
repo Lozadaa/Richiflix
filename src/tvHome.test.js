@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {homeRowsForTV,backTarget,recentlyAdded,isNew,topTen} from './tvHome.js';
+import {homeRowsForTV,backTarget,recentlyAdded,isNew,topTen,rowEyebrow} from './tvHome.js';
 import {normaliseItem} from './xtream.js';
 import {TMDB_BEST,TMDB_RECENT} from './tmdbSelections.js';
 
@@ -38,6 +38,9 @@ test('topTen interleaves TMDB_BEST films and series by tmdbRank, film first on a
  assert.deepEqual(topTen([{name:TMDB_RECENT,type:'movie',items:list('r',3)}]),[]);
  assert.deepEqual(topTen([]),[]);
  assert.deepEqual(topTen([{name:TMDB_BEST,type:'series',items:list('s',3)}]).map(item=>item.id),['s1','s2','s3']);
+});
+test('rowEyebrow maps every Inicio row title',()=>{
+ for(const [title,eyebrow] of [['Películas','TU CATÁLOGO'],['Series','TU CATÁLOGO'],['Una gran aventura','TU CATÁLOGO'],['Continuar viendo','SIGUE DONDE LO DEJASTE'],['Ahora en vivo','EN DIRECTO'],['Ahora en vivo · 3 en juego','EN DIRECTO'],['Películas mejor valoradas · TMDB','SELECCIÓN TMDB'],['Series recientes mejor valoradas · TMDB','SELECCIÓN TMDB'],['Top 10 en Kingdom','TOP 10'],['Nuevo esta semana','NOVEDADES'],['Para una noche de risas',''],[undefined,'']])assert.equal(rowEyebrow(title),eyebrow,String(title));
 });
 test('normaliseItem turns provider added seconds into addedAt, and drops absent or invalid values',()=>{
  const account={host:'http://example.test',username:'u',password:'p',name:'Fuente'},movie=raw=>normaliseItem({stream_id:1,name:'X',...raw},'movie',new Map(),account);
