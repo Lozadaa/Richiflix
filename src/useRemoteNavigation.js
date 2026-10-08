@@ -36,7 +36,7 @@ export function useRemoteNavigation(){
    // Up can focus the preserved banner control and reveal the same recommendation again.
    if(e.key==='ArrowDown'&&current.closest('.topbar')){const primary=document.querySelector('.app.has-tv-stage .focus-actions .primary')||document.querySelector('main .catalog-controls button')||document.querySelector('.card-open');if(primary){move(e,primary);return;}}
    if(e.key==='ArrowDown'&&current.closest('.focus-actions')){const filter=document.querySelector('main .category-filter-entry')||document.querySelector('main .live-hub .category-chip.selected');if(filter){move(e,filter);return;}let target=lastCard?.isConnected?lastCard:null;if(!target&&lastGroup?.isConnected){if(Number(lastGroup.dataset.virtualCount)>0)announce(e);target=restoreVirtualFocus(lastGroup,lastIndex);}target??=document.querySelector('.card-open');if(target){move(e,target);return;}}
-   if(current.closest('.catalog-controls')){if(e.key==='ArrowUp'){move(e,document.querySelector('.app.has-tv-stage .focus-actions .primary')||document.querySelector('.topbar nav button.active'));return;}if(e.key==='ArrowDown'){const row=document.querySelector('main .catalog-row .cards');move(e,row?recalled(e,row):lastCard?.isConnected?lastCard:document.querySelector('.card-open'));return;}}
+   if(current.closest('.catalog-controls')){if(e.key==='ArrowUp'){move(e,document.querySelector('.app.has-tv-stage .focus-actions .primary')||document.querySelector('.topbar nav button.active'));return;}if(e.key==='ArrowDown'){const empty=document.querySelector('main .empty-state-actions button'),row=document.querySelector('main .catalog-row .cards');move(e,empty||(row?recalled(e,row):lastCard?.isConnected?lastCard:document.querySelector('.card-open')));return;}}
    // Direct banner: Left/Right on the carousel's Play change the slide in FocusStage (bannerKeyAction, which
    // prevents the key); the dots are only an indicator. Up from the actions goes to the header.
    if(e.key==='ArrowUp'&&current.closest('.focus-actions')){move(e,document.querySelector('.topbar nav button.active'));return;}
@@ -82,7 +82,7 @@ export function useRemoteNavigation(){
      if(next){move(e,recalled(e,next));return;}
      const hub=group.closest('.live-hub');if(hub){const target=down?hub.querySelector('.catalog-grid'):hub.querySelector('.category-chip.selected');if(target){move(e,down?recalled(e,target):target);return;}}
     }
-    if(!down){move(e,document.querySelector('.app.has-tv-stage .focus-actions .primary')||document.querySelector('.topbar nav button.active'));return;}
+    if(!down){move(e,group.closest('.empty-state')?.querySelector('.empty-state-actions button')||document.querySelector('.app.has-tv-stage .focus-actions .primary')||document.querySelector('.topbar nav button.active'));return;}
     move(e,null);return;
    }
   }

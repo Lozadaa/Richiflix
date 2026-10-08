@@ -13,8 +13,8 @@ export function CategoryChips({categories,collections=[],value,change,title,allL
  const reveal=event=>{const target=event.target,root=strip.current;if(!target.matches('button')||!root.contains(target))return;const box=target.getBoundingClientRect(),bounds=root.getBoundingClientRect(),reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;if(box.left<bounds.left+8||box.right>bounds.right-8)root.scrollBy({left:box.left<bounds.left?box.left-bounds.left-8:box.right-bounds.right+8,behavior:reduced?'instant':'smooth'});const viewport=scrollViewport(root);if(viewport!==window){const view=viewport.getBoundingClientRect();glideViewportBy(viewport,viewportRevealDelta({top:bounds.top,bottom:bounds.bottom,viewportTop:view.top,height:view.height,margin:12}));}};
  const navigate=event=>{
   const buttons=[...strip.current.querySelectorAll('button')],index=buttons.indexOf(event.target);if(index<0||!event.key.startsWith('Arrow'))return;
-  // Live rows below: Down goes to the first row's remembered card (useRemoteNavigation owns that memory).
-  if(event.key==='ArrowDown'&&strip.current.closest('main')?.querySelector('.catalog-row .cards'))return;
+  // Live rows or empty-state actions below: Down goes to the first of them (useRemoteNavigation owns that memory).
+  if(event.key==='ArrowDown'&&strip.current.closest('main')?.querySelector('.catalog-row .cards,.empty-state-actions button'))return;
   event.preventDefault();event.stopPropagation();
   if(event.key==='ArrowLeft'||event.key==='ArrowRight'){buttons[index+(event.key==='ArrowRight'?1:-1)]?.focus({preventScroll:true});return;}
   const app=strip.current.closest('.app');if(event.key==='ArrowUp'){(app.querySelector('.has-tv-stage .focus-actions .primary')||app.querySelector('.topbar nav button.active'))?.focus({preventScroll:true});return;}
