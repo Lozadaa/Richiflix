@@ -81,9 +81,9 @@ body[data-focus-region]:not([data-focus-region='catalogue']) .tv-mode .card.is-p
 /* Grid: no container layer (measured neutral: its repaint just moves from the scene to a 1.37M px layer). */
 /* El track mide el catálogo completo (hasta millones de px): nunca debe ser capa. */
 .tv-mode .rail-halo{position:absolute;left:0;top:0;z-index:2;box-sizing:border-box;border:4px solid #f5d58d;border-radius:15px;pointer-events:none;opacity:0;will-change:transform,opacity;transition:none}
-.tv-mode .virtual-rail-track:has(.card.is-previewed:not(.is-expanded))>.rail-halo,.tv-mode .virtual-catalogue:has(.card.is-previewed:not(.is-expanded))>.rail-halo{opacity:1;transition:opacity var(--tv-fast,80ms) ease}
-body[data-focus-region]:not([data-focus-region='catalogue']) .tv-mode .virtual-rail-track:has(.card.is-previewed)>.rail-halo,body[data-focus-region]:not([data-focus-region='catalogue']) .tv-mode .virtual-catalogue:has(.card.is-previewed)>.rail-halo{opacity:0}
-@media(prefers-reduced-motion:reduce){.tv-mode .rail-halo,.tv-mode .virtual-rail-track:has(.card.is-previewed)>.rail-halo,.tv-mode .virtual-catalogue:has(.card.is-previewed)>.rail-halo{transition:none}}
+.tv-mode .virtual-rail-wrap:has(.card.is-previewed:not(.is-expanded))>.rail-halo,.tv-mode .virtual-catalogue:has(.card.is-previewed:not(.is-expanded))>.rail-halo{opacity:1;transition:opacity var(--tv-fast,80ms) ease}
+body[data-focus-region]:not([data-focus-region='catalogue']) .tv-mode .virtual-rail-wrap:has(.card.is-previewed)>.rail-halo,body[data-focus-region]:not([data-focus-region='catalogue']) .tv-mode .virtual-catalogue:has(.card.is-previewed)>.rail-halo{opacity:0}
+@media(prefers-reduced-motion:reduce){.tv-mode .rail-halo,.tv-mode .virtual-rail-wrap:has(.card.is-previewed)>.rail-halo,.tv-mode .virtual-catalogue:has(.card.is-previewed)>.rail-halo{transition:none}}
 @media(prefers-reduced-motion:reduce){.tv-mode .card.is-previewed .card-open,.tv-mode .card.is-previewed .card-open:after{transition:none}}
 @media(prefers-reduced-motion:reduce){.tv-mode .card .card-open{transition:none}}
 /* Fase C2: the TV banner is a recommendation carousel that stays visible while
@@ -144,3 +144,15 @@ body[data-focus-region]:not([data-focus-region='catalogue']) .tv-mode .virtual-r
 /* Ola 4: TV rails scroll on the compositor. With the focus anchored left every Right/Left scrolls the rail; as a
    main-thread scroller each scrollTo repainted and re-layerized it (P50 108–117 → 90–96 ms measured A/B). */
 .tv-mode .cards.virtual-rail{will-change:scroll-position}
+/* Kingdom A2, fixed focus column (spec §1): a virtual rail bleeds to the screen edges (negative margin = the 4.5% page
+   padding, written against the row's width: 4.5% of the scene = 4.5%/.91 of the row) and its padding-left (4.5% of the
+   full-bleed wrap) puts every focused card at the row title's x. The previous card peeks in the screen margin, under
+   a #101827 → transparent gradient; another one fades the right edge. Both are pseudo-elements of the wrap, which
+   never moves, so they paint once (no layer, no mask). The halo (.rail-halo, a child of the wrap since A2) stays at
+   the column and above the left gradient; only its opacity changes. */
+.tv-mode .virtual-rail-wrap{margin:0 calc(-4.5% / .91)}
+.tv-mode .virtual-rail-wrap>.cards.virtual-rail{margin-left:0;margin-right:0;padding-left:4.5%;padding-right:0}
+.tv-mode .virtual-rail-wrap:before,.tv-mode .virtual-rail-wrap:after{content:'';position:absolute;top:0;bottom:0;left:0;width:4.5%;pointer-events:none;z-index:3;background:linear-gradient(90deg,#101827,transparent)}
+.tv-mode .virtual-rail-wrap:after{left:auto;right:0;width:120px;background:linear-gradient(270deg,#101827,transparent)}
+.tv-mode .virtual-rail-wrap>.rail-halo{z-index:4}
+.tv-mode .catalog-row[data-row-far] .virtual-rail-wrap:before,.tv-mode .catalog-row[data-row-far] .virtual-rail-wrap:after{visibility:hidden}

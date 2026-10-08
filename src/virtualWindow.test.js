@@ -89,7 +89,8 @@ test('R5.3 slots: a kept key never changes slot, entering keys reuse freed slots
  assert.equal(new Set(fresh.values()).size,fresh.size);
 });
 test('row halo sits on the card-open box from the model and lifts like the focused card',()=>{
- assert.deepEqual(haloPlacement({index:3,width:210,gap:30}),{x:720,y:0});
+ for(const index of [0,1,7,39])assert.deepEqual(haloPlacement({index,kind:'rail',width:210,gap:30,paddingLeft:86}),{x:86,y:0},'A2: the rail halo stays at the fixed column');
+ assert.deepEqual(haloPlacement({index:3,width:210,gap:30,paddingLeft:86,paddingTop:12}),{x:86,y:12});
  assert.deepEqual(haloPlacement({index:9,kind:'grid',width:192,gap:30,columns:7,rowHeight:400,paddingLeft:12,paddingTop:20}),{x:12+2*222,y:420});
  assert.equal(haloPlacement({index:-1,width:210}),null);
  assert.deepEqual(haloFrames({x:720,y:0},1.06),[{transform:'translate3d(720px,0px,0)'},{transform:'translate3d(720px,-6px,0) scale(1.06)'}]);

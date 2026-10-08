@@ -75,10 +75,11 @@ export function assignSlots(previous,keys,reuse=true){
  return next;
 }
 // Ola 3-F row halo: one composited halo per rail/grid, placed from the model on focusin (no React, no layout
-// reads) at the cell's card-open box (card-open sits at the cell origin, full cell width).
+// reads) at the cell's card-open box (card-open sits at the cell origin, full cell width). Kingdom A2: a rail's halo
+// lives outside the sliding track, fixed at the focus column (paddingLeft, paddingTop of the rail in .rail-wrap).
 export function haloPlacement({index,kind='rail',width,gap=0,columns=1,rowHeight=0,paddingLeft=0,paddingTop=0}){
  if(!(index>=0))return null;
- return kind==='grid'?{x:paddingLeft+(index%columns)*(width+gap),y:paddingTop+Math.floor(index/columns)*rowHeight}:{x:index*(width+gap),y:0};
+ return kind==='grid'?{x:paddingLeft+(index%columns)*(width+gap),y:paddingTop+Math.floor(index/columns)*rowHeight}:{x:paddingLeft,y:paddingTop};
 }
 // The same lift as the focused .card-open (translateY(-6px) scale(--tv-focus-scale), origin at the box centre).
 export const haloFrames=({x,y},scale=1.06,lift=6)=>[{transform:`translate3d(${x}px,${y}px,0)`},{transform:`translate3d(${x}px,${y-lift}px,0) scale(${scale})`}];

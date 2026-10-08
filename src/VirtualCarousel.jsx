@@ -57,7 +57,7 @@ export const VirtualCarousel=memo(function VirtualCarousel({title,items,metadata
  const pointedPreview=useStableEvent((item,event,id)=>pointerPreview?.(item,event,id,{items:snapshot.current.items,index:virtualCardIndex(event.currentTarget),columns:snapshot.current.layout.columns||1,kind:'rail',loop:true}));
  // R5.1/R5.5: the window moves only past the hysteresis band (railWindow `previous`) and state is set only on a
  // real change, so a scroll inside the window (a key's own scrollTo included) renders nothing.
- const placeHalo=index=>{const node=halo.current,{layout}=snapshot.current,at=node&&haloPlacement({index,width:layout.width,gap:layout.gap});if(!at)return;const key=`${at.x},${at.y}`;if(haloAt.current===key)return;haloAt.current=key;liftHalo(node,haloFrames(at,motion.current.scale),motion.current.duration);};
+ const placeHalo=index=>{const node=halo.current,{layout}=snapshot.current,at=node&&haloPlacement({index,width:layout.width,gap:layout.gap,paddingLeft:layout.haloX,paddingTop:layout.haloY});if(!at)return;const key=`${at.x},${at.y}`;if(haloAt.current===key)return;haloAt.current=key;liftHalo(node,haloFrames(at,motion.current.scale),motion.current.duration);};
  const commit=(next,recycle)=>{win.current=next;const pinned=pinWindowFocus(next.indices,focused.current,snapshot.current.count);if(sameIndices(shown.current,pinned))return false;reuse.current=recycle;shown.current=pinned;setIndices(pinned);return true;};
  // Ola 3-F(a): a refresh driven by the rail's own scroll publishes in a transition (never inside the key's frame).
  const refresh=defer=>{
@@ -74,9 +74,9 @@ export const VirtualCarousel=memo(function VirtualCarousel({title,items,metadata
   const element=rail.current;let frame,lastWidth=-1;
   const measure=()=>{
    const style=getComputedStyle(probe.current),basis=style.flexBasis;probe.current.style.width=basis==='auto'?'210px':basis;
-   const width=probe.current.offsetWidth,railStyle=getComputedStyle(element),gap=parseFloat(railStyle.columnGap)||0,viewportWidth=element.clientWidth,paddingLeft=parseFloat(railStyle.paddingLeft)||0,paddingRight=parseFloat(railStyle.paddingRight)||0;
+   const width=probe.current.offsetWidth,railStyle=getComputedStyle(element),gap=parseFloat(railStyle.columnGap)||0,viewportWidth=element.clientWidth,paddingLeft=parseFloat(railStyle.paddingLeft)||0,paddingRight=parseFloat(railStyle.paddingRight)||0,haloX=element.offsetLeft+paddingLeft,haloY=element.offsetTop+(parseFloat(railStyle.paddingTop)||0);
    motion.current=haloMotion(railStyle);
-   if(width>0)setLayout(previous=>previous.width===width&&previous.gap===gap&&previous.viewportWidth===viewportWidth&&previous.paddingLeft===paddingLeft&&previous.paddingRight===paddingRight?previous:{...previous,width,gap,viewportWidth,paddingLeft,paddingRight});
+   if(width>0)setLayout(previous=>previous.width===width&&previous.gap===gap&&previous.viewportWidth===viewportWidth&&previous.paddingLeft===paddingLeft&&previous.paddingRight===paddingRight&&previous.haloX===haloX&&previous.haloY===haloY?previous:{...previous,width,gap,viewportWidth,paddingLeft,paddingRight,haloX,haloY});
   };
   measure();const observer=new ResizeObserver(entries=>{const width=entries[0].contentRect.width;if(width===lastWidth)return;lastWidth=width;cancelAnimationFrame(frame);frame=requestAnimationFrame(measure);});observer.observe(element);
   return()=>{cancelAnimationFrame(frame);observer.disconnect();};
@@ -174,13 +174,12 @@ export const VirtualCarousel=memo(function VirtualCarousel({title,items,metadata
  const move=direction=>{const element=rail.current;if(direction<0&&position.start||direction>0&&position.end)element.scrollTo({left:direction<0?element.scrollWidth-element.clientWidth:0,behavior:'instant'});else element.scrollBy({left:direction*(element.clientWidth+15),behavior:motionAllowed()?'smooth':'instant'});};
  return <section className="catalog-row" aria-labelledby={id} data-warm-id={id}>
   <div className="row-heading"><h2 id={id}>{displayText(title)}</h2><div className="row-controls"><button className="rail-arrow" aria-label={`Anterior en ${title}`} disabled={count<2} onClick={()=>move(-1)}><ChevronLeft size={20}/></button><button className="rail-arrow" aria-label={`Siguiente en ${title}`} disabled={count<2} onClick={()=>move(1)}><ChevronRight size={20}/></button></div></div>
-  <div className="rail-wrap"><div ref={rail} className="cards virtual-rail" aria-label={displayText(title)} data-virtual-kind="rail" data-virtual-count={count} data-virtual-item-count={items.length}>
+  <div className="rail-wrap virtual-rail-wrap"><div ref={rail} className="cards virtual-rail" aria-label={displayText(title)} data-virtual-kind="rail" data-virtual-count={count} data-virtual-item-count={items.length}>
    <div ref={probe} className={`card ${live?'live-card':'portrait-card'} virtual-rail-probe`} aria-hidden="true"/>
    <div className="virtual-rail-track" style={{width:Math.max(0,count*(layout.width+layout.gap)-layout.gap),height:layout.height,...(tv?{'--rail-tail':`${railTailSpace({...layout,itemWidth:layout.width,viewport:layout.viewportWidth})}px`}:{})}}>
     {cells.map(index=>{const item=items[index];return <div key={item?`s${slots.current.get(item.id)}`:viewAllKey} className="virtual-rail-cell" data-virtual-index={index} style={{width:layout.width,left:index*(layout.width+layout.gap),...(item?{}:{height:layout.height})}}>{item?<Card instanceId={`${id}:${item.id}`} item={item} metadata={metadata?.[item.id]} metadataPending={resolvedMetadata?!resolvedMetadata.has(item.id):false} open={open} progress={history[item.id]} favorite={favoriteIds.has(item.id)} toggle={toggle} index={index} total={items.length} preview={focusedPreview} pointerPreview={pointedPreview} leave={leave} tv={tv} profileId={profileId} kids={kids}/>:<div className={`card rail-more-card ${live?'live-card':'portrait-card'}`} data-card-id={`${id}:view-all`}><button className="card-open rail-more-open" aria-label={`Ver todo: ${displayText(title)}`} onClick={viewAll} onFocus={actionFocus}><span className="rail-more-symbol" aria-hidden="true"><LayoutGrid/></span><span className="rail-more-copy"><small>EXPLORAR</small><strong>Ver todo</strong><span>{displayText(title)}</span></span><span className="rail-more-count">{items.length.toLocaleString('es-CL')} {items.length===1?'título':'títulos'}</span><ArrowUpRight className="rail-more-arrow" aria-hidden="true"/></button></div>}</div>;})}
-    {tv&&cells.length>0&&<i ref={haloRef} className="rail-halo" aria-hidden="true" style={{width:layout.width,height:layout.openHeight||layout.width*1.5}}/>}
    </div>
-  </div>{!position.end&&<span className="rail-edge" aria-hidden="true"/>}</div>
+  </div>{tv&&cells.length>0&&<i ref={haloRef} className="rail-halo" aria-hidden="true" style={{width:layout.width,height:layout.openHeight||layout.width*1.5}}/>}{!position.end&&<span className="rail-edge" aria-hidden="true"/>}</div>
   <div className="row-footer">{(!position.start||!position.end)&&<span className="rail-progress" aria-hidden="true"><i ref={progress}/></span>}</div>
  </section>;
 });
