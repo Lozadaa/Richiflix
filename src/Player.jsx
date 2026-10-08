@@ -4,9 +4,10 @@ import {isTizen,isTVBuild} from './platform.js';
 import {createAVPlayer} from './avplay.js';
 import {Play,Pause,Volume2,Volume1,VolumeX,RotateCcw,RotateCw,Maximize,Minimize,MessageSquareText,Radio,Antenna,SkipBack,SkipForward,RefreshCcw} from 'lucide-react';
 import {Dialog} from './Dialog.jsx';
-import {Brand,BrandGlyph} from './Brand.jsx';
+import {Brand,KingdomLoader} from './Brand.jsx';
+import {loaderPhrase} from './loaderPhrases.js';
 import {displayText} from './displayText.js';
-import {displayTitle} from './artwork.js';
+import {artworkURL,displayTitle} from './artwork.js';
 import {usePlaybackChrome} from './usePlaybackChrome.js';
 import {createPlaybackHealth,createHlsRecovery} from './playbackRecovery.js';
 import {feedsOf,nextFeed,siblingChannel,eventPhaseLabel,eventPhaseLine} from './liveEvents.js';
@@ -35,10 +36,11 @@ const CHANNEL_KEYS={ChannelUp:1,PageUp:1,ChannelDown:-1,PageDown:-1};
 export function Player({item,start,save,close,change,seasons,series,intros={},setIntros=()=>{},fullscreen,toggleFullscreen,restoreFocus,tvMode=false}){
  const videoRef=useRef(),nativeRef=useRef(),hlsRef=useRef(),healthRef=useRef(),userPaused=useRef(false),seekingRef=useRef(false),saveRef=useRef(save),optionsRef=useRef(),lastSaved=useRef(-1),resumeAt=useRef(start),scrubbing=useRef(false),scrubValue=useRef(0),feedbackTimer=useRef(),cueTimer=useRef(),switchTimer=useRef(),tried=useRef(new Set(item.tried));
  saveRef.current=save;
- const accumulator=useRef(null);accumulator.current??=createSeekAccumulator();
  // D3: consecutive episodes started by the countdown; any key resets it, the fourth asks «¿Sigues ahí?».
  const autoplays=useRef(0),nextDismissed=useRef(false),lastPosition=useRef(0),startFor=useRef(item.id);
  const tv=tvMode||isTVBuild;
+ // TV: the seek cursor waits 2 s (or OK) before touching AVPlay; PC keeps the quick 0.4 s apply.
+ const accumulator=useRef(null);accumulator.current??=createSeekAccumulator(tv?{applyMs:2000}:{});
  const [error,setError]=useState(''),[loading,setLoading]=useState(true),[showLoader,setShowLoader]=useState(false),[paused,setPaused]=useState(true),[ended,setEnded]=useState(false),[retry,setRetry]=useState(0);
  const [media,setMedia]=useState(emptyMedia),[scrub,setScrub]=useState(null),[preview,setPreview]=useState(null),[feedback,setFeedback]=useState(''),[pendingSeek,setPendingSeek]=useState(null),[nextCard,setNextCard]=useState(false),[stillThere,setStillThere]=useState(false);
  const [volume,setVolume]=useState(()=>clamp(preference('rf-player-volume',.8),0,1)),[muted,setMuted]=useState(false),[rate,setRate]=useState(1),[options,setOptions]=useState(false),[cue,setCue]=useState('');
@@ -68,6 +70,8 @@ export function Player({item,start,save,close,change,seasons,series,intros={},se
   setMedia({current:video.currentTime,duration:video.duration||0,buffered:video.buffered.length?video.buffered.end(video.buffered.length-1):0,from:last>=0?video.seekable.start(last):0,to:last>=0?video.seekable.end(last):0});
  };
  useEffect(()=>{if(!loading){setShowLoader(false);return;}const timer=setTimeout(()=>setShowLoader(true),250);return()=>clearTimeout(timer);},[loading]);
+ const [tick,setTick]=useState(0);
+ useEffect(()=>{if(!loading)return;const id=setInterval(()=>setTick(value=>value+1),2500);return()=>clearInterval(id);},[loading]);
  useEffect(()=>{if(isTizen)return;const video=videoRef.current;if(tv){video.volume=1;video.muted=false;return;}video.volume=volume;video.muted=muted;try{localStorage.setItem('rf-player-volume',String(volume));}catch{}},[volume,muted,tv]);
  useEffect(()=>{if(!isTizen)videoRef.current.playbackRate=tv?1:rate;},[rate,tv]);
  useEffect(()=>()=>{clearTimeout(feedbackTimer.current);clearTimeout(cueTimer.current);clearTimeout(switchTimer.current);accumulator.current.cancel();},[]);
@@ -76,7 +80,7 @@ export function Player({item,start,save,close,change,seasons,series,intros={},se
  useEffect(()=>{
   const video=videoRef.current;let hls,stopped=false;
   userPaused.current=false;seekingRef.current=false;video.autoplay=true;
-  setError('');setLoading(true);setShowLoader(false);setEnded(false);setPaused(true);setMedia(emptyMedia);setLevels([]);setQuality(-1);setAudioTracks([]);setCaptions([]);setCaption(-1);setCue('');if(document.activeElement?.closest('.playback-sidebar'))videoRef.current?.focus({preventScroll:true});setOptions(false);lastSaved.current=-1;accumulator.current.cancel();setPendingSeek(null);setScrub(null);
+  setError('');setLoading(true);setShowLoader(false);setEnded(false);setPaused(true);setMedia(emptyMedia);setLevels([]);setQuality(-1);setAudioTracks([]);setCaptions([]);setCaption(-1);setCue('');if(document.activeElement?.closest('.playback-sidebar'))videoRef.current?.focus({preventScroll:true});setOptions(false);lastSaved.current=-1;accumulator.current.cancel();accumulator.current.settle();setPendingSeek(null);setScrub(null);
   // A new episode in the same dialog resumes from its own history entry.
   if(startFor.current!==item.id){startFor.current=item.id;resumeAt.current=start;}setNextCard(false);setStillThere(false);nextDismissed.current=false;lastPosition.current=0;
   const health=createPlaybackHealth({readPosition:()=>engine()?.currentTime||0,readSeeking:()=>!isTizen&&(video.seeking||seekingRef.current),onFailure:message=>{setLoading(false);setError(message);},onHealthy:()=>{const restore=document.activeElement?.closest('.player-state');setError('');setLoading(false);setPaused(false);setEnded(false);if(restore)requestAnimationFrame(()=>{if(healthRef.current===health)document.querySelector('.player-dialog .playback-toggle')?.focus({preventScroll:true});});},onWaiting:()=>setLoading(true)});healthRef.current=health;
@@ -87,7 +91,7 @@ export function Player({item,start,save,close,change,seasons,series,intros={},se
    if(!window.webapis?.avplay){setLoading(false);setError('El reproductor Samsung no est\u00e1 disponible.');return()=>{clearHealth();document.documentElement.classList.remove('native-playback');};}
    const driver=createAVPlayer(window.webapis.avplay,{url:item.url,live:item.kind==='iptv',start:resumeAt.current,onTracks:(tracks,subtitles)=>{setAudioTracks(named(tracks,'audio'));if(tracks.length)setAudio(tracks[0].index);setCaptions(named(subtitles,'subtitle'));},onEvent:(type,value)=>{
     if(type==='waiting')health.waiting();
-    if(['canplay','seeked'].includes(type)){if(type==='seeked'){health.reposition();if(engine()?.paused)setLoading(false);}sync();}
+    if(['canplay','seeked'].includes(type)){if(type==='seeked'){health.reposition();settled();if(engine()?.paused)setLoading(false);}sync();}
     // AVPlay's play() callback is a request, not proof of a displayed frame.
     if(type==='playing'){health.resume();health.waiting();setPaused(false);}
     if(type==='pause'){health.pause();setLoading(false);setPaused(true);}
@@ -140,7 +144,11 @@ export function Player({item,start,save,close,change,seasons,series,intros={},se
  const skip=seconds=>{if(tv&&!seekable)return;seek(engine().currentTime+seconds);flash(`${seconds>0?'+':''}${seconds} s`);};
  // D1: Left/Right (and the media seek keys) accumulate one burst; the bar previews the target and one seek follows.
  const intro=useIntroSkip({item,series,seasons,position:media.current,enabled:episodic&&Boolean(series),intros,setIntros}),introButton=useRef();
- accumulator.current.onApply((target,burst)=>{setPendingSeek(null);setScrub(null);seek(from+target);intro.applied({from:burst.from,to:target});});
+ // The clock keeps showing the target (`scrub`) until the video confirms with `seeked`.
+ accumulator.current.onApply((target,burst)=>{setPendingSeek(null);seek(from+target);intro.applied({from:burst.from,to:target});});
+ // ponytail: any `seeked` settles, also the first of two queued AVPlay seeks; a press in that gap starts from the first seek, not the queued one.
+ const settled=()=>{accumulator.current.settle();setScrub(null);};
+ const cancelSeek=()=>{accumulator.current.cancel();setPendingSeek(null);setScrub(null);};
  // D4: «Saltar intro» takes the focus when it appears; OK jumps to the end of the window, an arrow or Back dismisses it.
  useEffect(()=>{if(intro.offer)introButton.current?.focus({preventScroll:true});else if(document.activeElement?.closest('.skip-intro'))videoRef.current?.focus({preventScroll:true});},[intro.offer?.key]);
  const introKeys=e=>{if(e.key.startsWith('Arrow')||e.key==='Escape'){e.preventDefault();e.stopPropagation();intro.dismiss();videoRef.current?.focus({preventScroll:true});}};
@@ -192,11 +200,13 @@ export function Player({item,start,save,close,change,seasons,series,intros={},se
   // D2: in TV the focus lives on the video or on the button row; the media seek keys go through the window listener.
   if(tv){
    if(e.key.startsWith('Media'))return;
-   const action=playerKeyAction({key:e.key,focus:target===videoRef.current?'video':target.closest('.playback-toolbar')?'buttons':'other',repeat:e.repeat,seekable,chromeVisible:!chromeHidden});
+   const action=playerKeyAction({key:e.key,focus:target===videoRef.current?'video':target.closest('.playback-toolbar')?'buttons':'other',repeat:e.repeat,seekable,chromeVisible:!chromeHidden,pending:Boolean(pendingSeek)});
    if(key.startsWith('arrow'))e.preventDefault();
    if(!action||action.type==='close')return;
    e.preventDefault();e.stopPropagation();
    if(action.type==='seek')seekBy(action);
+   else if(action.type==='commitSeek')accumulator.current.flush();
+   else if(action.type==='cancelSeek')cancelSeek();
    else if(action.type==='focusVideo')videoRef.current?.focus({preventScroll:true});
    else if(action.type==='focusButtons'){if(action.togglePlay&&!e.repeat)play();focus(dialog.querySelector('.playback-toggle:not(:disabled)')||dialog.querySelector('.playback-toolbar button:not(:disabled)'));}
    else{const row=[...dialog.querySelectorAll('.playback-toolbar button:not(:disabled)')].filter(element=>!element.closest('[inert]'));focus(row[clamp(row.indexOf(target)+action.direction,0,row.length-1)]);}
@@ -263,9 +273,9 @@ export function Player({item,start,save,close,change,seasons,series,intros={},se
 
  return <Dialog immersive player tvMode={tv} chromeHidden={chromeHidden} close={close} label={`Reproduciendo ${title}`} restoreFocus={restoreFocus} onKeyDownCapture={keyboard}>
   <div className="video-stage">
-   <video ref={videoRef} controls={false} autoPlay playsInline tabIndex={0} aria-label={`Vídeo: ${title}`} onClick={play} onKeyUpCapture={e=>{if(e.code==='Space'){e.preventDefault();e.stopPropagation();}}} onWaiting={()=>healthRef.current?.waiting()} onSeeking={()=>{seekingRef.current=true;healthRef.current?.waiting();}} onSeeked={()=>{healthRef.current?.reposition();seekingRef.current=false;if(videoRef.current.paused)setLoading(false);sync();}} onEmptied={()=>{seekingRef.current=false;healthRef.current?.reposition();}} onPlaying={()=>healthRef.current?.playing()} onPause={()=>setPaused(true)} onCanPlay={sync} onProgress={sync} onDurationChange={sync} onVolumeChange={e=>{if(tv)return;setVolume(e.currentTarget.volume);setMuted(e.currentTarget.muted);}} onTimeUpdate={()=>{healthRef.current?.progress();sync();resumeAt.current=videoRef.current.currentTime;const seconds=Math.floor(videoRef.current.currentTime);if(item.kind!=='iptv'&&seconds%5===0&&seconds!==lastSaved.current){lastSaved.current=seconds;saveRef.current(seconds,item.id,{duration:videoRef.current.duration});}}} onError={()=>{if(!isTizen)healthRef.current?.fault('No pudimos reproducir esta fuente.');}} onEnded={()=>{healthRef.current?.ended();saveRef.current(0,item.id,{ended:true});setEnded(true);setLoading(false);}}/>
+   <video ref={videoRef} controls={false} autoPlay playsInline tabIndex={0} aria-label={`Vídeo: ${title}`} onClick={play} onKeyUpCapture={e=>{if(e.code==='Space'){e.preventDefault();e.stopPropagation();}}} onWaiting={()=>healthRef.current?.waiting()} onSeeking={()=>{seekingRef.current=true;healthRef.current?.waiting();}} onSeeked={()=>{healthRef.current?.reposition();seekingRef.current=false;settled();if(videoRef.current.paused)setLoading(false);sync();}} onEmptied={()=>{seekingRef.current=false;healthRef.current?.reposition();}} onPlaying={()=>healthRef.current?.playing()} onPause={()=>setPaused(true)} onCanPlay={sync} onProgress={sync} onDurationChange={sync} onVolumeChange={e=>{if(tv)return;setVolume(e.currentTarget.volume);setMuted(e.currentTarget.muted);}} onTimeUpdate={()=>{healthRef.current?.progress();sync();resumeAt.current=videoRef.current.currentTime;const seconds=Math.floor(videoRef.current.currentTime);if(item.kind!=='iptv'&&seconds%5===0&&seconds!==lastSaved.current){lastSaved.current=seconds;saveRef.current(seconds,item.id,{duration:videoRef.current.duration});}}} onError={()=>{if(!isTizen)healthRef.current?.fault('No pudimos reproducir esta fuente.');}} onEnded={()=>{healthRef.current?.ended();saveRef.current(0,item.id,{ended:true});setEnded(true);setLoading(false);}}/>
    {isTizen&&<object className="avplay-surface" type="application/avplayer" aria-hidden="true"/>}
-   {showLoader&&loading&&!error&&!ended&&<div className="player-loading" role="status" aria-label="Cargando vídeo"><div className="cinema-loader"><BrandGlyph/></div><span>{item.trying&&media.current===0?'Probando otra señal…':media.current>0?'Cargando…':title}</span></div>}
+   {showLoader&&loading&&!error&&!ended&&<div className="player-loading" role="status" aria-label="Cargando vídeo"><KingdomLoader className="player-kingdom-loader" label={item.trying&&media.current===0?'Probando otra señal…':media.current>0?'Cargando…':title} phrase={loaderPhrase(tick)}/></div>}
    {!tv&&paused&&!loading&&!error&&!ended&&<button className="player-resume" aria-label="Reanudar reproducción" onClick={play}><Play size={36} fill="currentColor"/></button>}
    {switching&&<div className="player-switch" role="status">{switching}</div>}
    {feedback&&<div className="seek-feedback" key={feedback} aria-live="polite"><span className="seek-feedback-icon">{feedback.startsWith('-')?<RotateCcw size={34}/>:<RotateCw size={34}/>}</span><strong>{feedback}</strong></div>}
@@ -281,7 +291,11 @@ export function Player({item,start,save,close,change,seasons,series,intros={},se
    <div className="playback-meta"><div className="playback-meta-copy"><span className="playback-clock">{live?'En directo':`${time(position)} / ${time(media.duration||NaN)}`}</span>{!tv&&<span className="playback-credit">{displayText(item.credit)||'Tu biblioteca personal'}</span>}</div>{live?!tv&&<button className={`live-edge ${to-position<3?'at-live':''}`} aria-label="Ir al directo" disabled={!seekable} onClick={()=>seek(to-.5)}><Radio size={28} aria-hidden="true"/></button>:!tv&&<span className="remaining-time">{seekable?`${time(Math.max(0,to-position))} restantes`:''}</span>}</div>
    {seekable&&<div className="seek-track" onPointerMove={e=>{const box=e.currentTarget.getBoundingClientRect();setPreview({value:from+clamp((e.clientX-box.left)/box.width,0,1)*(to-from),percent:clamp((e.clientX-box.left)/box.width*100,3,97)});}} onPointerLeave={()=>setPreview(null)}>
     {!tv&&preview&&<output className="seek-preview" style={{left:`${preview.percent}%`}}>{time(live?to-preview.value:preview.value)}</output>}
-    {pendingSeek&&<output className="seek-preview seek-pending" style={{left:`${clamp(percent,3,97)}%`}}>{`${pendingSeek.direction>0?'+':'-'}${time(pendingSeek.delta)} · ${time(from+pendingSeek.target)}`}</output>}
+    {pendingSeek&&<output className="seek-cursor" style={{left:`${clamp(pendingSeek.target/(to-from)*100,3,97)}%`}}>
+     {item.image&&<img className="seek-cursor-art" src={artworkURL(item.image)} alt="" aria-hidden="true"/>}
+     <strong>{time(from+pendingSeek.target)}</strong><span>{`${pendingSeek.direction>0?'+':'−'}${pendingSeek.delta<60?`${pendingSeek.delta} s`:time(pendingSeek.delta)}`}</span>
+     {tv&&<em>OK para saltar</em>}
+    </output>}
     <input type="range" tabIndex={tv?-1:0} aria-hidden={tv||undefined} onFocus={tv?()=>videoRef.current?.focus({preventScroll:true}):undefined} aria-label="Posición de reproducción" aria-valuetext={live?`${time(Math.max(0,to-position))} detrás del directo`:`${time(position)} de ${time(to)}`} min={from} max={to} step="0.1" value={clamp(position,from,to)} style={{'--played':`${percent}%`,'--buffered':`${buffered}%`}} onPointerDown={e=>{scrubbing.current=true;scrubValue.current=position;e.currentTarget.setPointerCapture(e.pointerId);setScrub(position);}} onChange={e=>{const value=Number(e.target.value);if(scrubbing.current){scrubValue.current=value;setScrub(value);}else seek(value);}} onPointerUp={finishScrub} onPointerCancel={()=>{scrubbing.current=false;setScrub(null);}} onLostPointerCapture={finishScrub}/>
    </div>}
    <div className="playback-toolbar">

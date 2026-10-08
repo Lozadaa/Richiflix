@@ -66,9 +66,9 @@ try{
  await remote(10009);await page.getByRole('dialog').waitFor({state:'detached'});
  const movie=page.locator('.cards[aria-label="Películas"] .card-open').first();await movie.focus();await remote(13);await page.locator('.player-dialog').waitFor();
  await page.getByRole('status',{name:'Cargando vídeo'}).waitFor();assert.equal(await page.getByRole('status',{name:'Cargando vídeo'}).count(),1);
- assert.equal(await page.locator('.cinema-loader').evaluate(el=>getComputedStyle(el).borderRadius),'50%');
- assert.ok((await page.locator('.cinema-loader img').getAttribute('src')).endsWith('kingdom-glyph.svg'));
- await page.waitForFunction(()=>document.querySelector('.cinema-loader img')?.naturalWidth>0);
+ assert.equal(await page.locator('.player-loading .kingdom-loader-shadow').evaluate(el=>getComputedStyle(el).borderRadius),'50%');
+ assert.ok((await page.locator('.player-loading .kingdom-loader-stage img').getAttribute('src')).endsWith('kingdom-glyph.svg'));
+ await page.waitForFunction(()=>document.querySelector('.player-loading .kingdom-loader-stage img')?.naturalWidth>0);
  // Chromium has no Samsung video plane. Use a black simulated plane rather
  // than the browser's unsupported-plugin placeholder in visual QA captures.
  await page.addStyleTag({content:'.avplay-surface{visibility:hidden}html,body{background:#03070d!important}'});
