@@ -3,7 +3,7 @@
 .empty-state-art{flex:0 0 auto;width:200px;aspect-ratio:16/9;object-fit:cover;border-radius:18px;background:#1b2436}
 .empty-state-copy{min-width:0}
 .empty-state h2{margin:0 0 8px;font-size:24px;font-weight:700;color:#fff}
-.empty-state p{margin:0;font-size:16px;color:#aeb8c9}
+.empty-state p{margin:0;font-size:16px;color:var(--text-2)}
 .empty-state-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:18px}
 .empty-state-actions>button{padding:12px 24px;border-radius:999px;font-weight:700}
 .empty-state-extra{margin-top:28px}

@@ -4,7 +4,7 @@
 .tv-mode .card{will-change:auto}
 .tv-mode .card .poster,.tv-mode .card.is-previewed .poster,.tv-mode .card:focus-within .poster{filter:none;box-shadow:none}
 .tv-mode .card-open{position:relative}
-.tv-mode .card-open:after{content:'';position:absolute;inset:0;border:4px solid #f5d58d;border-radius:15px;pointer-events:none;opacity:0;transform:translate(0,0);transition:none}
+.tv-mode .card-open:after{content:'';position:absolute;inset:0;border:4px solid var(--focus);border-radius:15px;pointer-events:none;opacity:0;transform:translate(0,0);transition:none}
 .tv-mode .card.is-previewed .card-open:after{opacity:1;transition:opacity var(--tv-fast,80ms) ease}
 /* R1.5/R2.3: the focus region lives on <body> (changes at region boundaries only) and only the selected card reads it. */
 .tv-mode .card.is-expanded .card-open:after,body[data-focus-region]:not([data-focus-region='catalogue']) .tv-mode .card.is-previewed .card-open:after{opacity:0}
@@ -12,7 +12,7 @@
    layer: gaining/losing one on focus or at the end of the opacity fade relayouts. */
 /* A fixed halo fades over the existing button instead of animating its shadow. */
 .tv-mode .topbar nav button,.tv-mode .category-chip,.tv-mode .category-picker,.tv-mode .category-option,.tv-mode .discovery-refresh,.card-expansion .expansion-actions button,.card-expansion .expansion-feeds button{position:relative}
-.tv-mode .topbar nav button:after,.tv-mode .category-chip:after,.tv-mode .category-picker:after,.tv-mode .category-option:after,.tv-mode .discovery-refresh:after,.card-expansion .expansion-actions button:after,.card-expansion .expansion-feeds button:after{content:'';position:absolute;inset:-3px;border:2px solid #c1b0ee55;border-radius:inherit;box-shadow:0 0 0 4px #c1b0ee12;opacity:0;pointer-events:none;transition:opacity var(--tv-fast,.18s) ease}
+.tv-mode .topbar nav button:after,.tv-mode .category-chip:after,.tv-mode .category-picker:after,.tv-mode .category-option:after,.tv-mode .discovery-refresh:after,.card-expansion .expansion-actions button:after,.card-expansion .expansion-feeds button:after{content:'';position:absolute;inset:-3px;border:2px solid rgba(var(--focus-rgb),0.33);border-radius:inherit;box-shadow:0 0 0 4px rgba(var(--focus-rgb),0.07);opacity:0;pointer-events:none;transition:opacity var(--tv-fast,.18s) ease}
 .tv-mode .topbar nav button:hover:after,.tv-mode .topbar nav button:focus:after,.tv-mode .category-chip:focus:after,.tv-mode .category-picker:focus:after,.tv-mode .category-option:focus:after,.tv-mode .discovery-refresh:focus:after,.card-expansion .expansion-actions button:focus:after,.card-expansion .expansion-feeds button:focus:after{opacity:1}
 /* The trailer reveals through prepainted backing/gradient layers. */
 .card-expansion,.card-expansion[data-trailer-state='playing']{background:transparent;animation-fill-mode:backwards}
@@ -30,13 +30,13 @@
 .tv-mode .topbar nav button{font-weight:700;transform:none}
 .tv-stage .focus-stage-copy{width:44%;max-width:800px;padding-right:26px}
 .tv-stage .focus-description{font-size:26px;line-height:1.38;-webkit-line-clamp:3}
-.tv-stage .focus-stage-shade{background:linear-gradient(90deg,#101827ed 0%,#101827c4 23%,#10182740 45%,transparent 66%),linear-gradient(0deg,#101827,transparent 42%)}
+.tv-stage .focus-stage-shade{background:linear-gradient(90deg,rgba(var(--bg-rgb),0.93) 0%,rgba(var(--bg-rgb),0.77) 23%,rgba(var(--bg-rgb),0.25) 45%,transparent 66%),linear-gradient(0deg,var(--bg),transparent 42%)}
 .expansion-tv .expansion-media{flex-basis:46%}.expansion-tv .expansion-body{padding:20px 28px;gap:12px}.expansion-tv .expansion-body h3{font-size:34px}.expansion-tv .expansion-description{font-size:26px;line-height:1.36;-webkit-line-clamp:3}
 .card-trailer-deck iframe{height:var(--trailer-height,100%);min-height:100%}
 .expansion-tv .expansion-body:before{background:linear-gradient(90deg,#0b101a38,#0b101abf 22%,#0b101ad9)}
 @media(max-width:1450px){.tv-stage .focus-stage-copy{width:46%}.tv-stage .focus-description{font-size:22px}.expansion-tv .expansion-body{padding:18px 24px}.expansion-tv .expansion-description{font-size:22px}.expansion-tv .expansion-body h3{font-size:30px}}
 @media(max-width:700px){.expansion-tv .expansion-media{flex-basis:auto}.expansion-tv .expansion-body{padding:12px 20px}.tv-stage .focus-stage-copy{width:64%}.expansion-tv .expansion-description{-webkit-line-clamp:3;font-size:20px}}
-.card-trailer-banner{border-radius:0}.card-trailer-banner:after{content:'';position:absolute;inset:0;background:linear-gradient(0deg,#101827 0%,#10182722 24%,transparent 50%);pointer-events:none;opacity:0}
+.card-trailer-banner{border-radius:0}.card-trailer-banner:after{content:'';position:absolute;inset:0;background:linear-gradient(0deg,var(--bg) 0%,rgba(var(--bg-rgb),0.13) 24%,transparent 50%);pointer-events:none;opacity:0}
 .card-trailer-banner[data-trailer-state='playing']:after{opacity:1}
 /* The banner keeps its art while a card trailer is only pending (TV delay). */
 .tv-stage[data-card-trailer='playing'] .focus-stage-copy,.tv-stage[data-card-trailer='playing'] .focus-stage-visual{opacity:0;pointer-events:none;transition:opacity var(--tv-base,.16s) ease}
@@ -80,7 +80,7 @@ body[data-focus-region]:not([data-focus-region='catalogue']) .tv-mode .card.is-p
 .tv-mode .virtual-rail-cell .card-open:after,.tv-mode .virtual-grid-cell .card-open:after{content:none}
 /* Grid: no container layer (measured neutral: its repaint just moves from the scene to a 1.37M px layer). */
 /* El track mide el catálogo completo (hasta millones de px): nunca debe ser capa. */
-.tv-mode .rail-halo{position:absolute;left:0;top:0;z-index:2;box-sizing:border-box;border:4px solid #f5d58d;border-radius:15px;pointer-events:none;opacity:0;will-change:transform,opacity;transition:none}
+.tv-mode .rail-halo{position:absolute;left:0;top:0;z-index:2;box-sizing:border-box;border:4px solid var(--focus);border-radius:15px;pointer-events:none;opacity:0;will-change:transform,opacity;transition:none}
 .tv-mode .virtual-rail-wrap:has(.card.is-previewed:not(.is-expanded))>.rail-halo,.tv-mode .virtual-catalogue:has(.card.is-previewed:not(.is-expanded))>.rail-halo{opacity:1;transition:opacity var(--tv-fast,80ms) ease}
 body[data-focus-region]:not([data-focus-region='catalogue']) .tv-mode .virtual-rail-wrap:has(.card.is-previewed)>.rail-halo,body[data-focus-region]:not([data-focus-region='catalogue']) .tv-mode .virtual-catalogue:has(.card.is-previewed)>.rail-halo{opacity:0}
 @media(prefers-reduced-motion:reduce){.tv-mode .rail-halo,.tv-mode .virtual-rail-wrap:has(.card.is-previewed)>.rail-halo,.tv-mode .virtual-catalogue:has(.card.is-previewed)>.rail-halo{transition:none}}
@@ -110,23 +110,23 @@ body[data-focus-region]:not([data-focus-region='catalogue']) .tv-mode .virtual-r
 .banner-dots button{position:relative;width:34px;height:20px;padding:0;display:grid;place-items:center;border:0;border-radius:10px;background:none;color:inherit}
 /* Dots switch at the commit, untransitioned: an opacity transition ending mid-fade would relayout. */
 .banner-dots span{display:block;width:10px;height:10px;border-radius:50%;background:#e8eef9;opacity:.42}
-.banner-dots .active span{background:#ff977f;opacity:1}
-.banner-dots button:after{content:'';position:absolute;inset:0;border:2px solid #f5d58d;border-radius:inherit;opacity:0;pointer-events:none;transition:opacity var(--tv-fast,80ms) ease}
+.banner-dots .active span{background:var(--accent);opacity:1}
+.banner-dots button:after{content:'';position:absolute;inset:0;border:2px solid var(--focus);border-radius:inherit;opacity:0;pointer-events:none;transition:opacity var(--tv-fast,80ms) ease}
 .banner-dots button:focus:after{opacity:1}
 @media(prefers-reduced-motion:reduce){.carousel-stage .focus-stage-visual.is-current,.banner-dots button:after{transition:none}.carousel-stage .focus-stage-copy>:not(.focus-actions){animation:none}}
 /* Fase D (TV UX). Continue-watching bar readable from the sofa. */
-.tv-mode .progress{height:6px;background:#ffffff30}.tv-mode .progress i{background:#ff977f}
+.tv-mode .progress{height:6px;background:#ffffff30}.tv-mode .progress i{background:var(--accent)}
 /* Active row: one attribute per row change (VirtualCarousel), colour only = paint, no layout. */
-.app.tv-mode .catalog-row h2{color:#aeb8c9;transition:none}.app.tv-mode .catalog-row[data-active-row] h2{color:#f2f0f8}
+.app.tv-mode .catalog-row h2{color:var(--text-2);transition:none}.app.tv-mode .catalog-row[data-active-row] h2{color:var(--text)}
 /* Expanded card: position in the row and remaining time, in mist. */
-.expansion-position{margin-left:auto;font-size:18px;line-height:1.25;color:#aeb8c9;white-space:nowrap}.expansion-position+.expansion-remote-hint{margin-left:16px}
-.expansion-tv .expansion-facts .expansion-remaining{color:#aeb8c9}
+.expansion-position{margin-left:auto;font-size:18px;line-height:1.25;color:var(--text-2);white-space:nowrap}.expansion-position+.expansion-remote-hint{margin-left:16px}
+.expansion-tv .expansion-facts .expansion-remaining{color:var(--text-2)}
 /* Empty and error states with an action. */
 .empty-action{display:flex;align-items:center;flex-wrap:wrap;gap:14px}.empty-action>p{margin:0;flex:1 0 100%}.empty-action>button{padding:12px 24px;border-radius:999px;font-weight:700}
-.tv-mode .empty-action{font-size:22px;color:#aeb8c9}.tv-mode .empty-action>button{min-height:56px;font-size:21px}
+.tv-mode .empty-action{font-size:22px;color:var(--text-2)}.tv-mode .empty-action>button{min-height:56px;font-size:21px}
 /* Kids: butter focus halos in the header, chips and the expanded card's actions. */
-.kids-space.tv-mode .topbar nav button:after,.kids-space.tv-mode .category-chip:after,.kids-space.tv-mode .category-picker:after,.kids-space.tv-mode .category-option:after,.kids-space.tv-mode .discovery-refresh:after,.expansion-kids .expansion-actions button:after{border-color:#f5d58d8c;box-shadow:0 0 0 4px #f5d58d1f}
-.kids-space.tv-mode .search:focus-within{outline-color:#f5d58d}.kids-space.tv-mode .small-avatar:focus-visible{box-shadow:0 0 0 3px #f5d58d}
+.kids-space.tv-mode .topbar nav button:after,.kids-space.tv-mode .category-chip:after,.kids-space.tv-mode .category-picker:after,.kids-space.tv-mode .category-option:after,.kids-space.tv-mode .discovery-refresh:after,.expansion-kids .expansion-actions button:after{border-color:rgba(var(--focus-rgb),0.55);box-shadow:0 0 0 4px rgba(var(--focus-rgb),0.12)}
+.kids-space.tv-mode .search:focus-within{outline-color:var(--focus)}.kids-space.tv-mode .small-avatar:focus-visible{box-shadow:0 0 0 3px var(--focus)}
 @media(prefers-reduced-motion:reduce){.app.tv-mode .catalog-row h2{transition:none}}
 /* F9: one knob for every TV key-path duration. Calibration: if the Samsung still feels heavy, lower all three.
    The expanded panel lives in a body portal, so it carries the knob too. Reduced motion keeps transition:none above. */
@@ -147,12 +147,12 @@ body[data-focus-region]:not([data-focus-region='catalogue']) .tv-mode .virtual-r
 /* Kingdom A2, fixed focus column (spec §1): a virtual rail bleeds to the screen edges (negative margin = the 4.5% page
    padding, written against the row's width: 4.5% of the scene = 4.5%/.91 of the row) and its padding-left (4.5% of the
    full-bleed wrap) puts every focused card at the row title's x. The previous card peeks in the screen margin, under
-   a #101827 → transparent gradient; another one fades the right edge. Both are pseudo-elements of the wrap, which
+   a var(--bg) → transparent gradient; another one fades the right edge. Both are pseudo-elements of the wrap, which
    never moves, so they paint once (no layer, no mask). The halo (.rail-halo, a child of the wrap since A2) stays at
    the column and above the left gradient; only its opacity changes. */
 .tv-mode .virtual-rail-wrap{margin:0 calc(-4.5% / .91)}
 .tv-mode .virtual-rail-wrap>.cards.virtual-rail{margin-left:0;margin-right:0;padding-left:4.5%;padding-right:0}
-.tv-mode .virtual-rail-wrap:before,.tv-mode .virtual-rail-wrap:after{content:'';position:absolute;top:0;bottom:0;left:0;width:4.5%;pointer-events:none;z-index:3;background:linear-gradient(90deg,#101827,transparent)}
-.tv-mode .virtual-rail-wrap:after{left:auto;right:0;width:120px;background:linear-gradient(270deg,#101827,transparent)}
+.tv-mode .virtual-rail-wrap:before,.tv-mode .virtual-rail-wrap:after{content:'';position:absolute;top:0;bottom:0;left:0;width:4.5%;pointer-events:none;z-index:3;background:linear-gradient(90deg,var(--bg),transparent)}
+.tv-mode .virtual-rail-wrap:after{left:auto;right:0;width:120px;background:linear-gradient(270deg,var(--bg),transparent)}
 .tv-mode .virtual-rail-wrap>.rail-halo{z-index:4}
 .tv-mode .catalog-row[data-row-far] .virtual-rail-wrap:before,.tv-mode .catalog-row[data-row-far] .virtual-rail-wrap:after{visibility:hidden}

@@ -2,7 +2,7 @@
 .age-badge{--age-accent:#d2c3f3;--age-surface:#252339;position:absolute;z-index:4;top:12px;right:12px;display:inline-flex;align-items:center;gap:7px;max-width:calc(100% - 24px);padding:5px 9px 5px 5px;border:1px solid var(--age-accent);border-radius:12px;background:var(--age-surface);box-shadow:0 4px 12px #07101b55,inset 0 1px 0 #ffffff18;color:var(--age-accent);font-size:17px;line-height:1;font-weight:800;pointer-events:none}
 .age-badge[data-age-tone='general']{--age-accent:#a6e6c6;--age-surface:#173b34}
 .age-badge[data-age-tone='family']{--age-accent:#a6dafa;--age-surface:#1b354b}
-.age-badge[data-age-tone='guidance']{--age-accent:#f5d58d;--age-surface:#44341e}
+.age-badge[data-age-tone='guidance']{--age-accent:var(--accent);--age-surface:#44341e}
 .age-badge[data-age-tone='mature']{--age-accent:#ffb1a0;--age-surface:#482a2d}
 .age-badge-mark{display:grid;place-items:center;flex-shrink:0;width:27px;height:29px;border-radius:8px;background:#ffffff0b}
 .age-badge svg{display:block;width:22px;height:22px}

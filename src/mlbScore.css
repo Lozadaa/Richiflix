@@ -1,6 +1,6 @@
 /* Fase L5: live score under the crests. Static text (changes at most once a minute); nothing animates. */
-.mlb-score{position:absolute;left:0;right:0;bottom:5%;z-index:2;display:flex;justify-content:center;align-items:baseline;gap:10px;color:#aeb8c9;white-space:nowrap;font-variant-numeric:tabular-nums}
-.mlb-runs{font:800 26px/1 'Bricolage Grotesque',Arial,sans-serif}.mlb-runs b{font-weight:inherit;color:#aeb8c9}.mlb-runs b.is-ahead{color:#fff}
+.mlb-score{position:absolute;left:0;right:0;bottom:5%;z-index:2;display:flex;justify-content:center;align-items:baseline;gap:10px;color:var(--text-2);white-space:nowrap;font-variant-numeric:tabular-nums}
+.mlb-runs{font:800 26px/1 'Bricolage Grotesque',Arial,sans-serif}.mlb-runs b{font-weight:inherit;color:var(--text-2)}.mlb-runs b.is-ahead{color:#fff}
 .mlb-inning{font-size:18px;font-weight:700;line-height:1}
 .mlb-score[data-stale]{opacity:.7}
 /* The score takes the city line's room; crests shrink inside the same card height. */
