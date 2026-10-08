@@ -55,7 +55,9 @@ export function normaliseItem(raw,type,categories,account){
  const durationSeconds=Number.isFinite(suppliedDuration)&&suppliedDuration>0?suppliedDuration:0;
  // H2-T1: films and series keep the provider name (originalTitle, search) and show a clean one with its audio codes.
  const title=text(raw.name||raw.title)||`${category} ${streamId}`,clean=type==='movie'||type==='series'?cleanName(title,{kind:'vod'}):null;
- return {...(clean&&{displayTitle:clean.title,originalTitle:title,languages:clean.languages}),id:`xt-${key}-${type}-${streamId}`,url:`xtream://${key}/${type}/${streamId}.${suffix}`,streamId,mediaType:type,extension:suffix,kind:type==='live'?'iptv':type==='series'?'series':'vod',sourceId:account.sourceId||'eterboxtv',source:account.name,credit:account.name,
+ // H2-T2: provider `added` (Unix seconds) → addedAt (ms); absent or not a positive number → no field.
+ const added=Number(raw.added)*1000;
+ return {...(clean&&{displayTitle:clean.title,originalTitle:title,languages:clean.languages}),...(Number.isFinite(added)&&added>0&&{addedAt:added}),id:`xt-${key}-${type}-${streamId}`,url:`xtream://${key}/${type}/${streamId}.${suffix}`,streamId,mediaType:type,extension:suffix,kind:type==='live'?'iptv':type==='series'?'series':'vod',sourceId:account.sourceId||'eterboxtv',source:account.name,credit:account.name,
   tmdbId:/^\d{1,10}$/.test(String(raw.tmdb_id||raw.info?.tmdb_id||''))?String(raw.tmdb_id||raw.info?.tmdb_id):undefined,
   title,genre:category,contentGenre:text(raw.genre||raw.info?.genre),category,year:text(raw.year)||clean?.year||'',image:imageURL(raw.stream_icon||raw.cover||raw.info?.movie_image,account),eventStartsAt:type==='live'?eventInstant(raw.event_start_timestamp??raw.start_timestamp??raw.event_start??raw.start_time):undefined,
   description:text(raw.plot||raw.info?.plot||raw.info?.description).slice(0,5000)||(type==='live'?`${account.name} · En vivo`:''),trailerId:youtubeID(raw.youtube_trailer||raw.info?.youtube_trailer),durationSeconds,duration:durationSeconds?`${Math.round(durationSeconds/60)} min`:undefined};

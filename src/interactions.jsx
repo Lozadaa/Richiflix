@@ -23,7 +23,7 @@ export const motionAllowed=()=>!window.matchMedia('(prefers-reduced-motion: redu
 
 // R6.1: metadata comes from the store by id (the `metadata` prop is only a fallback for callers without it, e.g. fixtures);
 // `metadataPending` is derived from the store, so rails no longer pass metadata or resolved sets.
-export const Card=memo(function Card({item:original,instanceId,metadata:fallbackMetadata,open,progress,favorite,toggle,index=0,total=0,preview,pointerPreview,leave,tv,profileId,kids=false}){
+export const Card=memo(function Card({item:original,instanceId,metadata:fallbackMetadata,open,progress,favorite,toggle,index=0,total=0,preview,pointerPreview,leave,tv,profileId,kids=false,fresh=false}){
  const selected=useCardSelected(instanceId);
  recordCardRender();
  const stored=useMetadataEntry(original.id),metadata=stored.metadata??fallbackMetadata,metadataPending=metadataTracked()&&!stored.resolved;
@@ -42,6 +42,7 @@ export const Card=memo(function Card({item:original,instanceId,metadata:fallback
     <QualityImage className={item.kind==='iptv'?'channel-logo':'poster-art'} src={item.imageGeneric?undefined:artworkURL(item.image)} fit={item.kind==='iptv'?'contain':'cover'} minVisibleSize={item.kind==='iptv'?72:0} pending={item.kind!=='iptv'&&metadataPending} priority={selected} fallback={fallback}/></>}
     {item.kind==='iptv'&&<EventBadge item={item} fine={selected}/>}
     {item.kind!=='iptv'&&<UserScore item={item} compact/>}
+    {fresh&&<span className="card-badges"><span className="card-badge is-new">NUEVO</span></span>}
     {item.kind==='provider'&&<span className="provider-label">{displayText(item.genre)}</span>}
     {!matchup&&<div className="poster-title">{item.kind==='iptv'?channelTitle(item):displayTitle(item)}</div>}
     {!tv&&<div className="card-play">{item.kind==='provider'?<ArrowUpRight className="card-play-icon" size={24}/>:<Play className="card-play-icon" fill="currentColor" size={20}/>}</div>}

@@ -8,6 +8,12 @@ export function homeRowsForTV(collections,day=SESSION_DAY){
  const [first,second]=day%2?[TMDB_RECENT,TMDB_BEST]:[TMDB_BEST,TMDB_RECENT],pick=(name,type)=>collections.find(group=>group.name===name&&group.type===type);
  return [pick(first,'movie'),pick(first,'series'),pick(second,'movie'),pick(second,'series')].filter(Boolean).slice(0,2);
 }
+// H2-T2: «Nuevo esta semana» and the NUEVO badge. `now` comes from the caller (App's useMemo per catalogue), never per key.
+const DAY=864e5;
+export function isNew(item,now,days=7){return Number.isFinite(item?.addedAt)&&item.addedAt>now-days*DAY;}
+export function recentlyAdded(items,now=Date.now(),days=7,limit=40){
+ return items.filter(item=>isNew(item,now,days)).sort((a,b)=>b.addedAt-a.addedAt).slice(0,limit);
+}
 // Back (Escape / Tizen 10009) in TV (nothing focused counts as header): content (cards and their expanded panel, banner,
 // filters, empty-state actions) -> header; header -> clear search -> Inicio -> profiles.
 // The panel's action buttons (long press) first return to their card (ExpandedCard).
