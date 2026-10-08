@@ -1,0 +1,26 @@
+{
+  "propuesta": "Aurora",
+  "tokens": {
+    "fondo": "#0a1631",
+    "superficie": "#1d3156",
+    "texto": "#fff5e8",
+    "texto-secundario": "#b6c8e8",
+    "acento": "#f5a66a",
+    "foco": "#b9d8ff"
+  },
+  "kids-acento": "#ffd16f",
+  "contrastes": {
+    "texto / fondo": 16.6193,
+    "texto secundario / fondo": 10.5936,
+    "acento / fondo": 8.9974,
+    "foco / fondo": 12.2261,
+    "texto / superficie": 11.9796,
+    "texto secundario / superficie": 7.6362,
+    "foco / superficie": 8.8129,
+    "tinta fondo / botón acento": 8.9974,
+    "Kids / fondo": 12.4586,
+    "tinta fondo / botón Kids": 12.4586,
+    "superficie / fondo": 1.3873
+  },
+  "criterio": "Texto normal ≥4.5:1; foco/componentes ≥3:1. Superficie decorativa no requiere 3:1 respecto al fondo; no usarla como único indicador de foco."
+}
