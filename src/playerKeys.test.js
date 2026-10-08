@@ -41,3 +41,12 @@ test('E2 sidebar focus: Up/Down walk every option, Left/Back close it, OK belong
  assert.equal(playerKeyAction({...sidebar,key:'Enter'}),null);
  assert.deepEqual(playerKeyAction({...sidebar,key:'MediaFastForward'}),{type:'seek',direction:1,repeat:false,now:true});
 });
+test('con cursor de salto activo, OK confirma y Volver cancela sin cerrar',()=>{
+ assert.deepEqual(playerKeyAction({...video,key:'Enter',pending:true}),{type:'commitSeek'});
+ assert.deepEqual(playerKeyAction({...video,key:'Enter',chromeVisible:true,pending:true}),{type:'commitSeek'});
+ assert.deepEqual(playerKeyAction({...video,key:'Escape',pending:true}),{type:'cancelSeek'});
+ assert.deepEqual(playerKeyAction({...video,key:'ArrowRight',pending:true}),{type:'seek',direction:1,repeat:false});
+ assert.deepEqual(playerKeyAction({...buttons,key:'Escape',pending:true}),{type:'cancelSeek'});
+ assert.deepEqual(playerKeyAction({...video,key:'Enter',pending:false}),{type:'focusButtons'});
+ assert.deepEqual(playerKeyAction({...video,key:'Escape'}),{type:'close'});
+});
