@@ -146,3 +146,18 @@ Miniaturas de episodios, marcas reales de créditos (no hay fuente), cambios en 
 - Unitarias: `anchoredRailOffset` (columna fija), puntuación difusa y sugerencias, cruce de episodios TMDB↔proveedor, acumulador de saltos, normalizador (tabla + muestra real), nombres de pista ISO.
 - En el TV (inspector): capturas de la columna de foco (0/1/6/20 Derecha y vuelta), búsqueda con errores de escritura y con un título ausente, serie con episodios en español, reproductor (foco nunca en la barra, saltos acumulados, siguiente episodio, panel de idioma con OK/Arriba/Abajo/Volver) y P50/P95 de navegación sin empeorar respecto a la sección 11 del plan de rendimiento.
 - Sin smokes de Playwright/Electron salvo `npm run test:tizen`, mientras Richard mantenga esa preferencia.
+
+## Resultado (8 oct 2026, medido en el 55")
+
+Build integrado (`main` `2a3cfd5`, 362 pruebas, `build:tizen` y `test:tizen` en verde) instalado en el UN55M75 (192.168.1.25). Arranque hasta perfiles en 8 s. Comprobado por el inspector:
+
+| Criterio | Resultado |
+|---|---|
+| Columna de foco fija (§1) | fila Películas: la tarjeta enfocada queda en x=80 en 0, 1 y 6 Derecha y tras 3 Izquierda; las vecinas llegan al foco y la anterior asoma bajo el degradado izquierdo (`artifacts/kingdom-55-foco-{0,1,6,3L}.png`) |
+| Nombres limpios en TV en vivo (§5) | «Deportivo Moquegua vs. Cienciano Liga 1», «Vancouver Canucks vs. Carolina Hurricanes NHL», sin siglas sueltas ni símbolos (`kingdom-55-tv-en-vivo.png`) |
+| Marca (§7) | corona + «Kingdom» en cabecera, paleta Solaria, icono en el lanzador |
+| Latencia de navegación (`tv-measure.mjs`, 3 corridas, 350 ms, fase de traza) | P50 100–118 / P95 147–178 ms; sección 11 del plan de rendimiento en el 65": 94–99 / 144–152. Capas tras 20 teclas: 88 (antes 67) |
+
+Pendiente de comprobar en el TV: búsqueda difusa, episodios en español, reproductor (saltos, siguiente episodio, saltar intro, panel lateral) — no se ejecutaron smokes de reproducción. Las 21 capas extra (degradados laterales y halos de A) son la primera candidata si la latencia debe volver a la de la sección 11. Los títulos VOD no pasan por `cleanName` (fuera de alcance: solo episodios y eventos), por eso «Michael (LAT/ENG/CAST)» sigue así en Continuar viendo.
+
+El 65" (192.168.1.12) no arrancó este build: se queda en «Preparando tus fuentes» porque cualquier acceso a IndexedDB se cuelga incluso desde el inspector (proveedor accesible, workers vivos); es el almacenamiento del TV, no el código.

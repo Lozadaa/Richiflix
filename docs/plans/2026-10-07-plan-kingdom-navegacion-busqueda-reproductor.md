@@ -392,3 +392,10 @@ test('cleanName is idempotent on the sample',async()=>{const sample=JSON.parse(a
 - **Cobertura del spec:** §1 → A1–A3 (incluye degradados); §2 → B1–B3; §3 → C1–C3; §4 → D1–D3; §4.1 → D4; §4.2 → D5; §5 → F1–F2; §6 → E1–E2; §7 → G1–G2. Sin huecos.
 - **Nombres consistentes entre tareas:** `anchoredRailOffset`/`railTailSpace`/`RAIL_PEEK_PX` (A1→A2); `fuzzyMatches`/`suggestNames` (B1→B3); `tmdbSearch` (B2→C3); `mergeSeasonEpisodes`/`tmdbSeason`/`useSeasonMetadata` (C1→C3); `createSeekAccumulator`/`playerKeyAction`/`adjacentEpisode` (D1→D3, E2); `learnIntro`/`introWindow`/`shouldOffer` (D4); `episodeState`/`seasonProgress`/`nextToWatch`/`continueWatchingEntries` (D5); `trackName` (E1→E2); `cleanName`/`titleCase` (F1→F2).
 - **Enfoque de revisión:** los cinco casos tienen prueba en A1, B1, C1, D1 y F1.
+
+## Resultado y desviaciones (8 oct 2026)
+
+- Olas 1–3 integradas en `main` (`2a3cfd5`): A, B, C, D, E, F, G; informes en `docs/plans/informe-{A..G}.md`. 362 pruebas; `build`, `build:tizen`, `test:tizen` en verde; subido a `origin/kingdom-main`.
+- Verificación final en el **55"** (el 65" tiene IndexedDB colgado a nivel de dispositivo): columna fija confirmada (x=80 constante), TV en vivo con nombres limpios, marca Kingdom; `measure:tv` ×3 → P50 100–118 / P95 147–178 ms (fase de traza, 350 ms) frente a 94–99 / 144–152 de §11 en el 65"; capas 88 frente a 67. Detalle en la sección «Resultado» del spec.
+- Desviaciones: G1 se hizo con Codex en Orca (ronda 2, Solaria); D4 usa marcas aprendidas por serie (no hay fuente de créditos); F1 se validó con 103 nombres de muestra y después con el catálogo real en Node (<40 ms para 8405 canales); C3 resuelve `tmdbId` con `tmdbSearch`; no se hicieron smokes de Playwright/Electron.
+- Pendiente: capturas del reproductor y de la búsqueda en el TV; revisar las 21 capas nuevas de A si hay que recuperar la latencia de §11.
