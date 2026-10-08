@@ -14,6 +14,12 @@ export function isNew(item,now,days=7){return Number.isFinite(item?.addedAt)&&it
 export function recentlyAdded(items,now=Date.now(),days=7,limit=40){
  return items.filter(item=>isNew(item,now,days)).sort((a,b)=>b.addedAt-a.addedAt).slice(0,limit);
 }
+// H2-T3: «Top 10 en Kingdom»: TMDB_BEST films and series interleaved by tmdbRank (from the selection metadata, else
+// the item, else its place in the list), film first on a tie; copies carry `rank` 1..10. No collection → [].
+export function topTen(collections,metadata={}){
+ const ranked=type=>(collections.find(group=>group.name===TMDB_BEST&&group.type===type)?.items||[]).map((item,position)=>({item,film:type==='movie',rank:Number(metadata[item.id]?.tmdbRank??item.tmdbRank)||position+1}));
+ return [...ranked('movie'),...ranked('series')].sort((a,b)=>a.rank-b.rank||b.film-a.film).slice(0,10).map(({item},index)=>({...item,rank:index+1}));
+}
 // Back (Escape / Tizen 10009) in TV (nothing focused counts as header): content (cards and their expanded panel, banner,
 // filters, empty-state actions) -> header; header -> clear search -> Inicio -> profiles.
 // The panel's action buttons (long press) first return to their card (ExpandedCard).

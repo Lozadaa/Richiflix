@@ -831,3 +831,9 @@ button.playback-toggle svg.lucide-play{margin-left:3px}
 .card-badge{padding:5px 9px;border-radius:10px;background:rgba(var(--bg-rgb),0.9);color:var(--text);font-size:12px;font-weight:800;line-height:1.2;letter-spacing:.08em}
 .card-badge.is-new{background:var(--accent);color:var(--bg)}
 .tv-mode .card-badges{top:16px;right:16px}.tv-mode .card-badge{padding:6px 10px;font-size:16px}
+/* Top 10: the ranked rail's cards gain a 90 px gutter for the number. VirtualCarousel measures its cell width from the
+   probe per rail (offsetWidth: content-box probe = basis + gutter), so the stride is per row and the fixed column
+   (anchoredRailOffset → x = padding-left) does not move. The number sits under the poster (z-index -1 in card-open). */
+.virtual-rail.is-ranked .portrait-card{padding-left:90px}
+.virtual-rail.is-ranked .virtual-rail-probe{box-sizing:content-box}.virtual-rail.is-ranked .card-open{position:relative}
+.card-rank{position:absolute;left:-90px;bottom:-4px;z-index:-1;font:800 120px/1 'Bricolage Grotesque',Arial,sans-serif;letter-spacing:-.08em;color:transparent;-webkit-text-stroke:2px var(--text-2);pointer-events:none}
