@@ -96,7 +96,7 @@ export function createSourceRegistry({readAccounts,writeAccounts,readCache,write
   episodes:async(id,sourceId)=>{
    const account=await selected(sourceId),key=account.sourceId+':'+accountKey(account)+':'+id;
    const previous=sourceData.get(sourceKeyFor(account))||await readCache(account).catch(()=>null);
-   if(blockedRecords.get(sourceKeyFor(account))?.has(`series:${id}`)||(previous?.blockedContent||[]).some(item=>item.mediaType==='series'&&String(item.streamId)===String(id))||isPornographic(previous?.shows?.find(item=>String(item.streamId)===String(id))))throw Error('Este contenido está bloqueado en Richiflix.');
+   if(blockedRecords.get(sourceKeyFor(account))?.has(`series:${id}`)||(previous?.blockedContent||[]).some(item=>item.mediaType==='series'&&String(item.streamId)===String(id))||isPornographic(previous?.shows?.find(item=>String(item.streamId)===String(id))))throw Error('Este contenido está bloqueado en Kingdom.');
    const cached=episodeCache.get(key);
    if(cached&&now()-cached.at<30*60*1000){episodeCache.delete(key);episodeCache.set(key,cached);return cached.work;}
    const work=loadXtreamEpisodes(account,id,fetcher);episodeCache.set(key,{at:now(),work});while(episodeCache.size>8)episodeCache.delete(episodeCache.keys().next().value);
@@ -107,11 +107,11 @@ export function createSourceRegistry({readAccounts,writeAccounts,readCache,write
    const work=(async()=>{const token=await metadataToken(),persistedKey=key+':metadata-v5:'+accountKey({host:'metadata',username:token}),cached=await readDetails(persistedKey);const candidate=cached||await loadXtreamVideoDetails(account,id,fetcher,type,token),data=isPornographic(candidate)?{isPornographic:true}:candidate;if(data.isPornographic)await rememberBlocked(account,id,type);if(!cached||data!==candidate)writeDetails(persistedKey,data).catch(()=>{});if(data.tmdbScore>0&&data.tmdbScore<=10&&Number.isSafeInteger(data.tmdbVotes)&&data.tmdbVotes>0)writeRating(key+':metadata-v3:'+accountKey({host:'metadata',username:token}),{tmdbScore:data.tmdbScore,tmdbVotes:data.tmdbVotes,tmdbId:data.tmdbId}).catch(()=>{});return data;})();detailCache.set(key,work);while(detailCache.size>160)detailCache.delete(detailCache.keys().next().value);try{return await work;}catch(error){detailCache.delete(key);throw error;}
   },
   shortEpg:async(id,sourceId)=>loadXtreamShortEpg(await selected(sourceId),id,fetcher),
-  playback:async item=>{if(isPornographic(item))throw Error('Este contenido está bloqueado en Richiflix.');const account=await selected(item.sourceId),key=accountKey(account);if(!item.url?.startsWith(`xtream://${key}/`))throw Error('El título no pertenece a esta conexión.');const {data,error}=await sourceCatalogue(account,false);if(!data)throw Error(error||'No se pudo preparar la señal.');
+  playback:async item=>{if(isPornographic(item))throw Error('Este contenido está bloqueado en Kingdom.');const account=await selected(item.sourceId),key=accountKey(account);if(!item.url?.startsWith(`xtream://${key}/`))throw Error('El título no pertenece a esta conexión.');const {data,error}=await sourceCatalogue(account,false);if(!data)throw Error(error||'No se pudo preparar la señal.');
    let canonical;if(item.mediaType==='episode'){for(const [cacheKey,cached] of episodeCache){if(!cacheKey.startsWith(sourceKeyFor(account)+':'))continue;const parent=cacheKey.slice((sourceKeyFor(account)+':').length);if((data.blockedContent||[]).some(record=>record.mediaType==='series'&&String(record.streamId)===parent))continue;try{canonical=(await cached.work).flatMap(group=>group.episodes).find(episode=>episode.url===item.url);if(canonical)break;}catch{}}}
    else canonical=(item.mediaType==='live'?data.channels:data.movies).find(candidate=>candidate.url===item.url&&candidate.mediaType===item.mediaType&&String(candidate.streamId)===String(item.streamId));
    if(!canonical||isPornographic(canonical))throw Error('Este contenido no está disponible en el catálogo permitido.');
-   if(canonical.mediaType==='movie'&&isPornographic(await registry.details(canonical.streamId,'movie',account.sourceId)))throw Error('Este contenido está bloqueado en Richiflix.');
+   if(canonical.mediaType==='movie'&&isPornographic(await registry.details(canonical.streamId,'movie',account.sourceId)))throw Error('Este contenido está bloqueado en Kingdom.');
    return playbackURL(account,canonical,data.connection.formats);},
  };
  return registry;

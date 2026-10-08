@@ -2,7 +2,7 @@ import React,{useEffect,useRef,useState} from 'react';
 import {ArrowLeft,X} from 'lucide-react';
 import {motionAllowed} from './interactions.jsx';
 import {revealRowFor} from './virtualNavigation.js';
-function Dialog({close,children,immersive=false,label='Richiflix',player=false,utility=false,chromeHidden=false,restoreFocus,onKeyDownCapture,tvMode=false,className=''}){
+function Dialog({close,children,immersive=false,label='Kingdom',player=false,utility=false,chromeHidden=false,restoreFocus,onKeyDownCapture,tvMode=false,className=''}){
  const ref=useRef(),timer=useRef(),dismissRef=useRef();const [closing,setClosing]=useState(false);
  const dismiss=()=>{if(closing)return;if(!motionAllowed()){close();return;}setClosing(true);timer.current=setTimeout(close,180);};
  dismissRef.current=dismiss;

@@ -103,7 +103,7 @@ export async function loadXtreamShortEpg(account,streamId,fetcher=fetch){
  return {epg_listings:list.slice(0,4).map(entry=>({title:text(entry?.title).slice(0,1000),start:text(entry?.start).slice(0,40),end:text(entry?.end).slice(0,40),start_timestamp:text(entry?.start_timestamp).slice(0,20),stop_timestamp:text(entry?.stop_timestamp).slice(0,20),now_playing:Number(entry?.now_playing)===1?1:0}))};
 }
 export function playbackURL(account,item,formats=['m3u8']){
- if(isPornographic(item))throw Error('Este contenido está bloqueado en Richiflix.');
+ if(isPornographic(item))throw Error('Este contenido está bloqueado en Kingdom.');
  const streamId=id(item.streamId),type=item.mediaType;if(!streamId||!['live','movie','episode'].includes(type))throw Error('Vídeo no válido.');
  const folder=type==='episode'?'series':type,format=type==='live'?(formats.includes('m3u8')?'m3u8':'ts'):extension(item.extension);
  return `${account.host}/${folder}/${encodeURIComponent(account.username)}/${encodeURIComponent(account.password)}/${streamId}.${format}`;

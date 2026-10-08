@@ -17,5 +17,5 @@ const server=createServer(async(request,response)=>{
   response.writeHead(200,headers);response.end(request.method==='HEAD'?undefined:html);
  }catch{response.writeHead(503);response.end('Reproductor no disponible.');}
 });
-server.listen(port,'0.0.0.0',()=>console.log(`Reproductor Richiflix disponible en la red local, puerto ${port}. Ctrl+C para cerrar.`));
+server.listen(port,'0.0.0.0',()=>console.log(`Reproductor Kingdom disponible en la red local, puerto ${port}. Ctrl+C para cerrar.`));
 for(const signal of ['SIGINT','SIGTERM'])process.on(signal,()=>server.close());

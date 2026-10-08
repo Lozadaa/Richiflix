@@ -1,4 +1,4 @@
-# Richiflix: cine con personalidad
+# Kingdom: cine con personalidad
 
 ## Dirección
 
@@ -6,14 +6,19 @@ Una sala de cine personal y juvenil que combina el detalle de una película anim
 
 ## Tokens
 
-- Noche: #101827. Fondo y superficies.
-- Nube: #f2f0f8. Texto principal.
-- Coral: #ff977f. Marca, acción principal y foco.
-- Lavanda: #c1b0ee. Selección, perfiles y sección deportiva.
-- Mantequilla: #f5d58d. Kids y pequeños detalles.
-- Bruma: #aeb8c9. Texto secundario.
+Paleta Solaria (detalle, contrastes y archivos en [BRAND.md](BRAND.md)). En `src/style.css` viven en `:root`; ningún CSS de `src/` repite los valores literales.
 
-Bricolage Grotesque para marca y títulos, Manrope para controles. Títulos en caja mixta, tamaño suficiente para TV. Marca propia en minúscula y símbolo play inclinado.
+- `--bg` #0d172b. Fondo azul noche; también tinta sobre botones de acento.
+- `--surface` #1d2d49. Superficies elevadas (diálogos, cabecera activa, paneles).
+- `--text` #fff4e4. Texto principal.
+- `--text-2` #bac8e0. Texto secundario, iconos y detalles fríos.
+- `--accent` #f2b84b. Marca, acción principal, selección y estados destacados.
+- `--focus` #fff1d2. Halo y contorno de foco del mando; distinto del acento.
+- `--kids` #ff9478. Acento propio del perfil Kids (el foco es el mismo).
+
+Las transparencias usan los canales `--*-rgb` (`rgba(var(--bg-rgb),.6)`): el build de Tizen compila para Chromium 85 y no admite `color-mix()`.
+
+Bricolage Grotesque para marca y títulos, Manrope para controles. Títulos en caja mixta, tamaño suficiente para TV. Marca: corona Solaria y la palabra «Kingdom» (nunca «Player» en la interfaz).
 
 ## Composición
 
@@ -43,12 +48,12 @@ Prompt: Wide cinematic feature artwork for a youthful personal movie streaming a
 El reproductor usa controles propios: timeline con buffer real, saltos de 10 segundos, volumen, mute, velocidad y fullscreen. Las opciones de calidad, audio y subtítulos aparecen solo cuando existen en la fuente. Sin controles nativos: un solo indicador de carga, retrasado 250 ms para evitar parpadeos al buscar. Fuentes manuales en Ajustes por perfil Adulto, con caché local IndexedDB, edición, actualización de listas y eliminación.
 
 
-Player para TV: controles principales de 84–168 px, controles secundarios de 64–128 px, etiquetas visibles, foco amarillo, rebote breve y superficies suaves coral/lavanda. Las flechas recorren los botones, Arriba lleva a la timeline y Abajo vuelve al vídeo. Enter sobre el vídeo pausa o reproduce. El control de volumen sigue disponible con mouse/Tab y el mando puede saltarlo para alcanzar opciones sin quedar atrapado. Escala compacta para móvil y movimiento reducido respetado.
+Player para TV: controles principales de 84–168 px, controles secundarios de 64–128 px, etiquetas visibles, foco blanco cálido (`--focus`), rebote breve y superficies suaves con el acento dorado. Las flechas recorren los botones, Arriba lleva a la timeline y Abajo vuelve al vídeo. Enter sobre el vídeo pausa o reproduce. El control de volumen sigue disponible con mouse/Tab y el mando puede saltarlo para alcanzar opciones sin quedar atrapado. Escala compacta para móvil y movimiento reducido respetado.
 
 
 ## Samsung TV / Tizen
 
-TV es Samsung Tizen. Build dedicado Chromium 85 / Tizen 6.5+, superficie AVPlay transparente y coordenadas nativas 1920 x 1080. Mando con foco visible, campos compatibles con IME Samsung, selectores recorribles y regreso por capas. Dock TV: iconos sin etiquetas, botones circulares de 96 px, Play de 128 px, foco amarillo y colores suaves. Flecha de regreso sin texto; saltos de 10 segundos integrados en el icono. Player nativo conserva un loader; volumen queda en el mando y opciones se limitan a capacidades expuestas. Certificados y validación en dispositivo: docs/TIZEN.md.
+TV es Samsung Tizen. Build dedicado Chromium 85 / Tizen 6.5+, superficie AVPlay transparente y coordenadas nativas 1920 x 1080. Mando con foco visible, campos compatibles con IME Samsung, selectores recorribles y regreso por capas. Dock TV: iconos sin etiquetas, botones circulares de 96 px, Play de 128 px, foco blanco cálido y colores suaves. Flecha de regreso sin texto; saltos de 10 segundos integrados en el icono. Player nativo conserva un loader; volumen queda en el mando y opciones se limitan a capacidades expuestas. Certificados y validación en dispositivo: docs/TIZEN.md.
 
 
 ### Player en TV

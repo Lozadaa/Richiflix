@@ -261,7 +261,7 @@ html::-webkit-scrollbar{display:none}
  .player-dialog .player-credit{bottom:68px;left:5%;font-size:10px}
 }
 
-/* Richiflix player: custom chrome, with one loading state. */
+/* Kingdom player: custom chrome, with one loading state. */
 .player-dialog .player-heading{align-items:flex-start;min-height:150px;pointer-events:none;background:linear-gradient(#080e19bf,transparent);padding-top:32px}
 .player-title{min-width:0;display:flex;flex-direction:column;gap:7px}
 .player-title>span{color:var(--accent);font-size:10px;font-weight:800;letter-spacing:2.2px;text-transform:uppercase}
@@ -529,7 +529,7 @@ button.playback-toggle svg.lucide-play{margin-left:3px}
 .tv-player .player-tool:focus,.tv-player .playback-toggle:focus{outline:4px solid var(--focus);outline-offset:7px;box-shadow:0 0 0 12px rgba(var(--focus-rgb),0.04)}
 .tv-player .back-button{width:80px;height:80px;min-height:80px}
 
-/* One Richiflix identity, from the launcher to the last frame. */
+/* One Kingdom identity, from the launcher to the last frame. */
 .kingdom-mark{display:block;width:42px;height:42px;flex-shrink:0;border-radius:25%;user-select:none}
 .brand{gap:11px}.brand>.kingdom-mark{transition:transform .3s var(--ease-out)}
 .brand:hover>.kingdom-mark{transform:rotate(-6deg) scale(1.04)}
@@ -601,7 +601,7 @@ button.playback-toggle svg.lucide-play{margin-left:3px}
 .detail-poster{position:absolute;top:15%;right:7%;width:28%;height:68%;z-index:-1}.detail-copy{width:min(900px,65%)}
 .samsung-tv .portrait-card{min-width:0}.samsung-tv .portrait-card .poster{height:0;padding-bottom:150%}.samsung-tv .cards .portrait-card{flex-basis:240px}.samsung-tv .poster-grid{grid-template-columns:repeat(6,minmax(0,1fr));gap:30px 22px}.samsung-tv .card-title{font-size:23px}.samsung-tv .card-meta{font-size:18px}.samsung-tv .card-caption{min-height:80px}.samsung-tv .hero h1{font-size:88px;max-width:750px}
 @media(max-width:760px){.poster-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 14px}.cards .portrait-card{flex-basis:43vw}.card-title{font-size:14px}.card-meta{font-size:11px}.card-save{top:10px;bottom:auto}.app .hero h1{font-size:clamp(44px,11vw,64px);letter-spacing:-2px}.app .hero-content{top:auto;bottom:110px;max-width:none}.hero-poster{top:9%;right:7%;width:46%;height:40%}.detail-copy{width:100%}.detail-poster{top:12%;right:7%;width:46%;height:35%}.live-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-/* Channel tiles are composed by Richiflix, independent of provider artwork. */
+/* Channel tiles are composed by Kingdom, independent of provider artwork. */
 .live-card .poster{position:relative;aspect-ratio:auto;height:0;padding-bottom:60%;border-radius:24px;background:linear-gradient(140deg,var(--identity-ink),#162134);border:1px solid #ffffff0b}
 .live-card .poster:after{display:none}.channel-pattern{position:absolute;inset:0;width:100%;height:100%;color:var(--identity-accent);pointer-events:none}.channel-pattern circle{fill:currentColor;opacity:.055}.channel-pattern path{stroke:currentColor;stroke-width:1.5;opacity:.12;fill:none}
 .live-card .poster>.channel-logo{position:absolute;inset:auto;top:22%;left:22%;width:56%;height:43%;background:none}.channel-logo>.kingdom-art{background:none!important;transition:opacity .25s}.channel-logo[data-image-state='ready']>.kingdom-art{opacity:0}

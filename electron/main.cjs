@@ -17,8 +17,8 @@ app.whenReady().then(()=>{
  // and hides manual Location headers, breaking relative HLS segment resolution.
  const streams=require('./stream-gateway.cjs').createStreamGateway((url,options)=>fetch(url,options));
  protocol.handle('richiflix',request=>{if(streams.handles(request))return streams.handle(request);const file=files.get(new URL(request.url).hostname);return file?net.fetch(pathToFileURL(file).href,{headers:request.headers}):new Response('Archivo no disponible',{status:404});});
- window=new BrowserWindow({width:1480,height:940,minWidth:900,minHeight:650,backgroundColor:'#101827',title:'Richiflix',icon,fullscreen:true,autoHideMenuBar:true,webPreferences:{preload:path.join(__dirname,'preload.cjs'),contextIsolation:true,nodeIntegration:false,sandbox:true}});
- if(process.platform==='win32')window.setAppDetails({appId:'local.richiflix',appIconPath:icon,relaunchDisplayName:'Richiflix',relaunchCommand:app.isPackaged?`"${process.execPath}"`:`"${process.execPath}" "${app.getAppPath()}"`});
+ window=new BrowserWindow({width:1480,height:940,minWidth:900,minHeight:650,backgroundColor:'#0d172b',title:'Kingdom Player',icon,fullscreen:true,autoHideMenuBar:true,webPreferences:{preload:path.join(__dirname,'preload.cjs'),contextIsolation:true,nodeIntegration:false,sandbox:true}});
+ if(process.platform==='win32')window.setAppDetails({appId:'local.richiflix',appIconPath:icon,relaunchDisplayName:'Kingdom Player',relaunchCommand:app.isPackaged?`"${process.execPath}"`:`"${process.execPath}" "${app.getAppPath()}"`});
  window.webContents.setWindowOpenHandler(()=>({action:'deny'}));
  // Identify the local app to YouTube's embed API; no IPTV request is altered.
  window.webContents.session.webRequest.onBeforeSendHeaders({urls:['https://www.youtube.com/embed/*','https://www.youtube-nocookie.com/embed/*']},(details,callback)=>{
@@ -29,6 +29,8 @@ app.whenReady().then(()=>{
  // Windows emits the native event before committing isFullScreen(). Read it
  // on the next main-process turn so the renderer receives the new state.
  const reportFullscreen=()=>setImmediate(()=>{if(!window.isDestroyed())window.webContents.send('fullscreen-change',window.isFullScreen());});
+ // The page says Kingdom; the window and taskbar keep the full product name.
+ window.on('page-title-updated',event=>event.preventDefault());
  window.on('enter-full-screen',reportFullscreen);
  window.on('leave-full-screen',reportFullscreen);
  window.loadFile(path.join(__dirname,'../dist/index.html'));

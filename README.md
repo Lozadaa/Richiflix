@@ -1,6 +1,8 @@
-# Richiflix
+# Kingdom Player
 
-App local para Windows con Electron y Samsung TV con Tizen. Perfiles Adulto/Kids, diseño azul noche, coral y lavanda, reproductor inmersivo y navegación por mando.
+App local para Windows con Electron y Samsung TV con Tizen. En la interfaz se llama **Kingdom**; «Kingdom Player» queda para el paquete, la ventana y la documentación. Perfiles Adulto/Kids, marca Solaria (corona dorada sobre azul noche), reproductor inmersivo y navegación por mando. Marca y paleta: [docs/BRAND.md](docs/BRAND.md).
+
+Antes se llamaba Richiflix. Los nombres técnicos se conservan a propósito: id del paquete Tizen `Richiflix1.Richiflix` (cambiarlo obligaría a desinstalar y se perderían perfiles y conexiones), `name` de `package.json`, eventos `richiflix-*`, `window.richiflix`, el protocolo `richiflix:`, las claves `rf-*` de almacenamiento, el acceso directo `Richiflix.lnk` y el nombre del `.wgt`.
 
 La actualización del 6 de octubre se comprobó exclusivamente en PC y no se envió al TV. Incluye episodios en una lista continua por temporada sin selector, recuperación del capítulo al volver, precarga de las dos filas próximas, caché persistente de scores, spinner durante carga de imágenes y búsqueda con OK/Volver. Pasaron 182 pruebas unitarias y las comprobaciones de Electron y del paquete Tizen simulado en PC. [Informe](docs/VALIDACION-PC-20261006.md).
 

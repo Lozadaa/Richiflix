@@ -120,7 +120,7 @@ try{
  await remote(10009);await page.waitForFunction(()=>document.activeElement.matches('.player-dialog video'));await remote(10009);await page.locator('.player-dialog').waitFor({state:'detached'});
  await page.getByRole('button',{name:'Cambiar perfil',exact:true}).focus();await remote(13);await page.waitForFunction(()=>document.activeElement.getAttribute('aria-label')==='Adulto');await page.getByRole('button',{name:'Kids',exact:true}).focus();await remote(13);
  await page.getByRole('button',{name:'Ajustes',exact:true}).waitFor();assert.equal(await page.getByRole('button',{name:'TV en vivo',exact:true}).count(),0);assert.equal(await page.getByRole('button',{name:'Añadir contenido',exact:true}).count(),0);
- await remote(10009);await page.getByRole('button',{name:'Adulto',exact:true}).waitFor();await remote(10009);await page.getByRole('dialog',{name:'Salir de Richiflix'}).waitFor();
+ await remote(10009);await page.getByRole('button',{name:'Adulto',exact:true}).waitFor();await remote(10009);await page.getByRole('dialog',{name:'Salir de Kingdom'}).waitFor();
  await page.getByRole('button',{name:'Seguir viendo',exact:true}).focus();await remote(13);await page.getByRole('dialog').waitFor({state:'detached'});
  assert.deepEqual(errors,[]);console.log('Tizen smoke OK: fuente principal lista desde cero sin login, edición Xtream, WGT, CSS, películas, episodios, perfiles, mando, loader, AVPlay, pausa/seek, audio, Volver, Kids y salida. Decoder simulado; falta prueba en TV real.');
 }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}
