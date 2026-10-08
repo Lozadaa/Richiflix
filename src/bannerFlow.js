@@ -53,3 +53,24 @@ export function bannerKeyAction({key,mode}){
 
 // Inicio con vida: a CSS knob (--tv-kenburns, --tv-ambient) is on unless it reads exactly 0 (unset = the default 1).
 export const knobOn=value=>String(value??'').trim()!=='0';
+
+// '#29324e' / '#abc' → '41,50,78' for rgba(var(--wash-ink-rgb),a); an 'r,g,b' triplet passes through; else null.
+export function hexToRgb(value){
+ const text=String(value??'').trim();
+ if(/^\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}$/.test(text))return text.split(',').map(part=>Number(part)).join(',');
+ const hex=text.replace(/^#/,''),full=hex.length===3?[...hex].map(digit=>digit+digit).join(''):hex;
+ if(!/^[0-9a-f]{6}$/i.test(full))return null;
+ return [0,2,4].map(start=>parseInt(full.slice(start,start+2),16)).join(',');
+}
+
+// H1-T2 ambient wash: two fixed layers (a, b). A new ink is written into the inactive one, which becomes active (the
+// other fades out); the same ink keeps the same object (no render, no fade). While the current slide's art is not
+// decoded (ready=false) the tint holds, so it never changes before the image it belongs to.
+export function ambientSlots(previous,ink,ready=true){
+ const rgb=hexToRgb(ink);
+ if(!rgb)return previous??null;
+ if(!previous)return {a:rgb,b:null,active:'a'};
+ if(!ready||previous[previous.active]===rgb)return previous;
+ const slot=previous.active==='a'?'b':'a';
+ return {...previous,[slot]:rgb,active:slot};
+}

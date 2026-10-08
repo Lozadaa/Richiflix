@@ -15,7 +15,7 @@ import {isTVBuild} from './platform.js';
 import {scoreLabel} from './mlbSchedule.js';
 import {TitleFacts} from './UserScore.jsx';
 import {createCardPress,okHint} from './cardExpansion.js';
-import {bannerKeyAction,knobOn} from './bannerFlow.js';
+import {bannerKeyAction,knobOn,ambientSlots} from './bannerFlow.js';
 const FADE_MS=320;
 export const FocusStage=memo(function FocusStage({item,active,visible=true,loading=false,metadataPending=loading,moving=false,open,inspect,favorite,toggle,tv,hover,leave,trailerDelay=0,next,nextPending=false,slide=0,slides=0,choose,onNextArt,profileId,paused=false}){
  const [actionsFocused,setActionsFocused]=useState(false);
@@ -45,14 +45,20 @@ export const FocusStage=memo(function FocusStage({item,active,visible=true,loadi
  const keyUp=event=>{if((event.key==='Enter'||event.keyCode===13)&&press.current.pressed){event.preventDefault();press.current.up();}};
  const hidden=direct&&mode==='carousel';
  // Inicio con vida: the knobs --tv-kenburns / --tv-ambient (0/1 on .app.tv-mode) are read once on mount, never per key.
- const [knobs,setKnobs]=useState(null);
+ const [knobs,setKnobs]=useState(null),[wash,setWash]=useState(null);
  useEffect(()=>{if(!tv)return;const style=getComputedStyle(document.querySelector('.app')||document.documentElement);setKnobs({kenburns:knobOn(style.getPropertyValue('--tv-kenburns')),ambient:knobOn(style.getPropertyValue('--tv-ambient'))});},[tv]);
  if(!item)return null;const live=item.kind==='iptv',matchup=mlbMatchup(item),remoteActions=isTVBuild&&tv,dormant=remoteActions&&!actionsFocused;
  const out=carousel&&layers.out&&layers.out.id!==item.id?layers.out:null,upcomingArt=carousel&&next&&next.id!==item.id&&next.id!==out?.id?next:null;
- return <section className={`hero focus-stage ${tv?'tv-stage':'pointer-stage'} ${carousel?'carousel-stage':''} ${live?'channel-stage':''} ${matchup?'mlb-stage':''}`} data-content-id={item.id} data-stage-visible={visible?'true':'false'} aria-hidden={!visible?true:undefined} data-stage-state={moving?'browsing':'settled'} data-slide={carousel?slide:undefined} data-kenburns={carousel&&knobs?.kenburns?'true':undefined} data-paused={carousel&&paused?'true':undefined} aria-label={carousel?'Recomendaciones':'Vista del título seleccionado'} style={identityStyle(item)} onMouseEnter={hover} onMouseLeave={leave} onFocus={event=>{if(remoteActions)setActionsFocused(true);if(direct&&!event.currentTarget.contains(event.relatedTarget)){const show=hint.visible();setHintOn(show);if(show)hint.shown();}hover?.(event);}} onBlur={event=>{if(!event.currentTarget.contains(event.relatedTarget)){setActionsFocused(false);press.current.cancel();setMode('carousel');setHintOn(false);leave?.();}}}>
+ // H1-T2 ambient wash: the slide's own --identity-ink (identityStyle, already the stage's style) goes into the free
+ // layer only when the slide changes, in this same render that makes its art layer is-current, and only once that art
+ // is decoded (until then the outgoing art and its tint stay). Never in keyDown; renders that keep the slide are no-ops.
+ const identity=identityStyle(item),ambient=carousel&&tv&&knobs?.ambient;
+ if(ambient){const nextWash=ambientSlots(wash,identity['--identity-ink'],currentArrived||!out);if(nextWash!==wash)setWash(nextWash);}
+ return <section className={`hero focus-stage ${tv?'tv-stage':'pointer-stage'} ${carousel?'carousel-stage':''} ${live?'channel-stage':''} ${matchup?'mlb-stage':''}`} data-content-id={item.id} data-stage-visible={visible?'true':'false'} aria-hidden={!visible?true:undefined} data-stage-state={moving?'browsing':'settled'} data-slide={carousel?slide:undefined} data-kenburns={carousel&&knobs?.kenburns?'true':undefined} data-paused={carousel&&paused?'true':undefined} aria-label={carousel?'Recomendaciones':'Vista del título seleccionado'} style={identity} onMouseEnter={hover} onMouseLeave={leave} onFocus={event=>{if(remoteActions)setActionsFocused(true);if(direct&&!event.currentTarget.contains(event.relatedTarget)){const show=hint.visible();setHintOn(show);if(show)hint.shown();}hover?.(event);}} onBlur={event=>{if(!event.currentTarget.contains(event.relatedTarget)){setActionsFocused(false);press.current.cancel();setMode('carousel');setHintOn(false);leave?.();}}}>
   {<TrailerPreview id={live?undefined:item.trailerId} active={!live&&active} delay={trailerDelay}/>}
   {[out&&<BannerArtwork key={out.id} item={out} className="is-out"/>,<BannerArtwork key={item.id} item={item} metadataPending={metadataPending} className={carousel?'is-current':undefined} onState={carousel?artChanged:undefined}/>,upcomingArt&&<BannerArtwork key={upcomingArt.id} item={upcomingArt} metadataPending={nextPending} className="is-next" onState={onNextArt}/>]}
   <div className="focus-stage-shade"/>
+  {ambient&&wash&&['a','b'].map(slot=><i key={slot} className={wash.active===slot?'ambient-wash is-active':'ambient-wash'} data-slot={slot} style={wash[slot]?{'--wash-ink-rgb':wash[slot]}:undefined} aria-hidden="true"/>)}
   <div className="focus-stage-copy">
    <React.Fragment key={item.id}><span className="focus-eyebrow"><CategoryMark item={item}/>{displayText(live?(!event?['EN DIRECTO',item.genre]:event.phase==='upcoming'?[event.label.toLocaleUpperCase('es'),eventCountdown(item).label]:[event.label.toLocaleUpperCase('es'),event.phase==='postponed'?'':event.time,item.genre]).filter(Boolean).join(' · '):item.contentGenre||item.genre)}{loading&&<span className="focus-info-loader" role="status" aria-label="Cargando información"/>}</span>
    <h1>{live?channelTitle(item):displayTitle(item)}</h1>

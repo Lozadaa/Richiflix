@@ -126,6 +126,17 @@ body[data-focus-region]:not([data-focus-region='catalogue']) .tv-mode .virtual-r
 .carousel-stage[data-kenburns='true'] .focus-stage-visual[data-artwork-state='ready']:not(.is-next){transform-origin:60% 40%;animation:stage-kenburns 9s linear both}
 .carousel-stage[data-paused='true'] .focus-stage-visual{animation-play-state:paused}
 @media(prefers-reduced-motion:reduce){.carousel-stage[data-kenburns='true'] .focus-stage-visual[data-artwork-state='ready']:not(.is-next){animation:none}}
+/* H1-T2 ambient wash: two fixed layers (FocusStage, only with --tv-ambient on) over the art and the shade (z 2), under
+   the copy (z 3) and the dots (z 4). The slide's --identity-ink is painted into the free layer once per slide change,
+   then only opacity fades. Deviation from the spec's «60vh, behind the first row»: the stage clips its content
+   (overflow hidden, contain paint) and its art is opaque, so the wash lives inside it, on the right (left 47%): it never
+   overlaps the copy box (≤ 46% wide), which would otherwise be promoted to a layer of its own. The gradient keeps the
+   spec's centre (70% of the screen = 43% of this box). Permanent layers (will-change): no raster per slide change. */
+.carousel-stage .ambient-wash{position:absolute;z-index:2;top:0;bottom:0;left:47%;right:0;pointer-events:none;opacity:0;will-change:opacity;transition:opacity var(--tv-slow,180ms) ease;background:radial-gradient(ellipse at 43% 0%,rgba(var(--wash-ink-rgb),.55),transparent 70%)}
+.carousel-stage .ambient-wash.is-active{opacity:1}
+/* A playing trailer (banner or card) is never tinted. */
+.focus-stage .trailer-preview.is-playing~.ambient-wash,.focus-stage .trailer-preview.is-exiting~.ambient-wash,.tv-stage[data-card-trailer='playing'] .ambient-wash{visibility:hidden}
+@media(prefers-reduced-motion:reduce){.carousel-stage .ambient-wash{transition:none}}
 /* Fase D (TV UX). Continue-watching bar readable from the sofa. */
 .tv-mode .progress{height:6px;background:#ffffff30}.tv-mode .progress i{background:var(--accent)}
 /* Active row: one attribute per row change (VirtualCarousel), colour only = paint, no layout. */
