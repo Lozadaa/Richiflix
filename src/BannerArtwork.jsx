@@ -11,7 +11,7 @@ function useArtworkState(src){
  return [result.src===src?result.state:src?'loading':'empty',update];
 }
 
-export function BannerArtwork({item,metadataPending=false,variant='focus',className,onState}){
+export function BannerArtwork({item,metadataPending=false,variant='focus',className,onState,tint}){
  const live=item.kind==='iptv',focus=variant==='focus',matchup=live?mlbMatchup(item):null;
  const backdrop=live?(focus?undefined:item.imageGeneric?undefined:artworkURL(item.image)):artworkURL(item.backdropImage,true);
  const [backdropState,backdropChanged]=useArtworkState(backdrop);
@@ -20,7 +20,7 @@ export function BannerArtwork({item,metadataPending=false,variant='focus',classN
  const state=ready?'ready':pending?'loading':'missing';
  // A carousel asks its prepainted next layer whether rotating is safe yet.
  useEffect(()=>{onState?.(item.id,state);},[onState,item.id,state]);
- return <div className={(focus?'focus-stage-visual':'hero-visual')+(className?' '+className:'')} data-artwork-state={state} aria-busy={pending?true:undefined}>
+ return <div className={(focus?'focus-stage-visual':'hero-visual')+(className?' '+className:'')} data-artwork-state={state} aria-busy={pending?true:undefined} style={tint?{'--wash-ink-rgb':tint}:undefined}>
   {/* A game keeps its local crests inside the layer, so the carousel's opacity fade carries them too. */}
   {focus&&matchup&&<MatchupArtwork matchup={matchup} wide item={item}/>}
   {backdrop&&<QualityImage className={focus?'focus-backdrop hero-art':'hero-art'} src={backdrop} fit={live?'contain':'cover'} position={focus?undefined:'70% center'} eager fallback={false} fallbackWhileLoading={false} onStateChange={backdropChanged}/>}

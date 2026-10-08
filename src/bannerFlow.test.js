@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createBannerFlow,createBannerCarousel,bannerKeyAction,knobOn,hexToRgb,ambientSlots,dotCycle} from './bannerFlow.js';
+import {createBannerFlow,createBannerCarousel,bannerKeyAction,knobOn,hexToRgb,dotCycle} from './bannerFlow.js';
 test('dot progress restarts on a slide change and on resume, never on a pause or a no-op render',()=>{
  const start=dotCycle(null,{slide:0});assert.deepEqual(start,{slide:0,paused:false,cycle:0,resumed:false});
  assert.equal(dotCycle(start,{slide:0}),start,'same slide, same state: same object');
@@ -12,19 +12,6 @@ test('dot progress restarts on a slide change and on resume, never on a pause or
 test('hexToRgb converts 6- and 3-digit hex, passes r,g,b through and rejects the rest',()=>{
  assert.equal(hexToRgb('#29324e'),'41,50,78');assert.equal(hexToRgb('#FFF'),'255,255,255');assert.equal(hexToRgb(' 1, 2 ,3 '),'1,2,3');
  for(const value of ['',undefined,'#12345','red','#gg0000'])assert.equal(hexToRgb(value),null);
-});
-test('ambient wash alternates a/b on a new ink and keeps its layer for the same ink',()=>{
- const first=ambientSlots(null,'#29324e');assert.deepEqual(first,{a:'41,50,78',b:null,active:'a'});
- const second=ambientSlots(first,'#423142');assert.deepEqual(second,{a:'41,50,78',b:'66,49,66',active:'b'});
- assert.equal(ambientSlots(second,'#423142'),second,'same ink: same object, no fade');
- const third=ambientSlots(second,'#203841');assert.deepEqual(third,{a:'32,56,65',b:'66,49,66',active:'a'});
- assert.equal(ambientSlots(third,'not a colour'),third);assert.equal(ambientSlots(null,undefined),null);
-});
-test('the tint does not change before the slide art is decoded',()=>{
- const shown=ambientSlots(null,'#29324e');
- assert.equal(ambientSlots(shown,'#423142',false),shown,'art still loading: old tint stays');
- assert.equal(ambientSlots(ambientSlots(shown,'#423142',false),'#423142',true).active,'b','art arrived: the tint follows');
- assert.deepEqual(ambientSlots(null,'#423142',false),{a:'66,49,66',b:null,active:'a'},'nothing shown yet: first tint goes in');
 });
 test('motion knobs: only an explicit 0 turns them off',()=>{
  for(const value of ['1',' 1 ','',undefined,null])assert.equal(knobOn(value),true);

@@ -73,14 +73,3 @@ export function dotCycle(previous,{slide,paused=false}){
  return previous.paused===paused?previous:{...previous,paused};
 }
 
-// H1-T2 ambient wash: two fixed layers (a, b). A new ink is written into the inactive one, which becomes active (the
-// other fades out); the same ink keeps the same object (no render, no fade). While the current slide's art is not
-// decoded (ready=false) the tint holds, so it never changes before the image it belongs to.
-export function ambientSlots(previous,ink,ready=true){
- const rgb=hexToRgb(ink);
- if(!rgb)return previous??null;
- if(!previous)return {a:rgb,b:null,active:'a'};
- if(!ready||previous[previous.active]===rgb)return previous;
- const slot=previous.active==='a'?'b':'a';
- return {...previous,[slot]:rgb,active:slot};
-}
