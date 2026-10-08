@@ -50,3 +50,37 @@ export function bannerKeyAction({key,mode}){
  if(mode==='actions')return key==='ArrowLeft'||key==='ArrowRight'?'toggle':key==='Escape'?'exit':null;
  return key==='ArrowLeft'?'previous':key==='ArrowRight'?'next':key==='Enter'?'press':null;
 }
+
+// Inicio con vida: a CSS knob (--tv-kenburns, --tv-ambient) is on unless it reads exactly 0 (unset = the default 1).
+export const knobOn=value=>String(value??'').trim()!=='0';
+
+// '#29324e' / '#abc' → '41,50,78' for rgba(var(--wash-ink-rgb),a); an 'r,g,b' triplet passes through; else null.
+export function hexToRgb(value){
+ const text=String(value??'').trim();
+ if(/^\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}$/.test(text))return text.split(',').map(part=>Number(part)).join(',');
+ const hex=text.replace(/^#/,''),full=hex.length===3?[...hex].map(digit=>digit+digit).join(''):hex;
+ if(!/^[0-9a-f]{6}$/i.test(full))return null;
+ return [0,2,4].map(start=>parseInt(full.slice(start,start+2),16)).join(',');
+}
+
+// H1-T3 dot progress: `cycle` keys the active dot, so its 9 s fill restarts on every slide change and on every resume.
+// createBannerCarousel.resume waits resumeMs + intervalMs, so a resumed fill is `resumed` (CSS delays it by resumeMs)
+// and still ends when the slide changes. A pause alone keeps the cycle (CSS pauses the running fill).
+export function dotCycle(previous,{slide,paused=false}){
+ if(!previous)return {slide,paused,cycle:0,resumed:false};
+ if(previous.slide!==slide)return {slide,paused,cycle:previous.cycle+1,resumed:false};
+ if(previous.paused&&!paused)return {slide,paused,cycle:previous.cycle+1,resumed:true};
+ return previous.paused===paused?previous:{...previous,paused};
+}
+
+// H1-T2 ambient wash: two fixed layers (a, b). A new ink is written into the inactive one, which becomes active (the
+// other fades out); the same ink keeps the same object (no render, no fade). While the current slide's art is not
+// decoded (ready=false) the tint holds, so it never changes before the image it belongs to.
+export function ambientSlots(previous,ink,ready=true){
+ const rgb=hexToRgb(ink);
+ if(!rgb)return previous??null;
+ if(!previous)return {a:rgb,b:null,active:'a'};
+ if(!ready||previous[previous.active]===rgb)return previous;
+ const slot=previous.active==='a'?'b':'a';
+ return {...previous,[slot]:rgb,active:slot};
+}

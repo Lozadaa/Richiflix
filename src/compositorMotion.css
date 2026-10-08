@@ -114,6 +114,41 @@ body[data-focus-region]:not([data-focus-region='catalogue']) .tv-mode .virtual-r
 .banner-dots button:after{content:'';position:absolute;inset:0;border:2px solid var(--focus);border-radius:inherit;opacity:0;pointer-events:none;transition:opacity var(--tv-fast,80ms) ease}
 .banner-dots button:focus:after{opacity:1}
 @media(prefers-reduced-motion:reduce){.carousel-stage .focus-stage-visual.is-current,.banner-dots button:after{transition:none}.carousel-stage .focus-stage-copy>:not(.focus-actions){animation:none}}
+/* Inicio con vida (H1). Knobs, read once by FocusStage on mount: 0 = no animation and no layer. Change them here, or
+   on .app from the inspector and then reload. --tv-kenburns covers the Ken Burns and the dot progress (data-kenburns);
+   --tv-ambient the two ambient washes (at 0 they are not rendered at all). */
+.app.tv-mode{--tv-kenburns:1;--tv-ambient:1}
+/* H1-T1 Ken Burns: the carousel art layer (already the crossfade's layer, so no second layer) scales 1 → 1.06 over the
+   9 s slide interval (createBannerCarousel intervalMs). Only decoded art moves and never the unpainted next slide; an
+   outgoing layer keeps its running animation (same name) under the fade, so it never snaps back. A new slide is a new
+   layer: the animation restarts with it. Live channels have no focus backdrop ('missing'): their crests do not move. */
+@keyframes stage-kenburns{from{transform:scale(1)}to{transform:scale(1.06)}}
+.carousel-stage[data-kenburns='true'] .focus-stage-visual[data-artwork-state='ready']:not(.is-next){transform-origin:60% 40%;animation:stage-kenburns 9s linear both}
+.carousel-stage[data-paused='true'] .focus-stage-visual[data-artwork-state]:not(.is-next){animation-play-state:paused}/* same specificity, after the shorthand */
+@media(prefers-reduced-motion:reduce){.carousel-stage[data-kenburns='true'] .focus-stage-visual[data-artwork-state='ready']:not(.is-next){animation:none}}
+/* H1-T2 ambient wash: two fixed layers (FocusStage, only with --tv-ambient on) over the art and the shade (z 2), under
+   the copy (z 3) and the dots (z 4). The slide's --identity-ink is painted into the free layer once per slide change,
+   then only opacity fades. Deviation from the spec's «60vh, behind the first row»: the stage clips its content
+   (overflow hidden, contain paint) and its art is opaque, so the wash lives inside it, on the right (left 47%): it never
+   overlaps the copy box (≤ 46% wide), which would otherwise be promoted to a layer of its own. The gradient keeps the
+   spec's centre (70% of the screen = 43% of this box). Permanent layers (will-change): no raster per slide change. */
+.carousel-stage .ambient-wash{position:absolute;z-index:2;top:0;bottom:0;left:47%;right:0;pointer-events:none;opacity:0;will-change:opacity;transition:opacity var(--tv-slow,180ms) ease;background:radial-gradient(ellipse at 43% 0%,rgba(var(--wash-ink-rgb),.55),transparent 70%)}
+.carousel-stage .ambient-wash.is-active{opacity:1}
+/* A playing trailer (banner or card) is never tinted. */
+.focus-stage .trailer-preview.is-playing~.ambient-wash,.focus-stage .trailer-preview.is-exiting~.ambient-wash,.tv-stage[data-card-trailer='playing'] .ambient-wash{visibility:hidden}
+@media(prefers-reduced-motion:reduce){.carousel-stage .ambient-wash{transition:none}}
+/* H1-T3 dot progress: one 32×3 line under the active dot fills with scaleX over the 9 s interval (the only new layer
+   of the dots). FocusStage re-keys the active dot on each slide change and resume (dotCycle); a resumed fill waits the
+   carousel's resumeMs (2 s) first. It pauses with the carousel and goes with the Ken Burns knob. */
+@keyframes dot-progress{to{transform:scaleX(1)}}
+.carousel-stage[data-kenburns='true'] .banner-dots .active:before{content:'';position:absolute;left:1px;right:1px;top:100%;height:3px;margin-top:2px;border-radius:2px;background:var(--accent);pointer-events:none;transform:scaleX(0);transform-origin:left;will-change:transform;animation:dot-progress 9s linear both}
+.carousel-stage[data-kenburns='true'] .banner-dots .active.is-resumed:before{animation-delay:2s}
+.carousel-stage[data-paused='true'] .banner-dots .active:before{animation-play-state:paused}
+@media(prefers-reduced-motion:reduce){.carousel-stage[data-kenburns='true'] .banner-dots .active:before{content:none}}
+/* H1-T3 staggered copy: the same stage-copy-in (duration unchanged), eyebrow / title (or logo) / description / facts. */
+.carousel-stage .focus-stage-copy>:nth-child(2){animation-delay:40ms}
+.carousel-stage .focus-stage-copy>:nth-child(3){animation-delay:80ms}
+.carousel-stage .focus-stage-copy>:nth-child(4){animation-delay:120ms}
 /* Fase D (TV UX). Continue-watching bar readable from the sofa. */
 .tv-mode .progress{height:6px;background:#ffffff30}.tv-mode .progress i{background:var(--accent)}
 /* Active row: one attribute per row change (VirtualCarousel), colour only = paint, no layout. */
