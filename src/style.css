@@ -530,40 +530,40 @@ button.playback-toggle svg.lucide-play{margin-left:3px}
 .tv-player .back-button{width:80px;height:80px;min-height:80px}
 
 /* One Richiflix identity, from the launcher to the last frame. */
-.richiflix-mark{display:block;width:42px;height:42px;flex-shrink:0;border-radius:25%;user-select:none}
-.brand{gap:11px}.brand>.richiflix-mark{transition:transform .3s var(--ease-out)}
-.brand:hover>.richiflix-mark{transform:rotate(-6deg) scale(1.04)}
+.kingdom-mark{display:block;width:42px;height:42px;flex-shrink:0;border-radius:25%;user-select:none}
+.brand{gap:11px}.brand>.kingdom-mark{transition:transform .3s var(--ease-out)}
+.brand:hover>.kingdom-mark{transform:rotate(-6deg) scale(1.04)}
 .player-wordmark{display:flex;align-items:center;gap:12px;color:#fff}
-.player-wordmark>.richiflix-mark{width:44px;height:44px}
+.player-wordmark>.kingdom-mark{width:44px;height:44px}
 .player-wordmark>span{font:inherit;color:inherit;margin:0}
-.cinema-loader .richiflix-mark{width:42px;height:42px}
+.cinema-loader .kingdom-mark{width:42px;height:42px}
 .small-avatar{position:relative;overflow:hidden}
 .quality-media{position:absolute;top:0;right:0;bottom:0;left:0;overflow:hidden;isolation:isolate}
 .quality-media>img{position:absolute;top:50%;left:50%;width:100%;height:100%;transform:translate(-50%,-50%) scale(var(--image-scale,1));opacity:0;transition:none}
 .quality-media[data-image-state='ready']>img{transition:opacity .4s ease}
-.richiflix-art{position:absolute;top:0;right:0;bottom:0;left:0;overflow:hidden;background:#1c2940}
-.richiflix-art>.richiflix-mark{position:absolute;width:42%;height:auto;right:7%;top:12%;opacity:.28;transform:rotate(-12deg)}
-.richiflix-art>i{position:absolute;width:70%;height:160%;top:-35%;left:-40%;border:2px solid #c1b0ee15;border-radius:40%;transform:rotate(25deg)}
-.quality-media[data-image-state='ready']>.richiflix-art>.richiflix-mark{opacity:0}
+.kingdom-art{position:absolute;top:0;right:0;bottom:0;left:0;overflow:hidden;background:#1c2940}
+.kingdom-art>.kingdom-mark{position:absolute;width:42%;height:auto;right:7%;top:12%;opacity:.28;transform:rotate(-12deg)}
+.kingdom-art>i{position:absolute;width:70%;height:160%;top:-35%;left:-40%;border:2px solid #c1b0ee15;border-radius:40%;transform:rotate(25deg)}
+.quality-media[data-image-state='ready']>.kingdom-art>.kingdom-mark{opacity:0}
 .quality-logo{background:#1c2940}
-.quality-logo>.richiflix-art>.richiflix-mark{width:23%;top:14%;opacity:.13}
-.provider-poster .richiflix-art{background:var(--provider-color,#c1b0ee)}
-.provider-poster .richiflix-art>.richiflix-mark{opacity:.18}
+.quality-logo>.kingdom-art>.kingdom-mark{width:23%;top:14%;opacity:.13}
+.provider-poster .kingdom-art{background:var(--provider-color,#c1b0ee)}
+.provider-poster .kingdom-art>.kingdom-mark{opacity:.18}
 .hero .hero-art{animation:none;background:none}
-.hero-art .richiflix-art>.richiflix-mark,.detail-image .richiflix-art>.richiflix-mark{width:min(48vw,650px);right:7%;top:12%;opacity:.5;transform:rotate(-9deg)}
-.hero-art .richiflix-art,.detail-image .richiflix-art{background:#17243b}
-.hero-art .richiflix-art>i,.detail-image .richiflix-art>i{width:55%;left:-25%;border-width:3px;border-color:#c1b0ee17}
-.hero-art[data-image-state='ready']>.richiflix-art>.richiflix-mark,.detail-image[data-image-state='ready']>.richiflix-art>.richiflix-mark{opacity:0}
+.hero-art .kingdom-art>.kingdom-mark,.detail-image .kingdom-art>.kingdom-mark{width:min(48vw,650px);right:7%;top:12%;opacity:.5;transform:rotate(-9deg)}
+.hero-art .kingdom-art,.detail-image .kingdom-art{background:#17243b}
+.hero-art .kingdom-art>i,.detail-image .kingdom-art>i{width:55%;left:-25%;border-width:3px;border-color:#c1b0ee17}
+.hero-art[data-image-state='ready']>.kingdom-art>.kingdom-mark,.detail-image[data-image-state='ready']>.kingdom-art>.kingdom-mark{opacity:0}
 .immersive-dialog .quality-media.detail-image{height:100%;min-height:100%;background:none;animation:none}
 .quality-media.detail-image:not([style]){background:none}
 .profile-tile .quality-media{border-radius:inherit}
 .profile-tile .quality-media>img,.small-avatar .quality-media>img{top:0;left:0;transform:none}
 .poster .quality-media>img{transform:translate(-50%,-50%) scale(var(--image-scale,1))!important}
-@media(max-width:760px){.brand>.richiflix-mark{width:32px;height:32px}.player-wordmark{display:none}.hero-art .richiflix-art>.richiflix-mark,.detail-image .richiflix-art>.richiflix-mark{width:75vw;right:-5%;top:10%}}
-@media(prefers-reduced-motion:reduce){.quality-media>img,.brand>.richiflix-mark{transition:none}}
+@media(max-width:760px){.brand>.kingdom-mark{width:32px;height:32px}.player-wordmark{display:none}.hero-art .kingdom-art>.kingdom-mark,.detail-image .kingdom-art>.kingdom-mark{width:75vw;right:-5%;top:10%}}
+@media(prefers-reduced-motion:reduce){.quality-media>img,.brand>.kingdom-mark{transition:none}}
 
 .profile-screen>.profile-backdrop{z-index:-2;pointer-events:none}
-.profile-backdrop .richiflix-art>.richiflix-mark{width:min(60vw,750px);right:4%;top:12%;opacity:.6}
+.profile-backdrop .kingdom-art>.kingdom-mark{width:min(60vw,750px);right:4%;top:12%;opacity:.6}
 
 .included-sources{margin:30px 0 38px}.included-sources h3{font-size:22px;margin:0 0 20px}
 .included-source-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
@@ -593,21 +593,21 @@ button.playback-toggle svg.lucide-play{margin-left:3px}
 
 /* Posters retain their full composition. Landscapes are reserved for backdrops. */
 .portrait-card .poster{height:0;aspect-ratio:auto;padding-bottom:150%;border-radius:20px;background:#1d293d}.portrait-card .poster>.quality-media{position:absolute;inset:0}
-.portrait-card .poster:after{background:linear-gradient(0deg,#10182733,transparent 35%)}.portrait-card .poster-title{display:none}.portrait-card .richiflix-art>.richiflix-mark{display:none}.portrait-card .richiflix-art{background:linear-gradient(145deg,#27354e,#162234)}
+.portrait-card .poster:after{background:linear-gradient(0deg,#10182733,transparent 35%)}.portrait-card .poster-title{display:none}.portrait-card .kingdom-art>.kingdom-mark{display:none}.portrait-card .kingdom-art{background:linear-gradient(145deg,#27354e,#162234)}
 .cards .portrait-card{flex:0 0 clamp(175px,14vw,245px)}.poster-grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:28px 20px}.live-grid{grid-template-columns:repeat(auto-fill,minmax(310px,1fr))}
 .card-caption{display:flex;flex-direction:column;gap:5px;opacity:1;align-items:flex-start;padding:12px 3px 0;min-height:60px}.card-title{font-weight:700;font-size:16px;line-height:1.35;color:#edf1fa;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.card-meta{font-size:12px;line-height:1.4;color:#9aa9bf}.card-save{top:13px;bottom:auto;right:13px}.portrait-card .card-play{background:#10182722}
 .app .hero-content{max-width:780px;top:30%}.app .hero h1{font-size:clamp(50px,5.5vw,94px);letter-spacing:-3px;line-height:1.02;max-width:760px}.hero-description{max-width:510px;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}.hero-poster{position:absolute;right:9%;top:18%;width:29%;height:66%;z-index:0;border-radius:22px}.hero-poster img,.detail-poster img{border-radius:20px}
-.hero-art .richiflix-art>.richiflix-mark,.detail-image .richiflix-art>.richiflix-mark{display:none}.hero-art .richiflix-art,.detail-image .richiflix-art{background:radial-gradient(ellipse at 75% 25%,#354666,#101827 78%)}.hero-art .richiflix-art>i,.detail-image .richiflix-art>i{display:none}
+.hero-art .kingdom-art>.kingdom-mark,.detail-image .kingdom-art>.kingdom-mark{display:none}.hero-art .kingdom-art,.detail-image .kingdom-art{background:radial-gradient(ellipse at 75% 25%,#354666,#101827 78%)}.hero-art .kingdom-art>i,.detail-image .kingdom-art>i{display:none}
 .detail-poster{position:absolute;top:15%;right:7%;width:28%;height:68%;z-index:-1}.detail-copy{width:min(900px,65%)}
 .samsung-tv .portrait-card{min-width:0}.samsung-tv .portrait-card .poster{height:0;padding-bottom:150%}.samsung-tv .cards .portrait-card{flex-basis:240px}.samsung-tv .poster-grid{grid-template-columns:repeat(6,minmax(0,1fr));gap:30px 22px}.samsung-tv .card-title{font-size:23px}.samsung-tv .card-meta{font-size:18px}.samsung-tv .card-caption{min-height:80px}.samsung-tv .hero h1{font-size:88px;max-width:750px}
 @media(max-width:760px){.poster-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 14px}.cards .portrait-card{flex-basis:43vw}.card-title{font-size:14px}.card-meta{font-size:11px}.card-save{top:10px;bottom:auto}.app .hero h1{font-size:clamp(44px,11vw,64px);letter-spacing:-2px}.app .hero-content{top:auto;bottom:110px;max-width:none}.hero-poster{top:9%;right:7%;width:46%;height:40%}.detail-copy{width:100%}.detail-poster{top:12%;right:7%;width:46%;height:35%}.live-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 /* Channel tiles are composed by Richiflix, independent of provider artwork. */
 .live-card .poster{position:relative;aspect-ratio:auto;height:0;padding-bottom:60%;border-radius:24px;background:linear-gradient(140deg,var(--identity-ink),#162134);border:1px solid #ffffff0b}
 .live-card .poster:after{display:none}.channel-pattern{position:absolute;inset:0;width:100%;height:100%;color:var(--identity-accent);pointer-events:none}.channel-pattern circle{fill:currentColor;opacity:.055}.channel-pattern path{stroke:currentColor;stroke-width:1.5;opacity:.12;fill:none}
-.live-card .poster>.channel-logo{position:absolute;inset:auto;top:22%;left:22%;width:56%;height:43%;background:none}.channel-logo>.richiflix-art{background:none!important;transition:opacity .25s}.channel-logo[data-image-state='ready']>.richiflix-art{opacity:0}
+.live-card .poster>.channel-logo{position:absolute;inset:auto;top:22%;left:22%;width:56%;height:43%;background:none}.channel-logo>.kingdom-art{background:none!important;transition:opacity .25s}.channel-logo[data-image-state='ready']>.kingdom-art{opacity:0}
 .content-identity{position:absolute;inset:0;display:grid;place-items:center;overflow:hidden;background:linear-gradient(145deg,var(--identity-ink),#162134);color:var(--identity-accent)}.identity-shapes{position:absolute;inset:0;width:100%;height:100%;fill:currentColor;opacity:.1}.identity-shapes path{fill:none;stroke:currentColor;stroke-width:2}.identity-glyph{position:relative;z-index:1;font:800 clamp(45px,5vw,90px)/1 'Bricolage Grotesque',Arial,sans-serif;letter-spacing:-3px;max-width:90%;text-align:center}
 .channel-identity{background:none}.channel-identity .identity-shapes{display:none}.channel-identity .identity-glyph{display:grid;place-items:center;min-width:75px;min-height:75px;padding:10px 15px;font-size:36px;letter-spacing:-1.5px;border-radius:25px;background:var(--identity-accent);color:var(--identity-ink);box-shadow:0 10px 25px #0002;transform:rotate(-5deg)}
-.poster-art>.richiflix-art{transition:opacity .3s}.poster-art[data-image-state='ready']>.richiflix-art{opacity:0}.poster-identity .identity-glyph{font-size:clamp(50px,5vw,100px);transform:rotate(-7deg);opacity:.9}
+.poster-art>.kingdom-art{transition:opacity .3s}.poster-art[data-image-state='ready']>.kingdom-art{opacity:0}.poster-identity .identity-glyph{font-size:clamp(50px,5vw,100px);transform:rotate(-7deg);opacity:.9}
 .live-card .poster-title{font-size:clamp(18px,1.5vw,25px);line-height:1.2;letter-spacing:-.5px;bottom:20px;left:22px;right:22px;color:#edf2ff;max-width:none;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-shadow:none}
 .live-card .live-label{top:17px;left:19px;right:auto;background:#ffffff0c;color:#c6d3e6;letter-spacing:1px;font-size:9px;padding:6px 9px}.live-card .live-label i{background:#93d7bd}.live-card .card-caption{min-height:28px;padding:9px 5px 0}.live-card .card-caption .card-title{display:none}.live-card .card-meta{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;font-size:11px}.live-card .card-play{background:#10182766}.live-card:hover .channel-pattern,.live-card:focus-within .channel-pattern{transform:scale(1.04);transition:transform .3s}
 .samsung-tv .live-card .poster{height:0;padding-bottom:60%}.samsung-tv .live-card .poster-title{font-size:25px;bottom:24px;left:25px}.samsung-tv .live-card .live-label{font-size:13px}.samsung-tv .live-card .card-meta{font-size:17px}.samsung-tv .channel-identity .identity-glyph{font-size:44px;min-height:92px;min-width:92px;border-radius:30px}
@@ -615,9 +615,9 @@ button.playback-toggle svg.lucide-play{margin-left:3px}
 
 /* Living-room browsing: one fixed stage and one independently scrolling catalogue. */
 .focus-stage.hero{position:fixed;inset:auto;top:100px;left:0;width:100%;height:48vh;min-height:0;z-index:4;background:#101827;overflow:hidden;isolation:isolate}
-.focus-stage-visual{position:absolute;inset:0;animation:focus-art-enter .5s ease both}.focus-backdrop{position:absolute;inset:0}.focus-stage .focus-backdrop>img{object-position:75% 35%}.focus-backdrop .richiflix-art{background:none}.focus-stage .content-identity{background:linear-gradient(120deg,#101827,var(--identity-ink));place-items:end center}.focus-stage .poster-identity .identity-glyph{font-size:140px;opacity:.16;align-self:center;margin-left:55%}
+.focus-stage-visual{position:absolute;inset:0;animation:focus-art-enter .5s ease both}.focus-backdrop{position:absolute;inset:0}.focus-stage .focus-backdrop>img{object-position:75% 35%}.focus-backdrop .kingdom-art{background:none}.focus-stage .content-identity{background:linear-gradient(120deg,#101827,var(--identity-ink));place-items:end center}.focus-stage .poster-identity .identity-glyph{font-size:140px;opacity:.16;align-self:center;margin-left:55%}
 .hero-visual,.banner-missing-art{position:absolute;inset:0}.banner-missing-art{overflow:hidden}.hero-visual>.banner-missing-art>.content-identity{height:100%}
-.focus-poster{position:absolute;right:8%;top:5%;width:29%;height:87%;border-radius:22px}.focus-logo{right:9%;top:10%;height:65%;width:35%}.focus-logo .richiflix-art{background:none}.focus-logo .identity-glyph{min-width:170px;min-height:170px;font-size:80px;border-radius:50px}
+.focus-poster{position:absolute;right:8%;top:5%;width:29%;height:87%;border-radius:22px}.focus-logo{right:9%;top:10%;height:65%;width:35%}.focus-logo .kingdom-art{background:none}.focus-logo .identity-glyph{min-width:170px;min-height:170px;font-size:80px;border-radius:50px}
 .focus-stage-shade{position:absolute;inset:0;background:linear-gradient(90deg,#101827 0%,#101827e8 25%,#10182788 49%,#10182700 78%),linear-gradient(0deg,#101827,transparent 25%);pointer-events:none}
 .focus-stage-copy{position:relative;z-index:2;width:56%;max-width:1040px;height:100%;padding:30px 0 30px 4.5%;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;animation:focus-copy-enter .3s ease both}
 .focus-eyebrow{font-size:22px;color:#c3d6e8;font-weight:700;line-height:1.3;margin-bottom:15px;letter-spacing:.6px}.app .focus-stage h1{font-size:clamp(38px,3.8vw,74px);line-height:1.05;letter-spacing:-2px;margin:0 0 20px;max-width:100%;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
@@ -636,7 +636,7 @@ button.playback-toggle svg.lucide-play{margin-left:3px}
 @media(max-width:1000px){.focus-stage.hero{height:48vh}.tv-mode.has-tv-stage .page-scene{top:calc(100px + 48vh)}.tv-mode .header-tools .search{display:none}.tv-mode .topbar nav button{font-size:15px;padding:10px 7px}.tv-mode .brand{max-width:160px}.tv-mode .poster-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.tv-mode .live-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.focus-description{font-size:18px;-webkit-line-clamp:2}.app .focus-stage h1{font-size:38px}.focus-actions>button{width:48px;height:48px;border-radius:17px}.focus-actions svg{width:25px;height:25px}.focus-eyebrow{font-size:15px}.pointer-stage.hero{left:3%;width:94%}}
 @media(prefers-reduced-motion:reduce){.focus-stage-visual,.focus-stage-copy{animation:none}.tv-mode .card,.focus-actions>button,.trailer-preview{transition:none}}
 
-.focus-stage .focus-poster{left:auto;bottom:auto;background:none}.focus-poster[data-image-state='ready']>.richiflix-art{opacity:0}.tv-mode .poster:after{pointer-events:none}.tv-mode .card-play{background:none}.focus-stage .trailer-preview{inset:auto;right:4.5%;top:10%;width:43%;height:80%;z-index:2;border-radius:24px;overflow:hidden}.focus-stage .trailer-preview iframe{width:100%;height:100%}.tv-mode .live-card .poster-title{color:#edf2ff}.tv-mode .poster-grid .card-open{display:block;width:100%}.tv-mode .card-open{scroll-margin:30px}
+.focus-stage .focus-poster{left:auto;bottom:auto;background:none}.focus-poster[data-image-state='ready']>.kingdom-art{opacity:0}.tv-mode .poster:after{pointer-events:none}.tv-mode .card-play{background:none}.focus-stage .trailer-preview{inset:auto;right:4.5%;top:10%;width:43%;height:80%;z-index:2;border-radius:24px;overflow:hidden}.focus-stage .trailer-preview iframe{width:100%;height:100%}.tv-mode .live-card .poster-title{color:#edf2ff}.tv-mode .poster-grid .card-open{display:block;width:100%}.tv-mode .card-open{scroll-margin:30px}
 
 .tv-mode .catalog-row{margin-bottom:36px}.tv-mode .row-heading{margin-bottom:10px}.tv-mode .catalog-row h2{font-size:32px;line-height:1.2;color:#e8eef9}.tv-mode .card-title{line-height:1.3}.tv-mode .card-play{opacity:0!important}.tv-mode .live-card .poster-title{font-size:clamp(24px,1.3vw,33px);line-height:1.2;font-weight:800}.tv-mode .live-card .card-meta{font-size:21px}.tv-mode .channel-identity .identity-glyph{min-width:85px;min-height:85px;font-size:40px}.tv-mode .row-footer{min-height:22px}.tv-mode .card-caption{opacity:1;transform:none}.tv-mode .card-open:active{transform:scale(.98)}
 
@@ -657,9 +657,9 @@ button.playback-toggle svg.lucide-play{margin-left:3px}
 .focus-stage .wide-illustration>img{-webkit-mask-image:radial-gradient(ellipse 50% 50% at 50% 50%,#000 35%,#000e 50%,#0008 72%,transparent 100%);mask-image:radial-gradient(ellipse 50% 50% at 50% 50%,#000 35%,#000e 50%,#0008 72%,transparent 100%)}
 .focus-stage .wide-identity{background:radial-gradient(ellipse 46% 50% at 76% 50%,var(--identity-ink),#101827 100%)}
 .focus-stage .wide-identity>.identity-shapes,.focus-stage .wide-identity:after{display:none}
-.quality-media>.richiflix-art{opacity:1;transition:opacity .85s ease}.quality-media[data-image-state='ready']>.richiflix-art{opacity:0;transition:opacity .85s ease .05s}.quality-media[data-image-state='ready']>img{transition:opacity .85s ease}.poster-art[data-image-state='ready']>.richiflix-art,.channel-logo[data-image-state='ready']>.richiflix-art,.focus-poster[data-image-state='ready']>.richiflix-art{transition:opacity .85s ease .05s}
-.quality-media[data-image-state='low-resolution']>.richiflix-art,.quality-media[data-image-state='unavailable']>.richiflix-art{opacity:1;transition:none}.quality-media[data-image-state='low-resolution']>img,.quality-media[data-image-state='unavailable']>img{transition:none}
-@media(prefers-reduced-motion:reduce){.quality-media>.richiflix-art,.quality-media[data-image-state='ready']>.richiflix-art,.quality-media[data-image-state='ready']>img,.focus-stage .trailer-preview{transition:none}}
+.quality-media>.kingdom-art{opacity:1;transition:opacity .85s ease}.quality-media[data-image-state='ready']>.kingdom-art{opacity:0;transition:opacity .85s ease .05s}.quality-media[data-image-state='ready']>img{transition:opacity .85s ease}.poster-art[data-image-state='ready']>.kingdom-art,.channel-logo[data-image-state='ready']>.kingdom-art,.focus-poster[data-image-state='ready']>.kingdom-art{transition:opacity .85s ease .05s}
+.quality-media[data-image-state='low-resolution']>.kingdom-art,.quality-media[data-image-state='unavailable']>.kingdom-art{opacity:1;transition:none}.quality-media[data-image-state='low-resolution']>img,.quality-media[data-image-state='unavailable']>img{transition:none}
+@media(prefers-reduced-motion:reduce){.quality-media>.kingdom-art,.quality-media[data-image-state='ready']>.kingdom-art,.quality-media[data-image-state='ready']>img,.focus-stage .trailer-preview{transition:none}}
 
 /* Local vector team marks compose each matchup at the current screen size. */
 .mlb-artwork{position:absolute;inset:0;overflow:hidden;background:#141e30;isolation:isolate}
@@ -674,7 +674,7 @@ button.playback-toggle svg.lucide-play{margin-left:3px}
 .mlb-mark>img{padding:0!important;filter:drop-shadow(0 8px 16px #0004)}
 /* R7: no CPU blur per crest in TV (two per MLB card plus the banner and the panel). */
 .tv-mode .mlb-mark>img,.expansion-tv .mlb-mark>img{filter:none}
-.mlb-mark>.richiflix-art{background:none!important;display:grid;place-items:center;inset:0;transform:none}
+.mlb-mark>.kingdom-art{background:none!important;display:grid;place-items:center;inset:0;transform:none}
 .mlb-abbreviation{font:800 44px 'Bricolage Grotesque',Arial,sans-serif;color:#dbe5f2}
 .mlb-location{font-size:clamp(11px,.75vw,17px);line-height:1.25;color:#b5c4d9;min-height:1.25em;white-space:nowrap}
 .mlb-team-name{font:800 clamp(18px,1.3vw,30px)/1.15 'Bricolage Grotesque',Arial,sans-serif;color:#f0f3fb;margin-top:2px}
@@ -696,7 +696,7 @@ button.playback-toggle svg.lucide-play{margin-left:3px}
 
 /* One circular loading indicator, with the bare brand glyph at its center. */
 .player-loading .cinema-loader{border-radius:50%;background:radial-gradient(circle,#243249c9,#18223575);box-shadow:none}
-.player-loading .cinema-loader .richiflix-glyph{display:block;width:86%;height:86%;object-fit:contain;border-radius:0;user-select:none}
+.player-loading .cinema-loader .kingdom-glyph{display:block;width:86%;height:86%;object-fit:contain;border-radius:0;user-select:none}
 .player-loading .cinema-loader:before{border-radius:50%}
 .live-label .event-badge-copy{margin:0;font:inherit;color:inherit;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .event-badge-copy>small{display:block;margin-top:3px;font-size:.88em;font-weight:600;color:#d5ddec;letter-spacing:.01em}
@@ -809,16 +809,16 @@ button.playback-toggle svg.lucide-play{margin-left:3px}
 .live-hub-ended .card:not(:focus-within){opacity:.6}
 .live-hub-channels>.row-heading{justify-content:flex-start;align-items:baseline}.live-hub-channels .catalog-count{margin:0}.tv-mode .live-hub-channels>.row-heading h2{font-size:32px;line-height:1.2;color:#e8eef9}
 /* Fase G: las tarjetas no muestran spinner; su identidad cubre la carga y el póster entra sólo con opacity (.18s), sin desmontar la identidad a mitad del fundido. */
-.poster .quality-media[data-image-state='ready']>img,.poster .quality-media[data-image-state='ready']>.richiflix-art{transition:opacity .18s ease}
-@media(prefers-reduced-motion:reduce){.poster .quality-media[data-image-state='ready']>img,.poster .quality-media[data-image-state='ready']>.richiflix-art{transition:none}}
+.poster .quality-media[data-image-state='ready']>img,.poster .quality-media[data-image-state='ready']>.kingdom-art{transition:opacity .18s ease}
+@media(prefers-reduced-motion:reduce){.poster .quality-media[data-image-state='ready']>img,.poster .quality-media[data-image-state='ready']>.kingdom-art{transition:none}}
 /* R3.4 (TV): the poster never fades itself (an opacity transition on the img made it a transient layer: StyleRecalc
    Animation IMG). Fast poster (no veil shown): it simply appears inside the card layer. Slow poster (veil shown, kept
    220 ms by QualityImage): the veil sits on top and fades .18s over the already visible poster. While a poster loads,
    the veil is gradient + glyph + title without the 1672x941 category PNG (decoded and scaled into every card); the PNG
    stays for the final look when there is no usable image (empty, unavailable, low-resolution). */
 .tv-mode .poster .quality-media>img{transition:none!important}
-.tv-mode .poster .quality-media[data-image-state='ready']>.richiflix-art{z-index:1}
-.tv-mode .poster .quality-media[data-image-state='loading']>.richiflix-art .category-illustration,.tv-mode .poster .quality-media[data-image-state='pending']>.richiflix-art .category-illustration,.tv-mode .poster .quality-media[data-image-state='ready']>.richiflix-art .category-illustration{display:none}
+.tv-mode .poster .quality-media[data-image-state='ready']>.kingdom-art{z-index:1}
+.tv-mode .poster .quality-media[data-image-state='loading']>.kingdom-art .category-illustration,.tv-mode .poster .quality-media[data-image-state='pending']>.kingdom-art .category-illustration,.tv-mode .poster .quality-media[data-image-state='ready']>.kingdom-art .category-illustration{display:none}
 /* Eventos L4: «Ahora · programa» replaces the channel's category in the same single line (no extra height); the expanded card adds a 4 px bar scaled by transform. */
 .category-caption.has-guide{min-width:0}.caption-guide{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tv-mode .live-card .card-meta.has-guide{font-size:20px;line-height:29.4px}
 .expansion-guide{display:flex;flex-direction:column;gap:6px;min-width:0}.expansion-guide p{margin:0;font-size:18px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.expansion-guide-now{font-weight:700;color:#edf1fa}.expansion-guide-next{color:#afbcd3}

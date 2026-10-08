@@ -24,7 +24,7 @@ try{
   await page.evaluate(()=>{const frame=document.getElementById('frame');frame.style.width='450px';frame.style.height='675px';});
   await page.waitForFunction(expected=>{const image=document.querySelector('img');return document.querySelector('.quality-media').dataset.imageState==='ready'&&image.naturalWidth===expected;},dpr===1?500:1600);
   const resized=await page.locator('img').evaluate(image=>({src:image.currentSrc,width:image.naturalWidth,height:image.naturalHeight}));
-  assert.equal(resized.width,dpr===1?500:1600);assert.equal(await page.locator('.richiflix-art').count(),0);assert.deepEqual(errors,[]);
+  assert.equal(resized.width,dpr===1?500:1600);assert.equal(await page.locator('.kingdom-art').count(),0);assert.deepEqual(errors,[]);
   results.push({dpr,initialWidth:initial.width,resizedWidth:resized.width,requests:requested,ready:true});await context.close();
  }
  console.log(JSON.stringify({responsiveArtwork:results,focusDoesNotRedownload:true,qualityGuardPreserved:true}));

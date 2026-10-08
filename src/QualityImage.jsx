@@ -77,7 +77,7 @@ const DecodedImage=memo(function DecodedImage(props){
  useEffect(()=>{if(!presentation.ready||!hold.current)return;const timer=setTimeout(()=>{hold.current=false;release(value=>value+1);},220);return()=>clearTimeout(timer);},[presentation.ready]);
  return <div ref={box} className={`quality-media ${className} ${fit==='contain'?'quality-logo':''}`} data-image-state={pending&&!src?'pending':presentation.state}>
   {loader&&waiting&&<span className="artwork-spinner" aria-hidden="true"/>}
-  {veil&&<div className="richiflix-art" aria-hidden="true">{fallback===true?<><BrandMark/><i/></>:typeof fallback==='function'?fallback(!waiting&&!presentation.ready):fallback}</div>}
+  {veil&&<div className="kingdom-art" aria-hidden="true">{fallback===true?<><BrandMark/><i/></>:typeof fallback==='function'?fallback(!waiting&&!presentation.ready):fallback}</div>}
   {displaySource&&!responsive?.pending&&<img ref={picture} src={displaySource} alt="" loading={eager?'eager':'lazy'} fetchPriority={priority?'high':'auto'} decoding="async" draggable="false" onLoad={reveal} onError={()=>{decoded.current=false;if(!cached.failed())setPresentation({state:'unavailable',ready:false});}} style={{opacity:presentation.ready?1:0,objectFit:fit,objectPosition:position,'--image-scale':presentation.scale}}/>}
  </div>;
 },sameImage);

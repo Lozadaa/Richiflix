@@ -21,7 +21,7 @@ function image(path){return new Promise(resolve=>{const img=new Image();img.onlo
 export function Boot({children}){
  const [ready,setReady]=useState(false),[profiles,setProfiles]=useState([]),[slow,setSlow]=useState(false),[stage,setStage]=useState('configuration'),[profileError,setProfileError]=useState(null),[attempt,setAttempt]=useState(0);
  useEffect(()=>{let live=true;setProfileError(null);setSlow(false);const timer=setTimeout(()=>{if(live)setSlow(true);},6000);performance.mark('richiflix-boot-start');
-  const resources=Promise.allSettled([document.fonts.load('600 24px Manrope'),document.fonts.load('800 40px "Bricolage Grotesque"'),image('avatars/adult-raccoon-320.png'),image('avatars/kids-kitten-320.png'),image('avatars/adult-raccoon-128.png'),image('avatars/kids-kitten-128.png'),image('brand/richiflix-glyph.svg'),image('artwork/categories/cinema.png')]);
+  const resources=Promise.allSettled([document.fonts.load('600 24px Manrope'),document.fonts.load('800 40px "Bricolage Grotesque"'),image('avatars/adult-raccoon-320.png'),image('avatars/kids-kitten-320.png'),image('avatars/adult-raccoon-128.png'),image('avatars/kids-kitten-128.png'),image('brand/kingdom-glyph.svg'),image('artwork/categories/cinema.png')]);
   if(readAutoTrailers())warmTrailerAPI();
   void artworkCacheClient().warm();
   let contentReady=false,resourcesReady=false,profilesReady=false;
