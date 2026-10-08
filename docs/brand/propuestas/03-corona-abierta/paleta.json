@@ -1,0 +1,22 @@
+{
+  "nombre": "Corona abierta",
+  "tokens": {
+    "fondo": "#191815",
+    "superficie": "#969083",
+    "texto": "#f6f3e9",
+    "texto-secundario": "#c0b9a9",
+    "acento": "#c9c4b4",
+    "foco": "#a9d2ef"
+  },
+  "kids-acento": "#f1b58c",
+  "contraste-sobre-fondo": {
+    "fondo": 1.0,
+    "superficie": 5.5916,
+    "texto": 15.9919,
+    "texto-secundario": 9.0917,
+    "acento": 10.1778,
+    "foco": 11.1193
+  },
+  "kids-contraste-sobre-fondo": 9.9156,
+  "formula": "WCAG 2.x: (L mayor + 0.05) / (L menor + 0.05); sRGB linealizado; pesos 0.2126, 0.7152, 0.0722."
+}
