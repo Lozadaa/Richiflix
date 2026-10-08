@@ -82,6 +82,8 @@ export function homeLiveEvents(events,now=Date.now()){
  const today=eventDay(now).day,live=events.filter(event=>eventPhase(event,now)==='live');
  return [...live,...events.filter(event=>{const start=eventInstant(event.eventStartsAt);return start!==null&&['soon','upcoming'].includes(eventPhase(event,now))&&eventDay(start).day===today;}).slice(0,4)];
 }
+// H2-T4: «Ahora en vivo · N en juego» on Inicio: events in the live phase (24 h channels never count).
+export function liveNowCount(items,now=Date.now()){let count=0;for(const item of items)if(item.isEvent&&eventPhase(item,now)==='live')count++;return count;}
 // «En juego · desde 19:00», «Hoy 21:00 · Empieza en 2 h»: expanded card and banner.
 export const eventPhaseLine=(event,phase)=>!phase?'':phase.phase==='live'?`En juego · desde ${phase.time}`:phase.phase==='upcoming'?`${phase.label} · ${eventCountdown(event).label}`:[phase.label,phase.phase==='postponed'?'':phase.time].filter(Boolean).join(' · ');
 export function eventCaption(event){

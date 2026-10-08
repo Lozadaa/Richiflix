@@ -18,12 +18,13 @@ import {BannerArtwork} from './BannerArtwork.jsx';
 import {UserScore,TitleFacts} from './UserScore.jsx';
 import {SelectedCardExpansion} from './ExpandedCard.jsx';
 import {remainingLabel} from './cardExpansion.js';
+import {cardFacts} from './cardFacts.js';
 
 export const motionAllowed=()=>!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 // R6.1: metadata comes from the store by id (the `metadata` prop is only a fallback for callers without it, e.g. fixtures);
 // `metadataPending` is derived from the store, so rails no longer pass metadata or resolved sets.
-export const Card=memo(function Card({item:original,instanceId,metadata:fallbackMetadata,open,progress,favorite,toggle,index=0,total=0,preview,pointerPreview,leave,tv,profileId,kids=false}){
+export const Card=memo(function Card({item:original,instanceId,metadata:fallbackMetadata,open,progress,favorite,toggle,index=0,total=0,preview,pointerPreview,leave,tv,profileId,kids=false,fresh=false}){
  const selected=useCardSelected(instanceId);
  recordCardRender();
  const stored=useMetadataEntry(original.id),metadata=stored.metadata??fallbackMetadata,metadataPending=metadataTracked()&&!stored.resolved;
@@ -33,15 +34,19 @@ export const Card=memo(function Card({item:original,instanceId,metadata:fallback
  const anchor=useRef(),expansion=useRef();
  const sameOwner=node=>node?.closest?.('.card-expansion')?.dataset.cardOwner===instanceId;
  const duration=item.durationSeconds||Number.parseFloat(item.duration)*60;
+ // H2-T4: facts line and audio codes are static data, memoized per item (a key only changes `selected`, never `item`).
+ const {facts,audio}=useMemo(()=>({facts:item.kind==='iptv'||item.resumeLabel?'':cardFacts(item),audio:item.languages?.slice(0,3).join(' · ')||''}),[item]);
  const matchup=mlbMatchup(item),guideLine=item.kind==='iptv'&&!item.isEvent?guideNowLine(item.guide):'';
  return <div ref={anchor} className={`card ${selected?'is-previewed':''} ${favorite?'is-favorite':''} ${item.kind==='iptv'?'live-card':'portrait-card'}`} data-content-id={item.id} data-card-id={instanceId} style={{'--card-index':Math.min(index,11)}} onKeyDown={event=>expansion.current?.keyDown(event)} onKeyUp={event=>expansion.current?.keyUp(event)} onMouseEnter={event=>pointerPreview?.(item,event,instanceId)} onMouseMove={event=>{if(tv&&event.nativeEvent.richiflixPointerMoved)pointerPreview?.(item,event,instanceId);}} onMouseLeave={leave} onFocus={event=>{if(event.target.classList.contains('card-open')&&!event.currentTarget.contains(event.relatedTarget)&&!sameOwner(event.relatedTarget))preview?.(item,instanceId,index);}} onBlur={event=>{if(!event.currentTarget.contains(event.relatedTarget)&&!sameOwner(event.relatedTarget))leave?.();}}>
   <button className="card-open" aria-label={displayText(item.title)} onClick={()=>open(item)}>
-   <div className={`poster ${item.kind==='provider'?'provider-poster':''} ${matchup?'mlb-poster':''}`} style={identityStyle(item)}>
+   {original.rank>0&&<b className="card-rank" aria-hidden="true">{original.rank}</b>}
+   <div className={`poster ${item.kind==='provider'?'provider-poster':''} ${matchup?'mlb-poster':''} ${item.kind!=='iptv'&&Number(item.tmdbScore)>=8?'is-gold':''}`} style={identityStyle(item)}>
     {item.kind==='iptv'&&<svg className="channel-pattern" viewBox="0 0 400 240" aria-hidden="true"><circle cx="370" cy="10" r="160"/><circle cx="-15" cy="280" r="185"/><path d="M220 -20L440 200M190 -20L410 200"/></svg>}
     {matchup?<MatchupArtwork matchup={matchup}/>:<>
     <QualityImage className={item.kind==='iptv'?'channel-logo':'poster-art'} src={item.imageGeneric?undefined:artworkURL(item.image)} fit={item.kind==='iptv'?'contain':'cover'} minVisibleSize={item.kind==='iptv'?72:0} pending={item.kind!=='iptv'&&metadataPending} priority={selected} fallback={fallback}/></>}
     {item.kind==='iptv'&&<EventBadge item={item} fine={selected}/>}
     {item.kind!=='iptv'&&<UserScore item={item} compact/>}
+    {(fresh||audio)&&<span className="card-badges">{fresh&&<span className="card-badge is-new">NUEVO</span>}{audio&&<span className="card-badge is-audio">{audio}</span>}</span>}
     {item.kind==='provider'&&<span className="provider-label">{displayText(item.genre)}</span>}
     {!matchup&&<div className="poster-title">{item.kind==='iptv'?channelTitle(item):displayTitle(item)}</div>}
     {!tv&&<div className="card-play">{item.kind==='provider'?<ArrowUpRight className="card-play-icon" size={24}/>:<Play className="card-play-icon" fill="currentColor" size={20}/>}</div>}
@@ -50,7 +55,7 @@ export const Card=memo(function Card({item:original,instanceId,metadata:fallback
 
   </button>
   {!(isTVBuild&&tv)&&<button className="card-save" tabIndex={tv?-1:0} aria-label={`${favorite?'Quitar':'Guardar'} ${displayText(item.title)} ${favorite?'de':'en'} Mi lista`} aria-pressed={favorite} onPointerDown={event=>{if(event.button===0&&event.pointerType==='mouse'){event.preventDefault();event.currentTarget.focus({preventScroll:true});}}} onClick={()=>toggle(item)}>{favorite?<Check size={18}/>:<Heart size={18}/>}</button>}
-  <span className="card-caption" aria-hidden="true"><span className="card-title">{displayTitle(item)}</span>{item.resumeLabel&&<span className="card-meta card-resume">{item.resumeLabel}</span>}{item.kind==='iptv'&&<span className={`card-meta category-caption ${guideLine?'has-guide':''}`}><CategoryMark item={item}/>{guideLine?<span className="caption-guide">{displayText(guideLine)}</span>:item.isEvent?eventCaption(item):displayText(item.genre)}</span>}</span>
+  <span className={`card-caption ${facts?'has-facts':''}`} aria-hidden="true"><span className="card-title">{displayTitle(item)}</span>{facts&&<span className="card-facts">{facts}</span>}{item.resumeLabel&&<span className="card-meta card-resume">{item.resumeLabel}</span>}{item.kind==='iptv'&&<span className={`card-meta category-caption ${guideLine?'has-guide':''}`}><CategoryMark item={item}/>{guideLine?<span className="caption-guide">{displayText(guideLine)}</span>:item.isEvent?eventCaption(item):displayText(item.genre)}</span>}</span>
   {selected&&<SelectedCardExpansion anchor={anchor} controller={expansion} item={item} instanceId={instanceId} metadataPending={metadataPending} favorite={favorite} toggle={toggle} open={open} tv={tv} index={index} total={total} remaining={item.resumeLabel||remainingLabel(progress,duration)} profileId={profileId} kids={kids}/>}
  </div>;
 });
