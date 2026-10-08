@@ -1,7 +1,7 @@
 import React,{memo,useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import {Play,Heart,Check} from 'lucide-react';
 import {identityStyle,channelTitle} from './ContentIdentity.jsx';
-import {displayTitle} from './artwork.js';
+import {displayTitle,logoURL} from './artwork.js';
 import {BannerArtwork} from './BannerArtwork.jsx';
 import {TrailerPreview} from './TrailerPreview.jsx';
 import {mlbMatchup} from './mlbArtwork.js';
@@ -17,6 +17,16 @@ import {TitleFacts} from './UserScore.jsx';
 import {createCardPress,okHint} from './cardExpansion.js';
 import {bannerKeyAction,knobOn,ambientSlots,dotCycle} from './bannerFlow.js';
 const FADE_MS=320;
+// H1-T4: the title logo (TMDB, H3) replaces the h1 only once decoded; the next slide's logo decodes ahead so the
+// copy never swaps h1 → img mid-slide (that would be a Layout after the text has settled).
+const decodedLogos=new Set();
+function decodeLogo(src){if(!src||decodedLogos.has(src))return Promise.resolve();const image=new Image();image.decoding='async';image.src=src;return image.decode().then(()=>{decodedLogos.add(src);});}
+function StageTitle({item,live}){
+ const title=live?channelTitle(item):displayTitle(item),src=!live&&item.logoImage?logoURL(item.logoImage):'';
+ const [ready,setReady]=useState(()=>decodedLogos.has(src));
+ useEffect(()=>{if(!src||ready)return;let alive=true;decodeLogo(src).then(()=>{if(alive)setReady(true);},()=>{});return()=>{alive=false;};},[src,ready]);
+ return src&&ready?<img className="title-logo" src={src} alt={title} decoding="sync"/>:<h1>{title}</h1>;
+}
 export const FocusStage=memo(function FocusStage({item,active,visible=true,loading=false,metadataPending=loading,moving=false,open,inspect,favorite,toggle,tv,hover,leave,trailerDelay=0,next,nextPending=false,slide=0,slides=0,choose,onNextArt,profileId,paused=false}){
  const [actionsFocused,setActionsFocused]=useState(false);
  const event=useEventPhase(item,true);
@@ -50,6 +60,7 @@ export const FocusStage=memo(function FocusStage({item,active,visible=true,loadi
  useEffect(()=>{if(!tv)return;const style=getComputedStyle(document.querySelector('.app')||document.documentElement);setKnobs({kenburns:knobOn(style.getPropertyValue('--tv-kenburns')),ambient:knobOn(style.getPropertyValue('--tv-ambient'))});},[tv]);
  if(!item)return null;const live=item.kind==='iptv',matchup=mlbMatchup(item),remoteActions=isTVBuild&&tv,dormant=remoteActions&&!actionsFocused;
  const out=carousel&&layers.out&&layers.out.id!==item.id?layers.out:null,upcomingArt=carousel&&next&&next.id!==item.id&&next.id!==out?.id?next:null;
+ useEffect(()=>{if(next?.logoImage)decodeLogo(logoURL(next.logoImage)).catch(()=>{});},[next?.logoImage]);
  // H1-T2 ambient wash: the slide's own --identity-ink (identityStyle, already the stage's style) goes into the free
  // layer only when the slide changes, in this same render that makes its art layer is-current, and only once that art
  // is decoded (until then the outgoing art and its tint stay). Never in keyDown; renders that keep the slide are no-ops.
@@ -62,7 +73,7 @@ export const FocusStage=memo(function FocusStage({item,active,visible=true,loadi
   {ambient&&wash&&['a','b'].map(slot=><i key={slot} className={wash.active===slot?'ambient-wash is-active':'ambient-wash'} data-slot={slot} style={wash[slot]?{'--wash-ink-rgb':wash[slot]}:undefined} aria-hidden="true"/>)}
   <div className="focus-stage-copy">
    <React.Fragment key={item.id}><span className="focus-eyebrow"><CategoryMark item={item}/>{displayText(live?(!event?['EN DIRECTO',item.genre]:event.phase==='upcoming'?[event.label.toLocaleUpperCase('es'),eventCountdown(item).label]:[event.label.toLocaleUpperCase('es'),event.phase==='postponed'?'':event.time,item.genre]).filter(Boolean).join(' · '):item.contentGenre||item.genre)}{loading&&<span className="focus-info-loader" role="status" aria-label="Cargando información"/>}</span>
-   <h1>{live?channelTitle(item):displayTitle(item)}</h1>
+   <StageTitle item={item} live={live}/>
    <p className="focus-description">{displayText(live?event?event.phase==='live'&&matchup?.teams[1]&&scoreLabel(item.eventScore,matchup.teams[0].id)?`En juego · ${scoreLabel(item.eventScore,matchup.teams[0].id).text}`:eventPhaseLine(item,event):guideNowLine(item.guide)||['Televisión en directo',item.genre].filter(Boolean).join(' · '):item.description||item.genre)}</p>
    <TitleFacts item={item}/>
    {item.cast&&<p className="focus-cast">{displayText(item.cast)}</p>}</React.Fragment>
