@@ -40,6 +40,7 @@ app.whenReady().then(()=>{
  ipcMain.handle('xtream-episodes',(event,id,sourceId)=>{trusted(event);return xtream.episodes(id,sourceId);});
  ipcMain.handle('xtream-details',(event,id,type,sourceId)=>{trusted(event);return xtream.details(id,type,sourceId);});
  ipcMain.handle('xtream-season',(event,tmdbId,season)=>{trusted(event);return xtream.season(tmdbId,season);});
+ ipcMain.handle('xtream-tmdb-search',(event,query)=>{trusted(event);return xtream.tmdbSearch(query);});
  ipcMain.handle('xtream-short-epg',(event,id,sourceId)=>{trusted(event);return xtream.shortEpg(id,sourceId);});
  ipcMain.handle('xtream-remove',(event,id)=>{trusted(event);streams.clear();return xtream.remove(id);});
  ipcMain.handle('xtream-restore',event=>{trusted(event);streams.clear();return xtream.restore();});

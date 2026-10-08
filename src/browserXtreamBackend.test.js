@@ -31,3 +31,8 @@ test('worker backend serves TMDB seasons with the stored token and the persisten
  assert.equal((await backend.season('1396',1))[0].name,'Piloto');assert.equal((await backend.season('1396',1))[0].name,'Piloto');assert.deepEqual(calls,['/3/tv/1396/season/1']);
  await backend.flush();assert.equal(saved.get('preview-details-v1').find(([key])=>key==='season:1396:1')[1].data.seasonEpisodes[0].name,'Piloto');
 });
+test('worker backend searches TMDB with the stored token',async()=>{
+ const {storage}=fixture(),calls=[];const fetcher=async address=>{const url=new URL(address);calls.push(url.pathname);return new Response(JSON.stringify(url.pathname.endsWith('search/multi')?{results:[{id:1396,media_type:'tv',name:'Breaking Bad',genre_ids:[18]}]}:{genres:[{id:18,name:'Drama'}]}));};
+ const backend=createBrowserXtreamBackend({storage,cryptography:webcrypto,fetcher,registryOptions:{preset:null},metadataOptions:{preset:'x'.repeat(30)}});
+ const [found]=await backend.tmdbSearch('Breaking Bad');assert.equal(found.tmdbId,'1396');assert.deepEqual(found.genres,['Drama']);assert.ok(calls.includes('/3/search/multi'));
+});

@@ -1,1 +1,1 @@
-export const catalogueWorkerMethods=new Set(['status','recommendations','cachedRatings','save','catalogue','episodes','details','season','shortEpg','playback','remove','restore','metadataStatus','metadataSave','flush','prepareChannels','indexSearch','search','fuzzy','dropSearch']);
+export const catalogueWorkerMethods=new Set(['status','recommendations','cachedRatings','save','catalogue','episodes','details','season','tmdbSearch','shortEpg','playback','remove','restore','metadataStatus','metadataSave','flush','prepareChannels','indexSearch','search','fuzzy','dropSearch']);

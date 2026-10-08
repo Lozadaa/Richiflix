@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {youtubeID,spanishMetadata,checkMetadataToken,validateMetadataToken,tmdbSeason} from './metadata.js';
+import {youtubeID,spanishMetadata,checkMetadataToken,validateMetadataToken,tmdbSeason,tmdbSearch} from './metadata.js';
 import {loadXtreamVideoDetails} from './xtream.js';
 import {composeChannels} from './channelArtwork.js';
 import {artworkURL,displayTitle} from './artwork.js';
@@ -91,4 +91,14 @@ test('tmdbSeason asks es-MX only for gaps, English only as last resort, and cach
  assert.deepEqual(await tmdbSeason('../x',2,'x'.repeat(30),()=>assert.fail()),[]);
  assert.deepEqual(await tmdbSeason('1396',2,'',()=>assert.fail()),[]);
  assert.deepEqual(await tmdbSeason('1396',2,'x'.repeat(30),async()=>new Response('',{status:404}),{get:async()=>null,put:()=>assert.fail()}),[]);
+});
+test('tmdbSearch uses search/multi in es-ES, keeps movies and series with genre names, and never throws',async()=>{
+ const calls=[],answers={'search/multi':{results:[{id:1396,media_type:'tv',name:'Breaking Bad',original_name:'Breaking Bad',first_air_date:'2008-01-20',genre_ids:[18,80],poster_path:'/bb.jpg'},{id:7,media_type:'person',name:'Bryan Cranston'},{id:9,media_type:'movie',title:'Adulto',adult:true},{id:603,media_type:'movie',title:'Matrix',release_date:'1999-03-30',genre_ids:[878]}]},'genre/movie/list':{genres:[{id:878,name:'Ciencia ficción'}]},'genre/tv/list':{genres:[{id:18,name:'Drama'},{id:80,name:'Crimen'}]}};
+ const fetcher=async url=>{const parsed=new URL(url);calls.push(parsed);const path=parsed.pathname.replace('/3/','');return {ok:true,json:async()=>answers[path]};};
+ const found=await tmdbSearch('  Breaking Bad ','a'.repeat(32),fetcher);
+ assert.deepEqual(found,[{tmdbId:'1396',type:'series',title:'Breaking Bad',originalTitle:'Breaking Bad',year:'2008',genreIds:[18,80],genres:['Drama','Crimen'],poster:'https://image.tmdb.org/t/p/w342/bb.jpg'},{tmdbId:'603',type:'movie',title:'Matrix',originalTitle:'',year:'1999',genreIds:[878],genres:['Ciencia ficción'],poster:undefined}]);
+ const search=calls.find(url=>url.pathname.endsWith('search/multi'));assert.equal(search.searchParams.get('query'),'Breaking Bad');assert.equal(search.searchParams.get('language'),'es-ES');assert.equal(search.searchParams.get('include_adult'),'false');
+ await tmdbSearch('Matrix','a'.repeat(32),fetcher);assert.equal(calls.filter(url=>url.pathname.includes('genre/')).length,2,'Genre lists are fetched once per token.');
+ assert.deepEqual(await tmdbSearch('x','a'.repeat(32),fetcher),[]);assert.deepEqual(await tmdbSearch('Matrix','',fetcher),[]);
+ assert.deepEqual(await tmdbSearch('Matrix','b'.repeat(32),async()=>({ok:false})),[]);
 });

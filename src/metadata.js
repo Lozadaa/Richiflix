@@ -60,3 +60,21 @@ export async function tmdbSeason(tmdbId,season,token,fetcher=fetch,cache){
   await cache?.put(key,{seasonEpisodes:episodes});return episodes;
  }catch{return [];}
 }
+// Titles missing from the catalogue: search/multi in es-ES, movies and series only,
+// with Spanish genre names from TMDB's lists (fetched once per token).
+const genreLists=new WeakMap();
+function tmdbGenres(token,fetcher){
+ let byToken=genreLists.get(fetcher);if(!byToken)genreLists.set(fetcher,byToken=new Map());
+ if(!byToken.has(token))byToken.set(token,Promise.all(['movie','tv'].map(type=>tmdbRequest(`genre/${type}/list`,token,fetcher))).then(lists=>new Map(lists.flatMap(list=>Array.isArray(list?.genres)?list.genres:[]).filter(genre=>Number.isSafeInteger(genre?.id)&&typeof genre.name==='string').map(genre=>[genre.id,genre.name]))).catch(()=>{byToken.delete(token);return new Map();}));
+ return byToken.get(token);
+}
+export async function tmdbSearch(query,token,fetcher=fetch){
+ const text=String(query||'').trim().slice(0,100);if(!token||text.length<2)return [];
+ try{
+  const [data,genres]=await Promise.all([tmdbRequest(`search/multi?query=${encodeURIComponent(text)}&include_adult=false&page=1`,token,fetcher),tmdbGenres(token,fetcher)]);
+  return (Array.isArray(data?.results)?data.results:[]).filter(entry=>['movie','tv'].includes(entry?.media_type)&&entry.adult!==true&&/^\d{1,10}$/.test(String(entry.id))&&(entry.title||entry.name)).slice(0,10).map(entry=>{
+   const genreIds=Array.isArray(entry.genre_ids)?entry.genre_ids.filter(Number.isSafeInteger):[];
+   return {tmdbId:String(entry.id),type:entry.media_type==='tv'?'series':'movie',title:String(entry.title||entry.name).slice(0,300),originalTitle:String(entry.original_title||entry.original_name||'').slice(0,300),year:String(entry.release_date||entry.first_air_date||'').slice(0,4),genreIds,genres:genreIds.map(id=>genres.get(id)).filter(Boolean),poster:typeof entry.poster_path==='string'&&/^\/[\w.-]+$/.test(entry.poster_path)?`https://image.tmdb.org/t/p/w342${entry.poster_path}`:undefined};
+  });
+ }catch{return [];}
+}

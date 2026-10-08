@@ -50,6 +50,7 @@ import {usePreviewPlayback} from './previewPlaybackStore.js';
 import {useStableEvent} from './useStableEvent.js';
 import {createCatalogueIndex} from './catalogueIndex.js';
 import {useCatalogueSearch} from './useCatalogueSearch.js';
+import {genreAlternatives,useTmdbSuggestion} from './searchSuggestions.js';
 import {setSelectedCard} from './cardSelectionStore.js';
 import {useProfileLibrary} from './useProfileLibrary.js';
 import {loadHlsLibrary} from './hlsLibrary.js';
@@ -295,6 +296,9 @@ export default function App({profile,changeProfile}){
  const searchSource=collectionItems||(page==='Películas'?movies:page==='Series'?shows:page==='TV en vivo'?live:page==='Mi lista'?savedItems:page==='MLB'?baseball:all);
  const smartSearch=categoryItems(searchSource)||(livePage?liveChipItems(searchSource,category):null);
  const search=useCatalogueSearch(index,smartSearch||searchSource,query,smartSearch?'Todas':category),searchResults=search.items;
+ // Bloque B: TMDB is only asked when the catalogue has no exact title and fewer than three approximate ones.
+ const tmdbAbsent=useTmdbSuggestion(query,!isKids&&!search.loading&&!searchResults.length&&search.fuzzy.length<3);
+ const absentAlternatives=useMemo(()=>{if(!tmdbAbsent)return [];const source=tmdbAbsent.type==='series'?shows:movies;return genreAlternatives({tmdbResult:tmdbAbsent,collections:[...smartCollections.filter(group=>group.type===(source===shows?'series':'movie')),...index.categories(source).map(name=>({name,items:()=>index.filter(source,'',name)}))]});},[tmdbAbsent,movies,shows,smartCollections,index]);
  const submitSearch=useStableEvent(event=>{const key=event.key==='Unidentified'?{13:'Enter',40:'ArrowDown',10009:'Escape'}[event.keyCode]:event.key;if(!tv||event.nativeEvent.isComposing||!['Enter','Escape'].includes(key))return;event.preventDefault();event.stopPropagation();searchRef.current?.blur();if(key==='Escape'){searchSubmitted.current=false;document.querySelector('.topbar nav button.active')?.focus();return;}searchSubmitted.current=true;if(!search.loading){requestAnimationFrame(()=>{searchSubmitted.current=false;(mainRef.current?.querySelector('.card-open')||document.querySelector('.topbar nav button.active'))?.focus({preventScroll:true});});}});
  useEffect(()=>{if(!searchSubmitted.current||search.loading)return;const frame=requestAnimationFrame(()=>{searchSubmitted.current=false;revealRowFor(mainRef.current?.querySelector('.card-open')||document.querySelector('.topbar nav button.active'))?.focus({preventScroll:true});});return()=>cancelAnimationFrame(frame);},[search.loading,searchResults]);
  const sectionFirst=collectionItems?filteredItems(collectionItems)[0]:page==='Películas'?filteredItems(movies)[0]:page==='Series'?filteredItems(shows)[0]:hub?hub.rows[0]?.items[0]||hub.channels[0]:page==='Mi lista'?savedItems[0]:featured[0];
