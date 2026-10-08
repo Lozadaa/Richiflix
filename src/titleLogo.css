@@ -1,0 +1,3 @@
+/* H3: TMDB title logo (w300). Base class for the banner (another batch); .is-panel for the expanded card. Static paint: no transition, no will-change. */
+.title-logo{max-height:120px;max-width:480px;width:auto;height:auto;display:block}
+.title-logo.is-panel{max-height:72px;max-width:360px}

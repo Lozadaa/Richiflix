@@ -6,7 +6,7 @@ import {QualityImage} from './QualityImage.jsx';
 import {ContentIdentity,identityStyle,channelTitle} from './ContentIdentity.jsx';
 import {MatchupArtwork} from './MatchupArtwork.jsx';
 import {mlbMatchup} from './mlbArtwork.js';
-import {artworkURL,displayTitle,titleFacts} from './artwork.js';
+import {artworkURL,displayTitle,titleFacts,logoURL} from './artwork.js';
 import {displayText} from './displayText.js';
 import {tvPanelPoster} from './responsiveArtwork.js';
 import {UserScore} from './UserScore.jsx';
@@ -50,6 +50,9 @@ export function ExpandedCard({item,instanceId,expansion,metadataPending,favorite
   const frame=tv?expansion.placement.trailer:null;
   return claimCardTrailer(trailer.current,item.trailerId,frame?.position||expansion.placement,frame?.stage||null);
  },[Boolean(expansion.placement),item.kind,item.trailerId,tv]);
+ // H3: the title logo replaces the h3 only once decoded, and only while open (never per key); on failure the h3 stays.
+ const logo=logoURL(item.logoImage),[logoReady,setLogoReady]=useState('');
+ useEffect(()=>{if(!logo||!opened)return;let current=true;const image=new Image();image.src=logo;image.decode().then(()=>{if(current)setLogoReady(logo);},()=>{});return()=>{current=false;};},[logo,opened]);
  const position=expansion.placement;if(!position)return null;
  const live=item.kind==='iptv',matchup=mlbMatchup(item),title=live?channelTitle(item):displayTitle(item),facts=titleFacts(item);
  const artwork=live?(item.imageGeneric?undefined:artworkURL(item.image)):tv?artworkURL(item.image)||artworkURL(item.backdropImage,true):artworkURL(item.backdropImage,true)||artworkURL(item.image);
@@ -73,7 +76,7 @@ export function ExpandedCard({item,instanceId,expansion,metadataPending,favorite
    {live&&<EventBadge item={item} fine channel/>}
    <span className="expansion-media-shade"/><AgeBadge item={item}/>
   </div>
-  <div className="expansion-body"><h3>{title}</h3>
+  <div className="expansion-body">{logo&&logoReady===logo?<img className="title-logo is-panel" src={logo} alt={title}/>:<h3>{title}</h3>}
    {item.isEvent?<p className="expansion-event-phase" data-event-state={phase?.phase}>{phaseLine}</p>:guide?<div className="expansion-guide"><p className="expansion-guide-now">Ahora · {displayText(guide.now.title)}</p>{guideBar!=null&&<span className="expansion-guide-bar" aria-hidden="true"><i style={{transform:`scaleX(${guideBar})`}}/></span>}{guideNext&&<p className="expansion-guide-next">{displayText(guideNext)}</p>}</div>:description&&!genericLive?<p className="expansion-description">{description}</p>:metadataPending&&!live?<div className="expansion-synopsis-loading" role="status" aria-label="Cargando información"><span/><span/></div>:null}
    {!guide&&<div className="expansion-facts">{!live&&!kids&&<UserScore item={item} compact/>}{!live&&facts&&<span>{facts}{audio&&!facts.includes(audio)?` · ${audio}`:''}</span>}{live&&<span>{displayText(item.isEvent?item.genre:item.source||item.genre)}</span>}{(tv||item.resumeLabel)&&remaining&&<span className="expansion-remaining">{remaining}</span>}</div>}
    <div className="expansion-actions" onKeyDown={key}><button className="expansion-play" aria-label={`${item.mediaType==='series'?'Ver episodios de':'Reproducir'} ${title}`} onClick={()=>open(item)} tabIndex={tv?-1:0}>{item.mediaType==='series'?<ArrowRight aria-hidden="true"/>:<Play fill="currentColor" aria-hidden="true"/>}</button><button className="expansion-save" aria-label={`${favorite?'Quitar':'Guardar'} ${title} ${favorite?'de':'en'} Mi lista`} aria-pressed={favorite} onClick={()=>toggle(item)} tabIndex={tv?-1:0}>{favorite?<Check aria-hidden="true"/>:<Plus aria-hidden="true"/>}</button>{teams.map(id=>{const followed=follow.teams.includes(id);return <button key={id} className="expansion-follow" aria-pressed={followed} aria-label={`${followed?'Dejar de seguir a':'Seguir a'} ${teamLabel(id)}`} onClick={()=>follow.toggleTeam(id)} tabIndex={tv?-1:0}>{teamAbbreviation(id)}</button>;})}{tv&&total>0&&<span className="expansion-position">{(index+1).toLocaleString('es-CL')} de {total.toLocaleString('es-CL')}</span>}{showHint&&<span className="expansion-remote-hint">Mantén OK para opciones</span>}</div>

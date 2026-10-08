@@ -14,6 +14,7 @@ import {installFocusPaintDiagnostics} from './focusPaintDiagnostics.js';
 import './style.css';
 import './tvCardComposition.css';
 import './compositorMotion.css';
+import './titleLogo.css';
 import {isTVBuild,installTVPlatform,uuid} from './platform.js';
 const disposeInputBoundary=installTVInputBoundary();
 if(import.meta.hot)import.meta.hot.dispose(disposeInputBoundary);
