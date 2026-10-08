@@ -9,9 +9,7 @@ import {displayText} from './displayText.js';
 const palettes=[['#b4a3e3','#29324e'],['#ffa88f','#423142'],['#99d4cd','#203841'],['#ebcb83','#3a3541'],['#9fbfe7','#23314c'],['#e5abc7','#3d2f48']];
 export function identityStyle(item){let hash=0;for(const letter of displayTitle(item))hash=(Math.imul(hash,31)+letter.charCodeAt(0))>>>0;const [accent,ink]=palettes[hash%palettes.length];return {'--identity-accent':accent,'--identity-ink':ink};}
 export function channelTitle(item){
- let title=displayText(item.eventDisplayTitle||item.title).replace(/[\u25a0-\u25ff\u200b-\u200f\ufeff]+/g,' · ').replace(/\s*·(?:\s*·)+\s*/g,' · ').replace(/\s*\|\s*[A-Z]{2,4}\s*$/,'').replace(/\s+/g,' ').trim();
- if(artworkCategory(item).key==='baseball')title=title.replace(/^\d{1,2}:\d{2}\s*[·|:-]?\s*/,'').replace(/\s*·\s*MLB(?:\s*·\s*(?:Spanish|English|Espa[nñ]ol))?\s*·?$/i,'').trim();
- return title.replace(/^[·\s]+|[·\s]+$/g,'');
+ return displayText(item.displayTitle??item.eventDisplayTitle??item.title);
 }
 export function CategoryArtwork({item,wide=false}){
  const category=artworkCategory(item);

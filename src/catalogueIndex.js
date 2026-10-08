@@ -22,7 +22,8 @@ export function createCatalogueIndex(all,{workerClient}={}){
  for(const item of all){byId.set(item.id,item);if(item.feeds)for(const feed of item.feeds)if(!byId.has(feed.id))byId.set(feed.id,item);}
  const group=items=>{let value=cache.get(items);if(!value){const primed=prepared.get(items);value={categories:primed?.categories,positions:primed?.categoryPositions,results:new Map(),key:'catalogue-'+(++sequence),registeredSession:null,registration:null};cache.set(items,value);}return value;};
  const categories=items=>{const value=group(items);if(!value.categories){const names=new Set();for(const item of items)for(const name of catalogueCategories(item))if(typeof name==='string')names.add(name);value.categories=[...names].sort((a,b)=>a.localeCompare(b,'es'));}return value.categories;};
- const matches=(item,needle,category)=>{if(category!=='Todas'&&!(catalogueCategories(item)).includes(category))return false;if(!needle)return true;let text=texts.get(item);if(text===undefined){text=`${item.searchText||item.title||''} ${item.genre||''} ${item.source||''}`.toLocaleLowerCase('es');texts.set(item,text);}return text.includes(needle);};
+ const searchTitle=item=>[item.searchText||item.title||'',item.displayTitle||'',item.originalTitle||''].filter(Boolean).join(' ');
+ const matches=(item,needle,category)=>{if(category!=='Todas'&&!(catalogueCategories(item)).includes(category))return false;if(!needle)return true;let text=texts.get(item);if(text===undefined){text=`${searchTitle(item)} ${item.genre||''} ${item.source||''}`.toLocaleLowerCase('es');texts.set(item,text);}return text.includes(needle);};
  const client=()=>workerClient||(typeof Worker!=='undefined'?catalogueWorkerClient():null);
  async function register(items,value,remote,signal){
   if(value.registeredSession===remote.session&&['worker','fallback'].includes(remote.mode))return;
@@ -30,7 +31,7 @@ export function createCatalogueIndex(all,{workerClient}={}){
   // one query must not poison the registration needed by its replacement.
   if(!value.registration){
    value.registration=(async()=>{
-    const records=await cooperativeMap(items,item=>({id:item.id,title:item.searchText||item.title,genre:item.genre,genres:catalogueCategories(item),source:item.source}),{batchSize:128,budget:2});
+    const records=await cooperativeMap(items,item=>({id:item.id,title:searchTitle(item),genre:item.genre,genres:catalogueCategories(item),source:item.source}),{batchSize:128,budget:2});
     await remote.request('indexSearch',[value.key,records]);value.registeredSession=remote.session;
    })().finally(()=>{value.registration=null;});
   }

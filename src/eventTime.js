@@ -61,6 +61,7 @@ export function scheduledEventTime(item,{updatedAt,timeZone,host}={}){
  return zonedEventTime(date,hour,minute,zone);
 }
 export function eventDisplayTitle(item){
+ if(item.displayTitle!==undefined)return item.displayTitle;
  const title=displayText(item.title);
  if(eventInstant(item.eventStartsAt)===null)return title;
  return title.replace(/^\s*\d{1,2}\/\d{1,2}\s+Soccer\s+\d{1,2}:\d{2}\s*[ap]m\s*/i,'').replace(/^\s*\d{1,2}:\d{2}\s*[·|:-]?\s*/,'').trim();

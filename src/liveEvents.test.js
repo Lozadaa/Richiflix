@@ -3,6 +3,25 @@ import assert from 'node:assert/strict';
 import {eventKey,groupLiveEvents,eventPhase,eventPhaseLabel,splitLiveEvents,homeLiveEvents,eventCaption,rememberFeed,preferredFeed,feedLanguage,liveHubRows,liveChipItems} from './liveEvents.js';
 import {createCatalogueIndex} from './catalogueIndex.js';
 import {reconcileMLBEvent} from './mlbSchedule.js';
+import {prepareChannels} from './channelPreparation.js';
+import {displayTitle} from './artwork.js';
+import {loadXtreamEpisodes} from './xtream.js';
+
+test('F2 prepared language wins and search indexes original and clean names locally and in worker',async()=>{
+ const channels=await prepareChannels({channels:[{id:'espn',title:'US: ESPN HD [ENG]',kind:'iptv'},{id:'hbo',title:'H_B_O',kind:'iptv'}]});
+ assert.equal(channels[0].displayTitle,'ESPN');assert.equal(channels[0].language,'en');assert.equal(channels[0].quality,'HD');assert.equal(channels[0].country,'US');assert.equal(channels[0].title,'US: ESPN HD [ENG]');assert.equal(displayTitle(channels[0]),'ESPN');
+ const signals=[channel('clean-en','Yankees vs. Rays',{language:'en'}),channel('clean-es','Yankees vs. Rays',{language:'es'})];
+ assert.equal(feedLanguage(signals[1]),'es');assert.equal(groupLiveEvents(signals).events[0].preferredFeedId,'clean-es');
+ const {createCatalogueWorkerClient}=await import('./catalogueWorkerClient.js'),{createCatalogueWorkerService}=await import('./catalogueWorker.js');
+ const service=createCatalogueWorkerService(),client=createCatalogueWorkerClient({createWorker:()=>{throw Error('Headless');},fallbackFactory:()=>service});
+ try{for(const workerClient of [undefined,client]){const index=createCatalogueIndex(channels,{workerClient});assert.deepEqual(await index.search(channels,'espn hd'),[channels[0]]);assert.deepEqual(await index.search(channels,'h b o'),[channels[1]]);}}finally{client.dispose();}
+});
+test('F2 episode receipt keeps provider numbers and cleans the visible title once',async()=>{
+ const account={host:'https://fixture.invalid',username:'fixture',password:'fixture',name:'Fixture'};
+ const fetcher=async()=>new Response(JSON.stringify({info:{name:'Breaking Bad'},episodes:{2:[{id:1,title:'Breaking Bad - S02E01 - Piloto [ENG] HD',episode_num:13}]}}));
+ const [group]=await loadXtreamEpisodes(account,'1',fetcher),[episode]=group.episodes;
+ assert.equal(episode.title,'Piloto');assert.equal(episode.displayTitle,'Piloto');assert.equal(episode.originalTitle,'Breaking Bad - S02E01 - Piloto [ENG] HD');assert.equal(episode.episodeNumber,13);assert.equal(episode.season,'2');assert.equal(episode.language,'en');
+});
 
 const start=Date.parse('2026-10-07T00:00:00Z'),H=3600000,M=60000; // 21:00 Santiago, 6 Oct
 const channel=(id,title,extra={})=>({id,kind:'iptv',mediaType:'live',title,genre:'MLB EVENTS',source:'eterbox',eventStartsAt:start,...extra});

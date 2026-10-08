@@ -3,6 +3,7 @@ import {youtubeID,spanishMetadata} from './metadata.js';
 import {eventInstant} from './eventTime.js';
 import {cooperativeMap} from './cooperativeWork.js';
 import {isPornographic,isPornographicCategory,CONTENT_POLICY_VERSION} from './contentPolicy.js';
+import {cleanName} from './displayNames.js';
 const text=value=>typeof value==='string'?value:typeof value==='number'?String(value):'';
 const id=value=>/^\d{1,20}$/.test(text(value))?text(value):null;
 const extension=value=>/^[a-z0-9]{1,10}$/i.test(text(value))?text(value).toLowerCase():'mp4';
@@ -76,7 +77,7 @@ export async function loadXtreamEpisodes(account,seriesId,fetcher=fetch){
  if(isPornographic(data?.info))return [];
  if(!groups||typeof groups!=='object')throw Error('No se encontraron episodios de esta serie.');
  return Object.entries(groups).sort(([a],[b])=>Number(a)-Number(b)).map(([season,episodes])=>({season,episodes:(Array.isArray(episodes)?episodes:[]).map(raw=>{
-  const item=normaliseItem({...raw,name:raw.title||raw.name},'episode',new Map(),account);return item?{...item,episodeNumber:Number(raw.episode_num)||0,season}:null;
+  const item=normaliseItem({...raw,name:raw.title||raw.name},'episode',new Map(),account);if(!item)return null;const clean=cleanName(item.title,{kind:'episode',series:data.info?.name||data.info?.title});return {...item,...clean,title:clean.title,displayTitle:clean.title,originalTitle:item.title,episodeNumber:Number(raw.episode_num)||clean.episodeNumber||0,season};
  }).filter(Boolean).sort((a,b)=>a.episodeNumber-b.episodeNumber)}));
 }
 export async function loadXtreamVideoDetails(account,streamId,fetcher=fetch,type='movie',metadataToken=''){

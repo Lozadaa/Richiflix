@@ -11,6 +11,7 @@ export function artworkURL(value,backdrop=false,tv=isTVBuild){
 export function displayTitle(item){
  if(item.eventDisplayTitle)return displayText(item.eventDisplayTitle);
  if(item.localizedTitle)return displayText(item.localizedTitle);
+ if(item.displayTitle!==undefined)return displayText(item.displayTitle);
  return displayText(item.title.replace(/\s*\((?:LAT(?:INO)?(?:\s*\/\s*ENG)?|ENG|DUAL|SUB(?:S|TITULADO)?|\d{4})\)\s*$/i,'').replace(/\s*\((?:LAT(?:INO)?(?:\s*\/\s*ENG)?|ENG|DUAL|SUB(?:S|TITULADO)?)\)\s*$/i,'').trim()||item.title);
 }
 export function titleFacts(item){

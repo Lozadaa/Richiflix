@@ -11,6 +11,7 @@ const words=item=>`${displayText(item.title)} ${item.genre||''} ${item.category|
 const normal=value=>String(value||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').replace(/\b(?:sd|hd|fhd|4k|es|en|spanish|english|espanol|lat|eng)\b/g,' ').replace(/\s+/g,' ').trim();
 // Short tokens are case-sensitive and title-only: «en vivo» or «es» in Spanish copy is not a language tag.
 export function feedLanguage(item){
+ if(item.language)return item.language;
  const title=displayText(item.title),all=words(item);
  return /spanish|espa[nñ]ol/i.test(all)||/\b(?:ES|LAT)\b/.test(title)?'es':/english|ingl[eé]s/i.test(all)||/\b(?:EN|ENG)\b/.test(title)?'en':null;
 }
