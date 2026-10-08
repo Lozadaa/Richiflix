@@ -13,7 +13,7 @@ const Episode=memo(function Episode({episode,index,top,height,headingHeight,prog
  {episode.groupStart&&<div className="episode-season-heading" style={{height:headingHeight}}><h4>{episode.season==='0'?'Especiales':`Temporada ${displayText(episode.season)}`}</h4><span>{episode.groupCount} {episode.groupCount===1?'episodio':'episodios'}</span></div>}
  <button className="episode-button" style={{height}} data-episode-id={episode.id} data-season={episode.season} aria-label={`Reproducir ${displayText(episode.title)}`} onClick={()=>play(episode)}>
   <div className="episode-art"><QualityImage src={episode.image} loader fallback={false}/>{fraction>0&&<span className="episode-progress" aria-hidden="true"><i style={{width:`${fraction*100}%`}}/></span>}</div>
-  <div className="episode-copy"><div className="episode-title"><span className="episode-number">{episode.episodeNumber||index+1}</span><strong>{displayText(episode.title)}</strong></div>{episode.description&&<p>{displayText(episode.description)}</p>}{episode.duration&&<small>{displayText(episode.duration)}</small>}</div>
+  <div className="episode-copy"><div className="episode-title"><span className="episode-number">{episode.episodeNumber||index+1}</span><strong>{displayText(episode.title)}</strong></div>{episode.description&&<p>{displayText(episode.description)}</p>}{(episode.duration||episode.descriptionLanguage==='en')&&<small>{[episode.duration&&displayText(episode.duration),episode.descriptionLanguage==='en'&&'Sinopsis en inglés'].filter(Boolean).join(' · ')}</small>}</div>
   <span className="episode-play" aria-hidden="true"><Play fill="currentColor"/></span>
  </button></div>;
 });

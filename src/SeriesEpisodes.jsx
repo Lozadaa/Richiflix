@@ -2,12 +2,15 @@ import React,{forwardRef,useEffect,useImperativeHandle,useMemo,useRef,useState} 
 import {RefreshCw,Clapperboard} from 'lucide-react';
 import {xtreamClient} from './xtreamClient.js';
 import {EpisodeList} from './EpisodeList.jsx';
+import {useSeasonMetadata} from './useSeasonMetadata.js';
+import {mergeSeasonEpisodes} from './episodeMetadata.js';
 import './seriesEpisodes.css';
 
 export const SeriesEpisodes=forwardRef(function SeriesEpisodes({item,play,history={},initialSeason,initialEpisodeId,returnSummary},ref){
  const [groups,setGroups]=useState([]),[loading,setLoading]=useState(true),[error,setError]=useState(''),[retry,setRetry]=useState(0);
  const root=useRef(),list=useRef(),lastEpisode=useRef(initialEpisodeId),interacted=useRef(false);
- const episodes=useMemo(()=>groups.flatMap(group=>group.episodes.map((episode,index)=>({...episode,season:group.season,groupStart:index===0,groupCount:group.episodes.length}))),[groups]);
+ const seasons=useMemo(()=>groups.map(group=>group.season),[groups]),{bySeason}=useSeasonMetadata(item,seasons,initialSeason??seasons[0]);
+ const episodes=useMemo(()=>groups.flatMap(group=>mergeSeasonEpisodes(group.episodes,bySeason.get(group.season),{season:group.season}).map((episode,index)=>({...episode,season:group.season,groupStart:index===0,groupCount:group.episodes.length}))),[groups,bySeason]);
  useImperativeHandle(ref,()=>({focusCurrent:()=>list.current?.focusId(lastEpisode.current)}));
  useEffect(()=>{let active=true;setLoading(true);setError('');xtreamClient().episodes(item.streamId,item.sourceId).then(data=>{if(active){setGroups(data);setLoading(false);}}).catch(()=>{if(active){setError('No se pudieron cargar los episodios. Comprueba la conexión y vuelve a intentarlo.');setLoading(false);}});return()=>{active=false;};},[item.streamId,item.sourceId,retry]);
  useEffect(()=>{if(loading||error||interacted.current)return;const frame=requestAnimationFrame(()=>{const active=document.activeElement,dialog=root.current?.closest('[role="dialog"]');if(!dialog||!dialog.contains(active))return;list.current?.focusId(initialEpisodeId||episodes.find(episode=>episode.season===initialSeason)?.id);});return()=>cancelAnimationFrame(frame);},[loading,error]);
