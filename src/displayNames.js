@@ -2,7 +2,38 @@ const acronyms=new Set('TV HD MLB NBA NFL UFC ESPN HBO CNN BBC FOX DAZN UEFA FIF
 const small=new Set('a al de del el la los las un una unos unas y e o u en con por para sin sobre entre vs'.split(' '));
 export function titleCase(text){return text.toLocaleLowerCase('es').replace(/\p{L}[\p{L}\p{N}]*/gu,(word,offset)=>acronyms.has(word.toUpperCase())?word.toUpperCase():offset>0&&small.has(word)?word:word[0].toLocaleUpperCase('es')+word.slice(1));}
 export function normalizeSpacing(text){return String(text??'').replace(/_+/g,' ').replace(/[–—-]+/g,' - ').replace(/\bvs\.?\s*/gi,'vs. ').replace(/\s+/g,' ').replace(/\s+([,.;!?])/g,'$1').replace(/^[\s·:;-]+|[\s·:;-]+$/g,'').trim();}
+// H2-T1: VOD names. Trailing audio/quality tags («(LAT/ENG/CAST)», «[4K]», «- Latino», «DUAL») leave the title;
+// languages keep their original order, upper case (LATINO→LAT, CASTELLANO→CAST, SUBS/SUBTITULADO→SUB); a «(2024)» goes
+// to `year`. Hyphens inside the title stay (no normalizeSpacing: «Spider-Man»). Only tags are removed, so it is idempotent.
+const VOD_LANGUAGE={LAT:'LAT',LATINO:'LAT',ENG:'ENG',CAST:'CAST',CASTELLANO:'CAST',SUB:'SUB',SUBS:'SUB',SUBTITULADO:'SUB',DUAL:'DUAL',ES:'ES',EN:'EN',VOSE:'VOSE'};
+const VOD_QUALITY=/^(?:4K|UHD|FHD|HD|SD|HDR|HEVC|H\.?26[45]|\d{3,4}P)$/i,PICTOGRAPHS=/\p{Extended_Pictographic}[️‍]*/gu;
+// A group is removable only if every token is a tag; bare (unbracketed) tokens must be written in capitals.
+function vodTags(text,bare=false){
+ const out={codes:[],quality:undefined,year:undefined};
+ for(const token of text.split(/[\s/,|+]+/).filter(Boolean)){
+  const upper=token.toUpperCase();
+  if(VOD_LANGUAGE[upper]&&(!bare||token===upper&&!['ES','EN'].includes(upper)))out.codes.push(VOD_LANGUAGE[upper]);
+  else if(VOD_QUALITY.test(token)&&(!bare||token===upper||/^\d{3,4}p$/.test(token)))out.quality??=upper;
+  else if(!bare&&/^(?:19|20)\d{2}$/.test(token))out.year=token;
+  else return null;
+ }
+ return out;
+}
+function cleanVod(raw){
+ const original=String(raw??'').trim(),groups=[];let title=original.replace(PICTOGRAPHS,' ').trim(),quality,year;
+ for(;;){
+  const match=title.match(/[\s\-–|·]*[([]([^()[\]]*)[)\]]\s*$/)||title.match(/\s*[-–|·]\s*(Latino|Castellano|Subtitulado|Dual)\s*$/i)||title.match(/[\s\-–|·]+([^\s\-–|·]+)\s*$/);
+  const tags=match&&vodTags(match[1],!/[)\]]\s*$/.test(match[0])&&!/^(?:Latino|Castellano|Subtitulado|Dual)$/i.test(match[1]));
+  if(!tags)break;
+  groups.unshift(tags.codes);quality=tags.quality||quality;year??=tags.year;title=title.slice(0,match.index);
+ }
+ title=title.replace(/\s+/g,' ').replace(/^[\s\-–|·:]+|[\s\-–|·:]+$/g,'');
+ const letters=[...title].filter(char=>/\p{L}/u.test(char)),uppercase=letters.filter(char=>char===char.toLocaleUpperCase('es')).length;
+ if(letters.length&&uppercase/letters.length>=.8)title=titleCase(title);
+ return {title:title||original,languages:[...new Set(groups.flat())],quality,year};
+}
 export function cleanName(raw,{kind='title',series}={}){
+ if(kind==='vod')return cleanVod(raw);
  let title=String(raw??''),language,quality,country,episodeNumber,season,time;
  // A clock can follow a decorative league prefix; keep only the event after it.
  const clock=title.match(/\b(\d{1,2}):([0-5]\d)\s*([ap]m)?\b/i);
