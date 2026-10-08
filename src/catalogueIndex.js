@@ -1,6 +1,8 @@
 import {catalogueCategories} from './catalogueCategories.js';
 import {catalogueWorkerClient} from './catalogueWorkerClient.js';
 import {cooperativeForEach,cooperativeMap} from './cooperativeWork.js';
+import {displayTitle} from './artwork.js';
+import {fuzzySearch} from './fuzzySearch.js';
 
 const prepared=new WeakMap();let sequence=0;
 const abortError=()=>new DOMException('Búsqueda reemplazada','AbortError');
@@ -24,6 +26,7 @@ export function createCatalogueIndex(all,{workerClient}={}){
  const categories=items=>{const value=group(items);if(!value.categories){const names=new Set();for(const item of items)for(const name of catalogueCategories(item))if(typeof name==='string')names.add(name);value.categories=[...names].sort((a,b)=>a.localeCompare(b,'es'));}return value.categories;};
  const searchTitle=item=>[item.searchText||item.title||'',item.displayTitle||'',item.originalTitle||''].filter(Boolean).join(' ');
  const matches=(item,needle,category)=>{if(category!=='Todas'&&!(catalogueCategories(item)).includes(category))return false;if(!needle)return true;let text=texts.get(item);if(text===undefined){text=`${searchTitle(item)} ${item.genre||''} ${item.source||''}`.toLocaleLowerCase('es');texts.set(item,text);}return text.includes(needle);};
+ const leanRecord=item=>({id:item.id,title:searchTitle(item),clean:item.title?displayTitle(item):'',genre:item.genre,genres:catalogueCategories(item),source:item.source});
  const client=()=>workerClient||(typeof Worker!=='undefined'?catalogueWorkerClient():null);
  async function register(items,value,remote,signal){
   if(value.registeredSession===remote.session&&['worker','fallback'].includes(remote.mode))return;
@@ -31,7 +34,7 @@ export function createCatalogueIndex(all,{workerClient}={}){
   // one query must not poison the registration needed by its replacement.
   if(!value.registration){
    value.registration=(async()=>{
-    const records=await cooperativeMap(items,item=>({id:item.id,title:searchTitle(item),genre:item.genre,genres:catalogueCategories(item),source:item.source}),{batchSize:128,budget:2});
+    const records=await cooperativeMap(items,leanRecord,{batchSize:128,budget:2});
     await remote.request('indexSearch',[value.key,records]);value.registeredSession=remote.session;
    })().finally(()=>{value.registration=null;});
   }
@@ -59,5 +62,14 @@ export function createCatalogueIndex(all,{workerClient}={}){
   const result=[];
   try{await cooperativeForEach(items,item=>{if(matches(item,needle,category))result.push(item);},{batchSize:Math.min(batchSize,128),budget:2,cancelled:()=>Boolean(signal?.aborted)});}
   catch(error){check(signal);throw error;}check(signal);return remember(value.results,key,result);
+ },async fuzzy(items,query,{signal,category='Todas'}={}){
+  // Approximate matches only run when exact search found little; the worker does the scoring.
+  check(signal);const value=group(items),remote=client();let found;
+  if(remote){
+   try{await register(items,value,remote,signal);try{found=await remote.request('fuzzy',[value.key,query,category],{signal});}catch(error){if(error.code!=='SEARCH_INDEX_MISSING')throw error;value.registeredSession=null;await register(items,value,remote,signal);found=await remote.request('fuzzy',[value.key,query,category],{signal});}}
+   catch(error){if(signal?.aborted||error.name==='AbortError')throw abortError();}
+  }
+  if(!found){value.lean??=items.map(leanRecord);const near=fuzzySearch(query,value.lean,{accept:category==='Todas'?undefined:item=>item.genres.includes(category)});found={ids:near.matches.map(match=>match.id),suggestions:near.suggestions};}
+  check(signal);return {items:found.ids.map(id=>byId.get(id)).filter(Boolean),suggestions:found.suggestions};
  }};
 }

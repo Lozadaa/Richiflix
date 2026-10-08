@@ -26,3 +26,10 @@ test('prepared category positions match catalogue order and handle hostile categ
  const movies=[{genre:'Drama'},{genre:'Comedia',genres:['Comedia','Drama','Drama']},{genre:'__proto__'},{genre:'constructor'}],channels=[{genre:'Deportes'}],groups=await prepareCatalogueGroups({movies,shows:[],channels},channels);
  assert.deepEqual(groups.movies.categories,['__proto__','Comedia','constructor','Drama'].sort((a,b)=>a.localeCompare(b,'es')));assert.deepEqual(groups.movies.categoryPositions.Drama,[0,1]);assert.deepEqual(groups.movies.categoryPositions.__proto__,[2]);assert.deepEqual(groups.movies.categoryPositions.constructor,[3]);assert.equal(Object.getPrototypeOf(groups.movies.categoryPositions),null);assert.deepEqual(groups.channels.categoryPositions.Deportes,[0]);assert.equal(groups.shows.categories.length,0);
 });
+test('fuzzy jobs score the clean name within the category and suggest real titles',async()=>{
+ const service=createCatalogueWorkerService({backendFactory:()=>{throw Error('Unexpected source access');}}),items=[{id:'bb',title:'Breaking Bad (LAT) HD',clean:'Breaking Bad',genres:['Drama']},{id:'bc',title:'Better Call Saul',genres:['Drama']},{id:'ls',title:'Los Simpson',genres:['Comedia']}];
+ await service.request('indexSearch',['shows',items]);
+ assert.deepEqual(await service.request('fuzzy',['shows','brekin bad','Todas']),{ids:['bb'],suggestions:['Breaking Bad']});
+ assert.deepEqual(await service.request('fuzzy',['shows','simson','Drama']),{ids:[],suggestions:[]});
+ await assert.rejects(service.request('fuzzy',['missing','bad']),{code:'SEARCH_INDEX_MISSING'});
+});

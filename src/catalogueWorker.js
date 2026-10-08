@@ -3,6 +3,7 @@ import {createBrowserXtreamBackend} from './browserXtreamBackend.js';
 import {prepareChannels} from './channelPreparation.js';
 import {cooperativeMap,cooperativeForEach} from './cooperativeWork.js';
 import {catalogueWorkerMethods} from './catalogueWorkerProtocol.js';
+import {fuzzySearch,prepareFuzzyIndex} from './fuzzySearch.js';
 
 export {catalogueWorkerMethods} from './catalogueWorkerProtocol.js';
 const cancelledError=()=>new DOMException('El trabajo anterior fue cancelado.','AbortError');
@@ -20,13 +21,14 @@ export function createCatalogueWorkerService({backendFactory=createBrowserXtream
    if(method==='prepareChannels')return await prepareChannels(args[0],options);
    if(method==='indexSearch'){
     const [key,items]=args;if(typeof key!=='string'||!Array.isArray(items))throw Error('Índice de búsqueda no válido.');
-    const records=await cooperativeMap(items,item=>({id:item.id,text:`${item.title||''} ${item.genre||''} ${item.source||''}`.toLocaleLowerCase('es'),genres:catalogueCategories(item)}),options);
-    check(signal);touch(key,{records,results:new Map()});return {count:records.length};
+    const records=await cooperativeMap(items,item=>({id:item.id,text:`${item.title||''} ${item.genre||''} ${item.source||''}`.toLocaleLowerCase('es'),genres:catalogueCategories(item),clean:item.clean||item.title||''}),options);
+    check(signal);touch(key,{records,results:new Map()});setTimeout(()=>{if(groups.get(key)?.records===records)prepareFuzzyIndex(records);},0);return {count:records.length};
    }
    if(method==='dropSearch'){groups.delete(args[0]);return true;}
-   if(method==='search'){
+   if(method==='search'||method==='fuzzy'){
     const [key,query='',category='Todas']=args,group=groups.get(key);if(!group){const error=Error('El índice de búsqueda se debe preparar de nuevo.');error.code='SEARCH_INDEX_MISSING';throw error;}
-    touch(key,group);const needle=String(query).toLocaleLowerCase('es'),cacheKey=JSON.stringify([needle,category]);if(group.results.has(cacheKey))return group.results.get(cacheKey);
+    touch(key,group);
+    if(method==='fuzzy'){const found=fuzzySearch(query,group.records,{accept:category==='Todas'?undefined:item=>item.genres.includes(category)});check(signal);return {ids:found.matches.map(match=>match.id),suggestions:found.suggestions};}const needle=String(query).toLocaleLowerCase('es'),cacheKey=JSON.stringify([needle,category]);if(group.results.has(cacheKey))return group.results.get(cacheKey);
     const ids=[];await cooperativeForEach(group.records,item=>{if((category==='Todas'||item.genres.includes(category))&&(!needle||item.text.includes(needle)))ids.push(item.id);},options);
     check(signal);if(group.results.size>=8)group.results.delete(group.results.keys().next().value);group.results.set(cacheKey,ids);return ids;
    }

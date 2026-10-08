@@ -30,7 +30,7 @@ test('injected worker client registers lean records once for concurrent and repe
   const index=createCatalogueIndex(items,{workerClient:client}),[blue,red]=await Promise.all([index.search(items,'AZUL'),index.search(items,'roja',{category:'Comedia'})]);
   assert.deepEqual(blue,[items[0]]);assert.deepEqual(red,[items[1]]);assert.equal(blue[0],items[0]);
   const registrations=calls.filter(call=>call.method==='indexSearch');assert.equal(registrations.length,1);
-  assert.deepEqual(Object.keys(registrations[0].args[1][0]).sort(),['genre','genres','id','source','title']);
+  assert.deepEqual(Object.keys(registrations[0].args[1][0]).sort(),['clean','genre','genres','id','source','title']);
   assert.notEqual(registrations[0].args[1][0],items[0]);
   assert.equal(await index.search(items,'azul'),blue);assert.equal(await index.search(items,'ROJA',{category:'Comedia'}),red);
   assert.deepEqual(await index.search(items,'fuente'),[items[0]]);assert.equal(calls.filter(call=>call.method==='indexSearch').length,1);assert.equal(calls.filter(call=>call.method==='search').length,3);
@@ -77,4 +77,11 @@ test('primed category positions avoid rescanning titles and preserve hostile cat
  assert.deepEqual(index.filter(items,'','Drama'),[items[0],items[1]]);
  assert.deepEqual(index.filter(items,'','__proto__'),[items[2]]);assert.deepEqual(index.filter(items,'','constructor'),[items[3]]);assert.deepEqual(index.filter(items,'','toString'),[items[4]]);
  assert.deepEqual(index.filter(preparedChannels,'','Deportes'),preparedChannels);assert.equal(index.filter(items),items);assert.deepEqual(index.categories(shows),[]);
+});
+
+test('fuzzy returns catalogue items and suggestions through the worker and without it',async()=>{
+ const items=[{id:'bb',title:'Breaking Bad',genre:'Drama'},{id:'ls',title:'Los Simpson',genre:'Comedia'}];
+ const {client,calls}=indexedClient();
+ try{for(const workerClient of [client,null]){const index=createCatalogueIndex(items,{workerClient}),found=await index.fuzzy(items,'brekin bad');assert.deepEqual(found.items,[items[0]]);assert.deepEqual(found.suggestions,['Breaking Bad']);assert.deepEqual((await index.fuzzy(items,'zzzz')).items,[]);}
+  assert.equal(calls.filter(call=>call.method==='fuzzy').length,2);}finally{client.dispose();}
 });
