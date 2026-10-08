@@ -63,6 +63,16 @@ export function hexToRgb(value){
  return [0,2,4].map(start=>parseInt(full.slice(start,start+2),16)).join(',');
 }
 
+// H1-T3 dot progress: `cycle` keys the active dot, so its 9 s fill restarts on every slide change and on every resume.
+// createBannerCarousel.resume waits resumeMs + intervalMs, so a resumed fill is `resumed` (CSS delays it by resumeMs)
+// and still ends when the slide changes. A pause alone keeps the cycle (CSS pauses the running fill).
+export function dotCycle(previous,{slide,paused=false}){
+ if(!previous)return {slide,paused,cycle:0,resumed:false};
+ if(previous.slide!==slide)return {slide,paused,cycle:previous.cycle+1,resumed:false};
+ if(previous.paused&&!paused)return {slide,paused,cycle:previous.cycle+1,resumed:true};
+ return previous.paused===paused?previous:{...previous,paused};
+}
+
 // H1-T2 ambient wash: two fixed layers (a, b). A new ink is written into the inactive one, which becomes active (the
 // other fades out); the same ink keeps the same object (no render, no fade). While the current slide's art is not
 // decoded (ready=false) the tint holds, so it never changes before the image it belongs to.

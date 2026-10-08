@@ -15,7 +15,7 @@ import {isTVBuild} from './platform.js';
 import {scoreLabel} from './mlbSchedule.js';
 import {TitleFacts} from './UserScore.jsx';
 import {createCardPress,okHint} from './cardExpansion.js';
-import {bannerKeyAction,knobOn,ambientSlots} from './bannerFlow.js';
+import {bannerKeyAction,knobOn,ambientSlots,dotCycle} from './bannerFlow.js';
 const FADE_MS=320;
 export const FocusStage=memo(function FocusStage({item,active,visible=true,loading=false,metadataPending=loading,moving=false,open,inspect,favorite,toggle,tv,hover,leave,trailerDelay=0,next,nextPending=false,slide=0,slides=0,choose,onNextArt,profileId,paused=false}){
  const [actionsFocused,setActionsFocused]=useState(false);
@@ -45,7 +45,8 @@ export const FocusStage=memo(function FocusStage({item,active,visible=true,loadi
  const keyUp=event=>{if((event.key==='Enter'||event.keyCode===13)&&press.current.pressed){event.preventDefault();press.current.up();}};
  const hidden=direct&&mode==='carousel';
  // Inicio con vida: the knobs --tv-kenburns / --tv-ambient (0/1 on .app.tv-mode) are read once on mount, never per key.
- const [knobs,setKnobs]=useState(null),[wash,setWash]=useState(null);
+ const [knobs,setKnobs]=useState(null),[wash,setWash]=useState(null),[dot,setDot]=useState(null);
+ if(carousel){const nextDot=dotCycle(dot,{slide,paused});if(nextDot!==dot)setDot(nextDot);}
  useEffect(()=>{if(!tv)return;const style=getComputedStyle(document.querySelector('.app')||document.documentElement);setKnobs({kenburns:knobOn(style.getPropertyValue('--tv-kenburns')),ambient:knobOn(style.getPropertyValue('--tv-ambient'))});},[tv]);
  if(!item)return null;const live=item.kind==='iptv',matchup=mlbMatchup(item),remoteActions=isTVBuild&&tv,dormant=remoteActions&&!actionsFocused;
  const out=carousel&&layers.out&&layers.out.id!==item.id?layers.out:null,upcomingArt=carousel&&next&&next.id!==item.id&&next.id!==out?.id?next:null;
@@ -67,6 +68,6 @@ export const FocusStage=memo(function FocusStage({item,active,visible=true,loadi
    {item.cast&&<p className="focus-cast">{displayText(item.cast)}</p>}</React.Fragment>
    <div className={`focus-actions${hidden?' is-direct':''}`} role="group" aria-label="Acciones del título seleccionado" aria-hidden={dormant?true:undefined} onKeyDown={keyDown} onKeyUp={keyUp}><button className="primary" tabIndex={dormant?-1:undefined} aria-label={item.mediaType==='series'?'Ver episodios':'Reproducir'} onClick={()=>item.mediaType==='series'?inspect(item):open(item)}><Play fill="currentColor" aria-hidden="true"/></button><button className="secondary" tabIndex={dormant||hidden?-1:undefined} aria-label={favorite?'Quitar de Mi lista':'Guardar en Mi lista'} aria-pressed={favorite} onClick={()=>toggle(item)}>{favorite?<Check aria-hidden="true"/>:<Heart aria-hidden="true"/>}</button>{hidden&&hintOn&&<span className="focus-remote-hint">Mantén OK para Mi lista</span>}</div>
   </div>
-  {carousel&&slides>1&&<div className="banner-dots" role="group" aria-label="Elegir recomendación">{Array.from({length:slides},(_,index)=><button key={index} className={index===slide?'active':''} aria-label={`Recomendación ${index+1} de ${slides}`} aria-pressed={index===slide} tabIndex={-1} onClick={()=>choose(index)}><span/></button>)}</div>}
+  {carousel&&slides>1&&<div className="banner-dots" role="group" aria-label="Elegir recomendación">{Array.from({length:slides},(_,index)=><button key={index===slide?`${index}:${dot?.cycle??0}`:index} className={index===slide?dot?.resumed?'active is-resumed':'active':''} aria-label={`Recomendación ${index+1} de ${slides}`} aria-pressed={index===slide} tabIndex={-1} onClick={()=>choose(index)}><span/></button>)}</div>}
  </section>;
 });

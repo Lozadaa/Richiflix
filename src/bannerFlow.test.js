@@ -1,6 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createBannerFlow,createBannerCarousel,bannerKeyAction,knobOn,hexToRgb,ambientSlots} from './bannerFlow.js';
+import {createBannerFlow,createBannerCarousel,bannerKeyAction,knobOn,hexToRgb,ambientSlots,dotCycle} from './bannerFlow.js';
+test('dot progress restarts on a slide change and on resume, never on a pause or a no-op render',()=>{
+ const start=dotCycle(null,{slide:0});assert.deepEqual(start,{slide:0,paused:false,cycle:0,resumed:false});
+ assert.equal(dotCycle(start,{slide:0}),start,'same slide, same state: same object');
+ const paused=dotCycle(start,{slide:0,paused:true});assert.deepEqual(paused,{slide:0,paused:true,cycle:0,resumed:false},'pause freezes the running fill');
+ const resumed=dotCycle(paused,{slide:0,paused:false});assert.deepEqual(resumed,{slide:0,paused:false,cycle:1,resumed:true},'resume refills after the quiet period');
+ const moved=dotCycle(resumed,{slide:1});assert.deepEqual(moved,{slide:1,paused:false,cycle:2,resumed:false},'a new slide fills at once');
+ const pausedMove=dotCycle(dotCycle(moved,{slide:1,paused:true}),{slide:2,paused:true});assert.deepEqual(pausedMove,{slide:2,paused:true,cycle:3,resumed:false},'a key while paused restarts it, frozen');
+});
 test('hexToRgb converts 6- and 3-digit hex, passes r,g,b through and rejects the rest',()=>{
  assert.equal(hexToRgb('#29324e'),'41,50,78');assert.equal(hexToRgb('#FFF'),'255,255,255');assert.equal(hexToRgb(' 1, 2 ,3 '),'1,2,3');
  for(const value of ['',undefined,'#12345','red','#gg0000'])assert.equal(hexToRgb(value),null);
