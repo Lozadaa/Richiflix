@@ -40,19 +40,16 @@ export function nextGridIndex(index,key,columns,count){
  if(key==='ArrowDown')return index+columns<count?index+columns:Math.floor(index/columns)<Math.floor((count-1)/columns)?count-1:null;
  return null;
 }
-// Ola 4, TV rails anchored left (Netflix/Samsung pattern): the focused card sits at the first visible position with
-// RAIL_PEEK px of the previous card showing. A reserved, empty tail lets the last item (including «Ver todo»)
-// reach this same position even in a short row; it never walks across the screen at the end of the catalogue.
-export const RAIL_PEEK=40;
-// The absolute tail extends the track's overflow, which includes leading padding but does not add trailing
-// padding to scrollWidth. Match that actual range so a clamped browser scroll never leaves a stale cached offset.
-export function railTailSpace({itemWidth,gap=0,paddingLeft=0,viewport,peek=RAIL_PEEK}){
- return Math.max(0,viewport-itemWidth-gap-peek-paddingLeft);
-}
-export function anchoredRailOffset({index,count,itemWidth,gap=0,paddingLeft=0,viewport,peek=RAIL_PEEK}){
- const stride=itemWidth+gap,tail=railTailSpace({itemWidth,gap,paddingLeft,viewport,peek}),max=Math.max(0,count*stride-gap+paddingLeft+tail-viewport);
- if(!Number.isInteger(index)||index<0||index>=count||!(count>0)||!(max>0))return 0;
- return Math.max(0,Math.min(max,index*stride-gap-peek));
+// Kingdom A1, TV rails with a fixed focus column (Netflix): every focused card, the first and the last included,
+// sits at x = paddingLeft (the row title's x); the previous card peeks in the screen margin, outside the column
+// (A2: the rail bleeds to the screen edges). A reserved, empty tail lets the last item (including «Ver todo») reach
+// the column even in a short row. The tail extends the track's overflow, which includes leading padding but not
+// trailing padding, so max is the actual scroll range: (count-1)*stride.
+export function railTailSpace({itemWidth,paddingLeft=0,viewport}){return Math.max(0,viewport-paddingLeft-itemWidth);}
+export function anchoredRailOffset({index,count,itemWidth,gap=0,paddingLeft=0,viewport}){
+ const stride=itemWidth+gap,max=Math.max(0,count*stride-gap+paddingLeft+railTailSpace({itemWidth,paddingLeft,viewport})-viewport);
+ if(!Number.isInteger(index)||index<0||index>=count)return 0;
+ return Math.max(0,Math.min(max,index*stride));
 }
 export function nextRailIndex(index,key,count){
  if(!Number.isInteger(count)||count<1||!Number.isInteger(index)||index<0||index>=count||!['ArrowLeft','ArrowRight'].includes(key))return null;

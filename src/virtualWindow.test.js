@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {rowWindow,railWindow,nextGridIndex,nextRailIndex,pinWindowFocus,assignSlots,haloPlacement,haloFrames,premountTarget,anchoredRailOffset,railTailSpace,RAIL_PEEK} from './virtualWindow.js';
+import {rowWindow,railWindow,nextGridIndex,nextRailIndex,pinWindowFocus,assignSlots,haloPlacement,haloFrames,premountTarget,anchoredRailOffset,railTailSpace} from './virtualWindow.js';
 test('grid keeps a fixed DOM budget across 27k titles, including pinned focus',()=>{
  const count=27000,columns=7,rowHeight=450,viewport=510;
  for(let index=0;index<500;index++){
@@ -105,20 +105,17 @@ test('pre-mount picks the next far rail in the last vertical direction within th
  assert.equal(premountTarget({rails:[rail(true),rail(true),rail(true),rail(true),rail(true),rail(false)],active:1,direction:1}),-1);// 3 hops max
  assert.equal(premountTarget({rails,active:-1}),-1);
 });
-test('TV rails keep their left anchor through the last item, short rows and circular wrapping',()=>{
- const g={count:40,itemWidth:210,gap:30,paddingLeft:5,paddingRight:5,viewport:1740},stride=240;
- assert.equal(RAIL_PEEK,40);
- assert.equal(anchoredRailOffset({...g,index:0}),0,'index 0 cannot anchor');
- assert.equal(anchoredRailOffset({...g,index:1}),stride-30-40,'the previous card shows paddingLeft + 40 px');
- const mid=[5,6,7].map(index=>anchoredRailOffset({...g,index}));assert.deepEqual([mid[1]-mid[0],mid[2]-mid[1]],[stride,stride],'one stride per key');
- assert.equal(anchoredRailOffset({...g,index:39}),39*stride-30-40,'the final item reaches the same anchor');
- assert.equal(anchoredRailOffset({...g,index:36}),36*stride-30-40);
- assert.equal(anchoredRailOffset({...g,count:5,index:4}),4*stride-30-40,'a short row has room to anchor its final item too');
- assert.equal(anchoredRailOffset({...g,index:nextRailIndex(39,'ArrowRight',40)}),0,'wrap end -> start lands on 0');
- assert.equal(anchoredRailOffset({...g,index:-1}),0);
- assert.equal(anchoredRailOffset({...g,index:40}),0);
- assert.equal(anchoredRailOffset({...g,index:1.5}),0);
- assert.equal(anchoredRailOffset({...g,count:1,index:0}),0);
+test('anchoredRailOffset keeps every card at the fixed column',()=>{
+ const layout={itemWidth:210,gap:30,paddingLeft:86,viewport:1920,count:40};
+ assert.equal(anchoredRailOffset({index:0,...layout}),0);
+ assert.equal(anchoredRailOffset({index:1,...layout}),240);
+ assert.equal(anchoredRailOffset({index:7,...layout}),7*240);
+ assert.equal(anchoredRailOffset({index:39,...layout}),39*240); // la cola permite llegar
+ assert.equal(anchoredRailOffset({index:2,...layout,count:3}),2*240); // fila corta: también se ancla
+ assert.equal(railTailSpace(layout),1920-86-210);
+ assert.equal(anchoredRailOffset({...layout,index:nextRailIndex(39,'ArrowRight',40)}),0,'wrap end -> start lands on 0');
+ for(const index of [-1,40,1.5])assert.equal(anchoredRailOffset({...layout,index}),0);
+ assert.equal(anchoredRailOffset({...layout,count:1,index:0}),0);
 });
 test('TV tail allows every focused card to stay before the midpoint without growing the DOM window',()=>{
  for(const viewport of [960,1280,1920,3840])for(const count of [2,5,9,240,27001]){
