@@ -23,6 +23,8 @@ export function anchorBoxFromLayout({trackRect,left=0,top=0,width,height,scrollD
 }
 // Virtual cells sit at numeric left/top inside an untransformed track or grid;
 // read those, never the cell rect, which includes neighbour transitions.
+// Top 10: the cell keeps the rank number in its left padding; the panel anchors to the poster so the number stays visible.
+export function insetAnchorBox(box,inset){if(!(inset>0)||inset>=box.width)return box;return {...box,left:box.left+inset,width:box.width-inset};}
 export function cellAnchorBox(cell){
  const track=cell.parentElement;if(!cell.matches('.virtual-rail-cell,.virtual-grid-cell')||!track)return cell.getBoundingClientRect();
  const rect=track.getBoundingClientRect();

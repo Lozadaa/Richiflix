@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {expandedCardPlacement,anchorBoxFromLayout,cellAnchorBox,createCardPress,okHint,remainingLabel,neighbourShifts,expansionViewportTop,expansionAlignFor,neighbourMotions,neighbourDurations,createExpansionHub} from './cardExpansion.js';
+import {insetAnchorBox,expandedCardPlacement,anchorBoxFromLayout,cellAnchorBox,createCardPress,okHint,remainingLabel,neighbourShifts,expansionViewportTop,expansionAlignFor,neighbourMotions,neighbourDurations,createExpansionHub} from './cardExpansion.js';
 import {reserveCardExpansion} from './cardExpansionSpace.js';
 // R1.1 fakes: cells record their Web Animations; nothing else on them (no classList, no setProperty) may be touched.
 const animatedCell=(index,parentElement)=>({dataset:{virtualIndex:String(index)},style:{left:`${index*240}px`,width:'210px',transform:'',transition:'',willChange:''},parentElement,animations:[],animate(keyframes,options){const animation={keyframes,options,state:'running',cancel(){this.state='cancelled';},reverse(){this.state='reversed';}};this.animations.push(animation);return animation;}});
@@ -160,4 +160,10 @@ test('R1.2/R1.3 expansion hub: listeners are added once, events reach only regis
  frames.shift()();assert.deepEqual(cleaned,[true]);assert.equal(calls.at(-1),'b:frame');
  hub.retire({cleanup:instant=>cleaned.push(instant)});hub.flushRetired();assert.deepEqual(cleaned,[true,true],'an opening applies retired reservations in its own batch');
  frames.shift()();assert.deepEqual(cleaned,[true,true]);offB();assert.equal(hub.size,0);
+});
+
+test('insetAnchorBox moves the anchor past the Top 10 number and ignores nonsense insets',()=>{
+ const box={left:86,top:220,width:300,height:405,right:386,bottom:625};
+ assert.deepEqual(insetAnchorBox(box,90),{...box,left:176,width:210});
+ assert.equal(insetAnchorBox(box,0),box);assert.equal(insetAnchorBox(box,NaN),box);assert.equal(insetAnchorBox(box,300),box);
 });
