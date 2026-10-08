@@ -1,4 +1,4 @@
-export const previewMetadataCacheOptions={capacity:2000,maxBytes:6*1024*1024,ttl:30*86400000,ttlForData:data=>data?.descriptionLanguage==='es'&&data.description?30*86400000:Object.keys(data||{}).length?7*86400000:5*60000};
+export const previewMetadataCacheOptions={capacity:2000,maxBytes:6*1024*1024,ttl:30*86400000,ttlForData:data=>Array.isArray(data?.seasonEpisodes)||data?.descriptionLanguage==='es'&&data.description?30*86400000:Object.keys(data||{}).length?7*86400000:5*60000};
 export function createPersistentMetadataCache({read,write,capacity=128,ttl=7*86400000,ttlForData=()=>ttl,maxBytes=Infinity,now=Date.now,delay=400}){
  let loaded,timer,writing,dirty=false,revision=0,bytes=0;const entries=new Map(),sizes=new Map(),encoder=Number.isFinite(maxBytes)?new TextEncoder():null;
  const size=(key,value)=>encoder?encoder.encode(JSON.stringify([key,value])).byteLength+2:0;

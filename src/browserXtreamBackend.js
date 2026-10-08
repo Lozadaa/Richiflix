@@ -1,6 +1,6 @@
 import {accountKey} from './xtream.js';
 import {createSourceRegistry} from './sourceRegistry.js';
-import {checkMetadataToken} from './metadata.js';
+import {checkMetadataToken,tmdbSeason} from './metadata.js';
 import {createMetadataPreferences} from './metadataPreferences.js';
 import {createPersistentMetadataCache,previewMetadataCacheOptions} from './persistentMetadataCache.js';
 import {deviceStorage} from './deviceStorage.js';
@@ -25,6 +25,7 @@ export function createBrowserXtreamBackend({storage=deviceStorage,cryptography=g
   metadataSave:async input=>{const status=await metadata.save(input);registry.clearDetails();return status;},
   ...Object.fromEntries(['status','recommendations','cachedRatings','save','episodes','details','shortEpg','playback','remove','restore'].map(method=>[method,(...args)=>registry[method](...args)])),
   catalogue:async force=>{const data=await registry.catalogue(force);if(!prepared.has(data)){const work=(async()=>{const options={budget:2,batchSize:128},preparedChannels=await prepareChannels(data,options);return {...data,preparedChannels,preparedGroups:await prepareCatalogueGroups(data,preparedChannels,options)};})();prepared.set(data,work);work.catch(()=>prepared.delete(data));}return prepared.get(data);},
+  season:async(tmdbId,season)=>tmdbSeason(tmdbId,season,await metadata.token(),fetcher,details),
   flush:()=>Promise.all([details.flush(),ratings.flush()]),
  };
 }

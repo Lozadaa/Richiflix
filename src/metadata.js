@@ -13,8 +13,8 @@ export function validateMetadataToken(value){
  if(token&&!/^[a-zA-Z0-9_.-]{20,2500}$/.test(token))throw Error('Introduce una API key o un token de lectura válido de TMDB.');
  return token;
 }
-export async function tmdbRequest(path,token,fetcher){
- const url=new URL('https://api.themoviedb.org/3/'+path);url.searchParams.set('language','es-ES');
+export async function tmdbRequest(path,token,fetcher,language='es-ES'){
+ const url=new URL('https://api.themoviedb.org/3/'+path);url.searchParams.set('language',language);
  const headers={};if(/^[a-f0-9]{32}$/i.test(token))url.searchParams.set('api_key',token);else headers.Authorization='Bearer '+token;
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),8000);
  try{const response=await fetcher(url.href,{headers,signal:controller.signal});if(!response.ok)throw Error('No se pudo consultar TMDB.');return await response.json();}
@@ -44,4 +44,19 @@ export async function spanishMetadata(tmdbId,type,token,fetcher=fetch){
    ...(data.poster_path?{image:`https://image.tmdb.org/t/p/w780${data.poster_path}`} :{}),
    ...(trailer?{trailerId:youtubeID(trailer.key)}:{}),metadataCredit:'TMDB'};
  }catch{return {};}
+}
+// Episode titles and synopses for one season: es-ES, then es-MX for the gaps
+// and English synopses only as a marked last resort. Kept 30 days per season.
+export async function tmdbSeason(tmdbId,season,token,fetcher=fetch,cache){
+ if(!token||!/^\d{1,10}$/.test(String(tmdbId))||!/^\d{1,3}$/.test(String(season)))return [];
+ const key=`season:${tmdbId}:${Number(season)}`,cached=await cache?.get(key);if(Array.isArray(cached?.seasonEpisodes))return cached.seasonEpisodes;
+ const load=async language=>{const data=await tmdbRequest(`tv/${tmdbId}/season/${Number(season)}`,token,fetcher,language);return new Map((Array.isArray(data?.episodes)?data.episodes:[]).filter(entry=>Number.isSafeInteger(entry?.episode_number)).map(entry=>[entry.episode_number,entry]));};
+ const text=value=>typeof value==='string'?value.trim():'';
+ try{
+  const spanish=await load('es-ES'),missing=()=>[...spanish.values()].filter(entry=>!text(entry.name)||!text(entry.overview));
+  if(missing().length){const mexican=await load('es-MX');for(const entry of missing()){const other=mexican.get(entry.episode_number);if(!text(entry.name)&&text(other?.name))entry.name=other.name;if(!text(entry.overview)&&text(other?.overview))entry.overview=other.overview;}}
+  if(missing().some(entry=>!text(entry.overview))){const english=await load('en-US').catch(()=>new Map());for(const entry of missing()){const other=english.get(entry.episode_number);if(!text(entry.overview)&&text(other?.overview))Object.assign(entry,{overview:other.overview,overviewLanguage:'en'});}}
+  const episodes=[...spanish.values()].map(({episode_number,season_number,name,overview,overviewLanguage,air_date,runtime,still_path})=>Object.fromEntries(Object.entries({episode_number,season_number,name:text(name).slice(0,300),overview:text(overview).slice(0,5000),overviewLanguage,air_date,runtime,still_path}).filter(([,value])=>value!==undefined&&value!==null)));
+  await cache?.put(key,{seasonEpisodes:episodes});return episodes;
+ }catch{return [];}
 }

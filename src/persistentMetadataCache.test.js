@@ -26,3 +26,8 @@ test('a flush includes changes that arrive while an earlier write is pending',as
 test('an unavailable cache store does not keep retrying in the background',async context=>{
  context.mock.timers.enable({apis:['setTimeout']});let writes=0;const cache=createPersistentMetadataCache({read:async()=>null,write:async()=>{writes++;throw Error('quota');}});await cache.put('a',1);await cache.flush();context.mock.timers.tick(10000);for(let i=0;i<10;i++)await Promise.resolve();assert.equal(writes,1);context.mock.timers.reset();
 });
+test('TMDB seasons stay 30 days in the preview cache',async()=>{
+ let now=1000;const cache=createPersistentMetadataCache({...previewMetadataCacheOptions,read:async()=>null,write:async()=>{},now:()=>now});
+ await cache.put('season:1396:1',{seasonEpisodes:[{episode_number:1,name:'Piloto'}]});now+=29*86400000;
+ assert.equal((await cache.get('season:1396:1')).seasonEpisodes[0].name,'Piloto');now+=2*86400000;assert.equal(await cache.get('season:1396:1'),null);
+});

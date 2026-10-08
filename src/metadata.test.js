@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {youtubeID,spanishMetadata,checkMetadataToken,validateMetadataToken} from './metadata.js';
+import {youtubeID,spanishMetadata,checkMetadataToken,validateMetadataToken,tmdbSeason} from './metadata.js';
 import {loadXtreamVideoDetails} from './xtream.js';
 import {composeChannels} from './channelArtwork.js';
 import {artworkURL,displayTitle} from './artwork.js';
@@ -76,4 +76,19 @@ test('shared provider watermarks get channel identities; actual channel variants
 test('full posters use high resolution and cleaned display names without changing source identity',()=>{
  assert.equal(artworkURL('https://image.tmdb.org/t/p/w342/poster.jpg'),'https://image.tmdb.org/t/p/w780/poster.jpg');assert.equal(artworkURL('https://image.tmdb.org/t/p/w1280/back.jpg',true),'https://image.tmdb.org/t/p/original/back.jpg');
  const item={title:'A Movie (LAT/ENG) (2025)'};assert.equal(displayTitle(item),'A Movie');assert.equal(item.title,'A Movie (LAT/ENG) (2025)');assert.equal(displayTitle({...item,localizedTitle:'Película'}),'Película');
+});
+test('tmdbSeason asks es-MX only for gaps, English only as last resort, and caches 30 days per season',async()=>{
+ const calls=[],responses={'es-ES':{episodes:[{episode_number:1,season_number:2,name:'Piloto',overview:'Sinopsis ES',air_date:'2010-01-01',runtime:45,still_path:'/a.jpg',crew:[{}]},{episode_number:2,season_number:2,name:'',overview:''},{episode_number:3,season_number:2,name:'Tres',overview:''}]},'es-MX':{episodes:[{episode_number:2,name:'Dos MX',overview:'Sinopsis MX'},{episode_number:3,name:'Tres MX',overview:''}]},'en-US':{episodes:[{episode_number:3,name:'Three',overview:'English synopsis'}]}};
+ const fetcher=async address=>{const url=new URL(address);assert.equal(url.pathname,'/3/tv/1396/season/2');calls.push(url.searchParams.get('language'));return new Response(JSON.stringify(responses[url.searchParams.get('language')]));};
+ const store=new Map(),cache={get:async key=>store.get(key)??null,put:async(key,value)=>{store.set(key,value);}};
+ const episodes=await tmdbSeason('1396',2,'x'.repeat(30),fetcher,cache);
+ assert.deepEqual(calls,['es-ES','es-MX','en-US']);
+ assert.deepEqual(episodes,[{episode_number:1,season_number:2,name:'Piloto',overview:'Sinopsis ES',air_date:'2010-01-01',runtime:45,still_path:'/a.jpg'},{episode_number:2,season_number:2,name:'Dos MX',overview:'Sinopsis MX'},{episode_number:3,season_number:2,name:'Tres',overview:'English synopsis',overviewLanguage:'en'}]);
+ assert.deepEqual(store.get('season:1396:2'),{seasonEpisodes:episodes});
+ assert.deepEqual(await tmdbSeason('1396','2','x'.repeat(30),()=>assert.fail(),cache),episodes);
+ calls.length=0;responses['es-ES']={episodes:[{episode_number:1,name:'Uno',overview:'Completo'}]};
+ assert.equal((await tmdbSeason('1396',2,'x'.repeat(30),fetcher))[0].name,'Uno');assert.deepEqual(calls,['es-ES']);
+ assert.deepEqual(await tmdbSeason('../x',2,'x'.repeat(30),()=>assert.fail()),[]);
+ assert.deepEqual(await tmdbSeason('1396',2,'',()=>assert.fail()),[]);
+ assert.deepEqual(await tmdbSeason('1396',2,'x'.repeat(30),async()=>new Response('',{status:404}),{get:async()=>null,put:()=>assert.fail()}),[]);
 });

@@ -25,3 +25,9 @@ test('fresh worker catalogue performs parsing and preparation before returning r
  const backend=createBrowserXtreamBackend({storage,cryptography:webcrypto,fetcher,registryOptions:{preset:account},metadataOptions:{preset:''}}),data=await backend.catalogue(true);
  assert.equal(await backend.catalogue(false),data,'Repeated catalogue access reuses prepared worker data');assert.equal(calls.length,7);assert.equal(data.movies.length,1);assert.equal(data.shows.length,1);assert.equal(data.preparedChannels.length,1);assert.deepEqual(data.preparedGroups.movies.categoryPositions.Drama,[0]);assert.ok(saved.has('catalogue-eterboxtv'));assert.equal(saved.get('catalogue-eterboxtv').preparedGroups,undefined,'persistent catalogue format remains unchanged');
 });
+test('worker backend serves TMDB seasons with the stored token and the persistent metadata cache',async()=>{
+ const {storage,saved}=fixture(),calls=[];const fetcher=async address=>{const url=new URL(address);calls.push(url.pathname);return new Response(JSON.stringify({episodes:[{episode_number:1,name:'Piloto',overview:'Sinopsis'}]}));};
+ const backend=createBrowserXtreamBackend({storage,cryptography:webcrypto,fetcher,registryOptions:{preset:null},metadataOptions:{preset:'x'.repeat(30)}});
+ assert.equal((await backend.season('1396',1))[0].name,'Piloto');assert.equal((await backend.season('1396',1))[0].name,'Piloto');assert.deepEqual(calls,['/3/tv/1396/season/1']);
+ await backend.flush();assert.equal(saved.get('preview-details-v1').find(([key])=>key==='season:1396:1')[1].data.seasonEpisodes[0].name,'Piloto');
+});

@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld('richiflix',{
  xtreamCatalogue:refresh=>ipcRenderer.invoke('xtream-catalogue',refresh),
  xtreamEpisodes:(id,sourceId)=>ipcRenderer.invoke('xtream-episodes',id,sourceId),
  xtreamDetails:(id,type,sourceId)=>ipcRenderer.invoke('xtream-details',id,type,sourceId),
+ xtreamSeason:(tmdbId,season)=>ipcRenderer.invoke('xtream-season',tmdbId,season),
  xtreamShortEpg:(id,sourceId)=>ipcRenderer.invoke('xtream-short-epg',id,sourceId),
  metadataStatus:()=>ipcRenderer.invoke('metadata-status'),
  metadataSave:token=>ipcRenderer.invoke('metadata-save',token),
