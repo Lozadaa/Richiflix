@@ -114,6 +114,18 @@ body[data-focus-region]:not([data-focus-region='catalogue']) .tv-mode .virtual-r
 .banner-dots button:after{content:'';position:absolute;inset:0;border:2px solid var(--focus);border-radius:inherit;opacity:0;pointer-events:none;transition:opacity var(--tv-fast,80ms) ease}
 .banner-dots button:focus:after{opacity:1}
 @media(prefers-reduced-motion:reduce){.carousel-stage .focus-stage-visual.is-current,.banner-dots button:after{transition:none}.carousel-stage .focus-stage-copy>:not(.focus-actions){animation:none}}
+/* Inicio con vida (H1). Knobs, read once by FocusStage on mount: 0 = no animation and no layer. Change them here, or
+   on .app from the inspector and then reload. --tv-kenburns covers the Ken Burns and the dot progress (data-kenburns);
+   --tv-ambient the two ambient washes (at 0 they are not rendered at all). */
+.app.tv-mode{--tv-kenburns:1;--tv-ambient:1}
+/* H1-T1 Ken Burns: the carousel art layer (already the crossfade's layer, so no second layer) scales 1 → 1.06 over the
+   9 s slide interval (createBannerCarousel intervalMs). Only decoded art moves and never the unpainted next slide; an
+   outgoing layer keeps its running animation (same name) under the fade, so it never snaps back. A new slide is a new
+   layer: the animation restarts with it. Live channels have no focus backdrop ('missing'): their crests do not move. */
+@keyframes stage-kenburns{from{transform:scale(1)}to{transform:scale(1.06)}}
+.carousel-stage[data-kenburns='true'] .focus-stage-visual[data-artwork-state='ready']:not(.is-next){transform-origin:60% 40%;animation:stage-kenburns 9s linear both}
+.carousel-stage[data-paused='true'] .focus-stage-visual{animation-play-state:paused}
+@media(prefers-reduced-motion:reduce){.carousel-stage[data-kenburns='true'] .focus-stage-visual[data-artwork-state='ready']:not(.is-next){animation:none}}
 /* Fase D (TV UX). Continue-watching bar readable from the sofa. */
 .tv-mode .progress{height:6px;background:#ffffff30}.tv-mode .progress i{background:var(--accent)}
 /* Active row: one attribute per row change (VirtualCarousel), colour only = paint, no layout. */

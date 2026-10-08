@@ -50,3 +50,6 @@ export function bannerKeyAction({key,mode}){
  if(mode==='actions')return key==='ArrowLeft'||key==='ArrowRight'?'toggle':key==='Escape'?'exit':null;
  return key==='ArrowLeft'?'previous':key==='ArrowRight'?'next':key==='Enter'?'press':null;
 }
+
+// Inicio con vida: a CSS knob (--tv-kenburns, --tv-ambient) is on unless it reads exactly 0 (unset = the default 1).
+export const knobOn=value=>String(value??'').trim()!=='0';

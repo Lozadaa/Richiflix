@@ -48,5 +48,6 @@ export function useBannerCarousel(ids,paused,ready){
  useEffect(()=>{const sync=()=>setHidden(document.hidden);document.addEventListener('visibilitychange',sync);return()=>document.removeEventListener('visibilitychange',sync);},[]);
  useEffect(()=>{const controller=carousel.current;if(paused||hidden)controller.pause();else controller.resume();return()=>controller.pause();},[paused,hidden]);
  const go=useCallback(index=>carousel.current.go(index),[]);
- return {index:Math.max(0,ids.indexOf(shown.current)),go};
+ // paused (a hidden page included) lets FocusStage freeze the Ken Burns and the dot progress with the clock.
+ return {index:Math.max(0,ids.indexOf(shown.current)),go,paused:Boolean(paused||hidden)};
 }

@@ -1,6 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createBannerFlow,createBannerCarousel,bannerKeyAction} from './bannerFlow.js';
+import {createBannerFlow,createBannerCarousel,bannerKeyAction,knobOn} from './bannerFlow.js';
+test('motion knobs: only an explicit 0 turns them off',()=>{
+ for(const value of ['1',' 1 ','',undefined,null])assert.equal(knobOn(value),true);
+ for(const value of ['0',' 0'])assert.equal(knobOn(value),false);
+});
 function fixture(){
  let time=0,sequence=0;const timers=new Map(),changes=[],commits=[];
  const flow=createBannerFlow({onChange:state=>changes.push(state),onCommit:card=>commits.push(card),schedule:(callback,delay)=>{const id=++sequence;timers.set(id,{callback,at:time+delay});return id;},cancel:id=>timers.delete(id)});
