@@ -274,13 +274,73 @@ export function shiftDiff(current,wanted){
 
 ---
 
+## Lote E · Halo verde de «visto» y progreso lineal de «donde lo dejaste» (tras el merge de D)
+
+**Pedido de Richard (10 oct):** «un halo verde en lo que ya has visto, y que te salga dónde dejaste los últimos con un progreso lineal».
+
+**Hoy:** la biblioteca del perfil tiene `history[id]` (segundos), `watched[id]===true` y `durations[id]`; `episodeState` (`watchProgress.js:5`) ya clasifica `watched`/`started`/`none` con `WATCHED_FRACTION=.9`. La lista de episodios marca vistos con check y título atenuado y pinta una barra en los empezados. Las tarjetas de los rails pintan `.progress` (6 px, blanco al 19 %, relleno `--accent`) con `resumeFraction` o `history[id]/duration`, pero sólo reciben `history` (no `watched`/`durations`), y el panel ampliado dice «Te quedan N min» sin barra.
+
+**Diseño:** un token `--seen` (verde Solaria: `#5fd38a`, `--seen-rgb:95,211,138`). **Visto** = película o episodio con `watched[id]===true` o fracción ≥ 0,9: el póster lleva un halo verde estático (`box-shadow: 0 0 0 3px var(--seen), 0 0 16px rgba(var(--seen-rgb),.4)`, pintado por estado, sin transición) y una insignia verde «✓ Visto» en la columna de insignias; en la lista de episodios el mismo halo en `.episode-art` además del check actual. **Empezado** = fracción entre 0,02 y 0,9: barra de progreso más visible en todos los rails (8 px, pista `rgba(var(--text-rgb),.18)`, relleno `--accent`, bordes redondeados) y, bajo el título, «Quedan 23 min» en lugar de la línea de datos (como ya hace Continuar viendo con `card-resume`); en el panel ampliado, una barra lineal `.expansion-progress` bajo los datos junto a «Te quedan N min». Series (tarjeta de serie): sin halo (no se conoce la temporada completa sin cargar episodios); su progreso lo muestra el episodio. Todo es pintura estática: sin `transition`, sin `animation`, sin capas.
+
+**Archivos:** `src/watchProgress.js` (+ test), `src/interactions.jsx` (Card: clase `is-seen`, insignia, `card-resume` generalizado), `src/VirtualCarousel.jsx` y `src/VirtualCatalogue.jsx` (pasar `library`), `src/EpisodeList.jsx` + su CSS, `src/ExpandedCard.jsx` + `src/expandedCard.css`, `src/style.css` (token, `.poster.is-seen`, `.progress`, `.card-badge.is-seen`), `src/App.jsx` (una prop `library={{history,watched,durations}}` en `row()` y en las cuadrículas: **lo hago yo en la integración** para no chocar con B+C). Como D reescribe `interactions.jsx` y `ExpandedCard.jsx`, E se ejecuta **después** del merge de D (mismo agente de D al final, o uno nuevo sobre `main` ya integrado).
+
+### Tarea E1: estado de visionado de un título (pura)
+
+**Interfaces:** `titleProgress(item,{history={},watched={},durations={}})` → `{state:'watched'|'started'|'none',fraction:0..1,remainingMinutes:number|null}`; usa `episodeState` para `mediaType==='episode'` y la misma regla para películas (`duration = durations[id] || item.durationSeconds`). Series y canales → `none`.
+
+- [ ] **Paso 1: prueba** (`src/watchProgress.test.js`)
+
+```js
+test('titleProgress: visto por marca o por fracción, empezado con minutos restantes, nada para series y canales',()=>{
+ const lib={history:{m1:5400,m2:300},watched:{m3:true},durations:{m1:6000}};
+ assert.deepEqual(titleProgress({id:'m1',mediaType:'movie'},lib),{state:'watched',fraction:0.9,remainingMinutes:10});
+ assert.deepEqual(titleProgress({id:'m2',mediaType:'movie',durationSeconds:6000},lib),{state:'started',fraction:0.05,remainingMinutes:95});
+ assert.equal(titleProgress({id:'m3',mediaType:'movie'},lib).state,'watched');
+ assert.equal(titleProgress({id:'m4',mediaType:'movie',durationSeconds:6000},lib).state,'none');
+ assert.equal(titleProgress({id:'s1',mediaType:'series'},lib).state,'none');
+ assert.equal(titleProgress({id:'c1',kind:'iptv'},lib).state,'none');
+ assert.equal(titleProgress({id:'m2',mediaType:'movie'},{history:{m2:30},durations:{m2:6000}}).state,'none','menos del 2 % no cuenta como empezado');
+});
+```
+
+- [ ] **Paso 2:** falla. **Paso 3:** implementación en `watchProgress.js` reutilizando `episodeState` (si su firma encaja, `titleProgress` es un adaptador de 8 líneas: resolver duración, fracción = segundos/duración, `watched` si marca o fracción ≥ `WATCHED_FRACTION`, `started` si fracción ≥ 0,02, `remainingMinutes = Math.max(0, Math.round((duración − segundos)/60))`, `null` sin duración).
+- [ ] **Paso 4:** verde; commit `feat(E1): titleProgress para películas y episodios`.
+
+### Tarea E2: halo verde e insignia «Visto»
+
+- [ ] **Paso 1:** `style.css` `:root`: `--seen:#5fd38a;--seen-rgb:95,211,138`. `.poster.is-seen{box-shadow:0 0 0 3px var(--seen),0 0 16px rgba(var(--seen-rgb),.4)}` (comprobar que el póster no tiene ya `box-shadow` por estado; si lo tiene, combinarlos). `.card-badge.is-seen{background:var(--seen);color:var(--bg)}`. Lista de episodios: `.episode-cell.is-watched .episode-art{box-shadow:0 0 0 3px var(--seen),0 0 14px rgba(var(--seen-rgb),.4)}` manteniendo el check.
+- [ ] **Paso 2:** `Card`: recibe `library` (desde `VirtualCarousel`/`VirtualCatalogue`), calcula `const progress=useMemo(()=>titleProgress(item,library),[item,library])`; `.poster` añade `is-seen` cuando `progress.state==='watched'`; la columna de insignias añade `<span className="card-badge is-seen">✓ Visto</span>` primero. Nada cambia al enfocar.
+- [ ] **Paso 3:** `npm test`, build; commit `feat(E2): halo verde e insignia Visto en tarjetas y episodios`.
+
+### Tarea E3: progreso lineal visible
+
+- [ ] **Paso 1:** `.tv-mode .progress{height:8px;border-radius:4px;overflow:hidden;background:rgba(var(--text-rgb),.18)}` (sustituye la regla de `compositorMotion.css:147`; mover a `style.css` junto a `.progress`), relleno `--accent`. La barra se pinta cuando `progress.state==='started'` con `width` = fracción (como hoy, estático) en **todos** los rails y cuadrículas, no sólo donde haya `resumeFraction`.
+- [ ] **Paso 2:** bajo el título: si `progress.state==='started'` y hay `remainingMinutes`, `card-resume` con «Quedan N min» en lugar de `card-facts` (Continuar viendo mantiene su `resumeLabel`).
+- [ ] **Paso 3:** panel ampliado: bajo los datos, un `div.expansion-progress` con un `i` cuyo `width` es el porcentaje redondeado de `fraction`, cuando `started`, junto al «Te quedan N min» existente; CSS en `expandedCard.css`: 6 px, misma pista y relleno, sin transición.
+- [ ] **Paso 4:** `npm test`, `npm run build`, `npm run build:tizen`, `npm run test:tizen`; commit `feat(E3): progreso lineal en rails, cuadrículas y panel`.
+
+**Verificación en TV (yo):** una película vista (halo verde + «✓ Visto»), una empezada (barra + «Quedan N min», panel con barra), temporada con episodios vistos (halo en la lista). Capturas `artifacts/visto-progreso-55.png`. `measure:tv` ×1 para confirmar que no hay capas ni transiciones nuevas (inventario sin `transition`/`animation` en el diff de CSS).
+
+---
+
+## Medición: mismas pruebas, antes y después
+
+Pedido de Richard: «deja los mismos tests que miden, o ajústalos, pero con eso comprobamos; si desmejora algo lo mejoramos, tratemos de que sea mejor».
+
+- Las herramientas no cambian: `npm run measure:tv` (20 teclas, 350 ms, fase de traza y capas), `scripts/tv-trace-report.mjs` con sourcemap, el inventario de capas y las corridas del 8 oct como referencia (`artifacts/tv-measure-2026-10-08-vida5-55-run{1,2,3}.json`).
+- Ajuste único al protocolo, para que las corridas sean comparables: antes de cada corrida se relanza la app (`was_kill` + `debug` + `tv-enter`) para que todas arranquen en el mismo índice de la fila (hoy 15 → 43 → 71 infla la P95 de las corridas 2 y 3 por decodificación de portadas). Se añade `--relaunch` a `scripts/tv-measure.mjs` que lo haga solo, y la referencia se vuelve a tomar con ese mismo protocolo sobre el build actual **antes** de integrar nada de este plan.
+- Criterio: P50 y P95 (fase de traza), capas tras 20 teclas, raster total y `Layout` por tecla no peores que la referencia; objetivo declarado: **mejores**. D debería bajar Layerize y el trabajo de React por tecla (no hay montaje de panel por tecla); C3 debería bajar el arranque. Si una medida empeora, se corrige en una iteración más antes de integrar; si no se consigue, la perilla de ese lote vuelve al comportamiento anterior y queda anotado.
+
+---
+
 ## Orden y reparto
 
 - Tres Opus en paralelo, worktrees disjuntos: **A** (`nextEpisodeFlow`, `NextEpisodeCard`, `Player.jsx`, `playerControls.css`), **B+C** (`firstSeen`, `sourceRegistry`, `browserXtreamBackend`, `tvHome`, `App.jsx` filas, `Boot.jsx`, `contentStore`, `scripts/tv-enter.mjs`), **D** (`cardExpansion*`, `useCardExpansion`, `cardSelectionStore`, `interactions.jsx`, `VirtualCarousel.jsx`, `ExpandedCard.jsx`, `expandedCard.css`). B y C comparten `sourceRegistry.js`: un solo agente, B antes que C.
-- Integración: merge A → B+C → D; `npm test`, builds, `test:tizen`; instalación en el 55" sólo con el «instala» de Richard; medición de D y C2/C3; sección «Resultado».
+- **E** va después del merge de D (mismo agente de D al terminar, o uno nuevo sobre main); su cambio de App.jsx (prop library) lo hago yo al integrar.
+- Integración: merge A → B+C → D → E; `npm test`, builds, `test:tizen`; instalación en el 55" sólo con el «instala» de Richard; medición de D y C2/C3; sección «Resultado».
 
 ## Autorrevisión
 
-- **Cobertura de lo pedido:** cuenta atrás visible, con texto, animación y cancelación → A1–A3; títulos que no estaban antes en sección aparte → B1–B3; aviso de primera carga → C1 (y causa del arranque lento → C2/C3); panel que no desaparece al moverse en horizontal → D1–D4.
+- **Cobertura de lo pedido:** halo verde de visto y progreso lineal → E1–E3; medición con las mismas pruebas → sección «Medición»; cuenta atrás visible, con texto, animación y cancelación → A1–A3; títulos que no estaban antes en sección aparte → B1–B3; aviso de primera carga → C1 (y causa del arranque lento → C2/C3); panel que no desaparece al moverse en horizontal → D1–D4.
 - **Nombres consistentes:** `nextEpisodePhase`/`countdownStep`/`COUNTDOWN_MS` (A1→A2→A3); `stampFirstSeen`/`firstSeenAt`/`isArrival`/`ARRIVAL_DAYS` (B1→B2→B3); `sanitizedPolicy` (C3); `shiftDiff` (D1→D2), `retarget` (D2→D3), `registerCard`/`useRailSelection`/`expansionOwner`/`EXPANSION_SWAP_MS`/`is-settling` (D3→D4).
 - **Enfoque de revisión:** los cinco casos tienen prueba o verificación nombrada (A1, A2+TV, B1, C3, D4).
