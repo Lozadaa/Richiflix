@@ -15,7 +15,9 @@ export function createSourceRegistry({readAccounts,writeAccounts,readCache,write
   if(!stored||list.length!==stored.length)await writeAccounts(list);
   return list;
  })().catch(error=>{accountsPromise=null;throw error;});
- const statusFor=list=>{const sources=list.map(publicSource),primary=sources.find(source=>source.pinned);return {...(primary||{name:'eterboxtv',host:defaultSource?.host||'',configured:false}),sources,revision:sources.map(source=>source.id+':'+source.key).join('|')};};
+ // `restorable`: the backend that restores (Electron's main process, or the browser backend) knows the preset; the
+ // interface build may not (Vite only sees .env.local at build time).
+ const statusFor=list=>{const sources=list.map(publicSource),primary=sources.find(source=>source.pinned);return {...(primary||{name:'eterboxtv',host:preset?.host||'',configured:false}),sources,restorable:Boolean(preset),revision:sources.map(source=>source.id+':'+source.key).join('|')};};
  async function commit(list){await writeAccounts(list);catalogueController?.abort();accountsPromise=Promise.resolve(list);revision++;cataloguePromise=null;detailCache.clear();episodeCache.clear();selectionsPromise=null;selectionsCatalogue=null;sourceData.clear();return statusFor(list);}
  async function selected(sourceId=PRIMARY_SOURCE_ID){const account=(await accounts()).find(account=>account.sourceId===sourceId);if(!account)throw Error('Esta fuente ya no está disponible.');return account;}
  const expires=data=>{const updated=Date.parse(data?.updatedAt);return Number.isFinite(updated)?updated+catalogueTTL:0;};

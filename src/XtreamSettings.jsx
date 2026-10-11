@@ -17,7 +17,7 @@ export function XtreamSettings({catalogue}){
    <p className="xtream-host">{source.host}</p>
    {source.channels!==undefined&&<p className="xtream-counts">{source.channels.toLocaleString('es-CL')} canales · {source.movies.toLocaleString('es-CL')} películas · {source.shows.toLocaleString('es-CL')} series</p>}
    {source.error&&<p role="alert" className="source-error">{displayText(source.error)}</p>}
-   <div className="dialog-actions"><button className="secondary" disabled={saving} onClick={()=>edit(source)}><KeyRound size={18}/> Cambiar login</button>{source.pinned?(defaultSource&&<button className="secondary" disabled={saving} onClick={()=>action(()=>xtreamClient().restore())}><RotateCcw size={18}/> Restaurar eterboxtv</button>):<button className="secondary" disabled={saving} onClick={()=>action(()=>xtreamClient().remove(source.id))}><Trash2 size={18}/> Quitar fuente</button>}</div>
+   <div className="dialog-actions"><button className="secondary" disabled={saving} onClick={()=>edit(source)}><KeyRound size={18}/> Cambiar login</button>{source.pinned?((catalogue.connection.restorable??Boolean(defaultSource))&&<button className="secondary" disabled={saving} onClick={()=>action(()=>xtreamClient().restore())}><RotateCcw size={18}/> Restaurar eterboxtv</button>):<button className="secondary" disabled={saving} onClick={()=>action(()=>xtreamClient().remove(source.id))}><Trash2 size={18}/> Quitar fuente</button>}</div>
   </article>)}
   {(error||catalogue.error)&&<p role="alert" className="source-error">{displayText(error||catalogue.error)}</p>}
   {catalogue.loading&&<p role="status">Cargando tus fuentes…</p>}

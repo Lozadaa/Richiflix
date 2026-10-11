@@ -4,6 +4,10 @@ const fs=require('node:fs/promises');
 const {pathToFileURL}=require('node:url');
 const {randomUUID}=require('node:crypto');
 const {providerDestinations}=require('./sources.cjs');
+// The main process runs src/ modules in Node, where Vite's import.meta.env does not exist: the personal preset in
+// .env.local (VITE_DEFAULT_SOURCE, ignored by git) reaches sourceDefaults.js through process.env. Variables already
+// set (tests, the shell) win over the file.
+try{for(const line of require('node:fs').readFileSync(path.join(__dirname,'../.env.local'),'utf8').split(/\r?\n/)){const match=/^\s*(VITE_[A-Z0-9_]+)\s*=\s*(.*?)\s*$/.exec(line);if(match&&process.env[match[1]]===undefined)process.env[match[1]]=match[2].replace(/^(['"])(.*)\1$/,'$2');}}catch{}
 const icon=path.join(__dirname,'../public/brand/kingdom.ico');
 if(process.platform==='win32')app.setAppUserModelId('local.richiflix');
 if(process.env.RICHIFLIX_USER_DATA)app.setPath('userData',process.env.RICHIFLIX_USER_DATA);
