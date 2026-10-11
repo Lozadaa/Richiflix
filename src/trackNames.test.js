@@ -22,6 +22,9 @@ test('the short table answers when Intl.DisplayNames is missing',()=>{
  try{assert.equal(trackName({language:'es-419'}),'Español (Latinoamérica)');assert.equal(trackName({language:'jpn'}),'Japonés');assert.equal(trackName({language:'fra'}),'Francés');}
  finally{Intl.DisplayNames=original;}
 });
+test('forced subtitles are named apart from the full track',()=>{
+ assert.deepEqual(trackNames([{language:'es',forced:true},{language:'es'},{language:'en'}],'subtitle'),['Español (forzados)','Español','Inglés']);
+});
 test('duplicates get the codec, otherwise a number',()=>{
  assert.deepEqual(trackNames([{language:'eng'},{language:'eng'}],'audio'),['Inglés','Inglés (2)']);
  assert.deepEqual(trackNames([{language:'eng',codec:'ac3'},{language:'eng',codec:'aac'},{language:'spa'}],'audio'),['Inglés (AC3)','Inglés (AAC)','Español']);

@@ -41,7 +41,8 @@ export function useRemoteNavigation(){
  function navigation(e){
   if(e.defaultPrevented||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key))return;
   const current=document.activeElement,tv=Boolean(document.querySelector('.tv-mode')),dialog=document.querySelector('[role="dialog"]');
-  if(['INPUT','TEXTAREA','VIDEO',...(!isTVBuild?['SELECT']:[])].includes(current.tagName))return;
+  // Android TV: a text field at rest (no keyboard yet, data-tv-idle) is walked past like a button; OK starts typing (platform.js).
+  if(['INPUT','TEXTAREA','VIDEO',...(!isTVBuild?['SELECT']:[])].includes(current.tagName)&&current.dataset.tvIdle!=='true')return;
   if(tv&&!dialog){
    if(current.matches('.discovery-refresh')){const discovery=current.closest('.home-discovery'),first=discovery.querySelector('.cards'),rows=[...document.querySelectorAll('.catalog-row .cards')],previous=rows[rows.indexOf(first)-1];if(e.key==='ArrowDown'&&first){move(e,recalled(e,first));return;}if(e.key==='ArrowUp'&&previous){move(e,recalled(e,previous));return;}move(e,null);return;}
    // Down from the header enters the banner; leaving for the catalogue hides it.

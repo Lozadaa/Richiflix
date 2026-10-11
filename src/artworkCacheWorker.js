@@ -1,3 +1,4 @@
+import './polyfills.js';
 import {createArtworkStorage} from './artworkStorage.js';
 import {createArtworkDiskCache} from './artworkDiskCache.js';
 const cache=createArtworkDiskCache({store:createArtworkStorage()});

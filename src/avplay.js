@@ -39,7 +39,7 @@ export function createAVPlayer(api,{url,live=false,start=0,onEvent=()=>{},onTrac
     // E1: language and codec of each audio/subtitle track; trackNames.js turns them into readable names.
     try{const info=api.getTotalTrackInfo(),list=type=>info.filter(track=>track.type===type).map(track=>{
      let extra={};try{extra=JSON.parse(track.extra_info);}catch{}
-     return {index:track.index,language:extra.language||extra.track_lang||'',codec:extra.fourCC||''};
+     return {index:track.index,language:extra.language||extra.track_lang||'',codec:extra.fourCC||'',...(extra.forced?{forced:true}:{})};
     });onTracks(list('AUDIO'),list('TEXT'));}catch{}
     emit('durationchange');if(!live&&start>0&&start<duration-5)driver.seek(start);
    }).catch(()=>{});

@@ -1,5 +1,7 @@
-// Samsung IME Done/Cancel are distinct from remote OK/Return.
-export function textInputAction(event){
+// Samsung IME Done/Cancel are distinct from remote OK/Return. On Android TV the remote's OK never reaches a field
+// being edited (platform.js), so Enter is the keyboard's Done/Search key, sent while the last word is still composing.
+export function textInputAction(event,{enterIsDone=false}={}){
+ if(enterIsDone&&event.keyCode===13&&event.key==='Enter')return 'done';
  if(event.isComposing||event.keyCode===229)return null;
  if(event.keyCode===65376||event.key==='Accept')return 'done';
  if(event.keyCode===65385||event.key==='Cancel'||event.keyCode===10009||event.key==='Escape')return 'leave';

@@ -1,4 +1,4 @@
-import {isTVBuild} from './platform.js';
+import {isTVBuild,isAndroidTV} from './platform.js';
 import {BridgePlayer,bridgeFrameURL,normalizeTrailerBridgeURL} from './trailerBridge.js';
 const bridgeURL=isTVBuild?normalizeTrailerBridgeURL(import.meta.env?.VITE_TRAILER_BRIDGE_URL):undefined;
 export const trailerBridgeEnabled=Boolean(bridgeURL);
@@ -43,7 +43,8 @@ export function trailerFrameURL(id,location=globalThis.location){
 }
 // «Tráilers automáticos»: off by default on Tizen while YouTube's error 153 persists there.
 export const AUTO_TRAILERS_KEY='rf-auto-trailers';
-export function readAutoTrailers(storage=globalThis.localStorage,tvBuild=isTVBuild){try{const value=JSON.parse(storage.getItem(AUTO_TRAILERS_KEY));return typeof value==='boolean'?value:!tvBuild;}catch{return !tvBuild;}}
+// Default on, except on Samsung (YouTube needs the trailer bridge there); Android TV's WebView embeds YouTube directly.
+export function readAutoTrailers(storage=globalThis.localStorage,tvBuild=isTVBuild,direct=isAndroidTV){const fallback=!tvBuild||direct;try{const value=JSON.parse(storage.getItem(AUTO_TRAILERS_KEY));return typeof value==='boolean'?value:fallback;}catch{return fallback;}}
 // TV waits for a calm selection: a newly wanted id (or none) closes the gate; with no delay it opens at once.
 export const TV_TRAILER_DELAY_MS=1500;
 export const trailerGate=(gate,key,delay)=>gate.key===key?gate:{key,open:Boolean(key)&&!delay};

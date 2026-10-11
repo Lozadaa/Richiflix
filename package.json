@@ -18,7 +18,8 @@
     "brand:export": "node scripts/export-brand.mjs",
     "windows:shortcut": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/windows-shortcut.ps1",
     "measure:tv": "node scripts/tv-measure.mjs --ab",
-    "measure:tv:enter": "node scripts/tv-enter.mjs"
+    "measure:tv:enter": "node scripts/tv-enter.mjs",
+    "build:android": "vite build --mode android && node scripts/package-android.mjs"
   },
   "dependencies": {
     "hls.js": "^1.6.0",

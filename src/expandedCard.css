@@ -52,3 +52,5 @@
 .expansion-sound svg{width:22px;height:22px}
 .expansion-sound[aria-pressed=true]{color:var(--accent)}
 .expansion-trailer-button{display:inline-flex;align-items:center;gap:8px}.expansion-trailer-button svg{width:18px;height:18px}
+/* TV panel: «Tráiler» is a labelled pill, not one of the round follow buttons. */
+.expansion-follow.expansion-trailer-button{width:auto;min-width:0;padding:0 18px;border-radius:999px;white-space:nowrap}

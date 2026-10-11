@@ -7,6 +7,10 @@ test('Samsung IME Done and Cancel do not rely on ordinary OK or app Back',()=>{
  assert.equal(textInputAction({keyCode:10009,key:'Unidentified'}),'leave');
  for(const event of [{keyCode:13,key:'Enter'},{keyCode:229,key:'Unidentified'},{key:'a'},{key:'Backspace'},{key:'ArrowLeft'},{keyCode:65376,isComposing:true}])assert.equal(textInputAction(event),null);
 });
+test('Android TV keyboard Enter finishes typing, even mid-composition',()=>{
+ for(const isComposing of [false,true])assert.equal(textInputAction({keyCode:13,key:'Enter',isComposing},{enterIsDone:true}),'done');
+ assert.equal(textInputAction({keyCode:229,key:'Unidentified',isComposing:true},{enterIsDone:true}),null);
+});
 test('text entry excludes player sliders and native choice fields',()=>{
  for(const type of ['text','password','url','email','search','tel','number'])assert.equal(isTextField({tagName:'INPUT',type}),true);
  for(const type of ['range','checkbox','file'])assert.equal(isTextField({tagName:'INPUT',type}),false);

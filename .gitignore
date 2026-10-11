@@ -6,3 +6,4 @@ dist-tizen/
 artifacts/
 .env.local
 .env.*.local
+dist-android/

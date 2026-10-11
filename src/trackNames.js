@@ -6,11 +6,13 @@ const UNKNOWN=new Set(['und','mul','zxx','mis','root']);
 const display=(type,code)=>{try{const name=new Intl.DisplayNames(['es'],{type,fallback:'none'}).of(code);return name&&name.toLowerCase()!==code.toLowerCase()?name:'';}catch{return '';}};
 const capital=text=>text.charAt(0).toUpperCase()+text.slice(1);
 
-export function trackName({language,label,index=0,kind='audio'}){
+export function trackName({language,label,index=0,kind='audio',forced=false}){
  const [base='',region='']=String(language||'').trim().replace(/_/g,'-').split('-'),code=ALIAS[base.toLowerCase()]||base.toLowerCase();
  const name=!UNKNOWN.has(code)&&/^[a-z]{2,3}$/.test(code)&&(display('language',code)||LANGUAGES[code]);
- if(name){const place=region&&(display('region',region.toUpperCase())||REGIONS[region]);return capital(place?`${name} (${place})`:name);}
- return String(label||'').trim()||`${kind==='subtitle'?'Subtítulos':'Pista'} ${index+1}`;
+ // Forced subtitles only carry signs and foreign-language lines: say so, next to the full track of the same language.
+ const suffix=forced?' (forzados)':'';
+ if(name){const place=region&&(display('region',region.toUpperCase())||REGIONS[region]);return capital(place?`${name} (${place})`:name)+suffix;}
+ return (String(label||'').trim()||`${kind==='subtitle'?'Subtítulos':'Pista'} ${index+1}`)+suffix;
 }
 
 // Same name twice: the codec tells them apart; if it does not, «(2)», «(3)»…

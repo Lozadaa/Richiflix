@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Kingdom</string>
+    <string name="back_to_exit">Presiona Atrás otra vez para salir</string>
+</resources>

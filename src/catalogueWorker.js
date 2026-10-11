@@ -1,3 +1,4 @@
+import './polyfills.js';
 import {catalogueCategories} from './catalogueCategories.js';
 import {createBrowserXtreamBackend} from './browserXtreamBackend.js';
 import {prepareChannels} from './channelPreparation.js';

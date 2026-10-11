@@ -1,6 +1,6 @@
 import React,{useEffect,useRef,useState} from 'react';
 import {loadHlsLibrary} from './hlsLibrary.js';
-import {isTizen,isTVBuild} from './platform.js';
+import {isTizen,isTVBuild,nativePlayback} from './platform.js';
 import {createAVPlayer} from './avplay.js';
 import {Play,Pause,Volume2,Volume1,VolumeX,RotateCcw,RotateCw,Maximize,Minimize,MessageSquareText,Radio,Antenna,SkipBack,SkipForward,RefreshCcw} from 'lucide-react';
 import {Dialog} from './Dialog.jsx';
@@ -72,8 +72,8 @@ export function Player({item,start,save,close,change,seasons,series,intros={},se
  useEffect(()=>{if(!loading){setShowLoader(false);return;}const timer=setTimeout(()=>setShowLoader(true),250);return()=>clearTimeout(timer);},[loading]);
  const [tick,setTick]=useState(0);
  useEffect(()=>{if(!loading)return;const id=setInterval(()=>setTick(value=>value+1),2500);return()=>clearInterval(id);},[loading]);
- useEffect(()=>{if(isTizen)return;const video=videoRef.current;if(tv){video.volume=1;video.muted=false;return;}video.volume=volume;video.muted=muted;try{localStorage.setItem('rf-player-volume',String(volume));}catch{}},[volume,muted,tv]);
- useEffect(()=>{if(!isTizen)videoRef.current.playbackRate=tv?1:rate;},[rate,tv]);
+ useEffect(()=>{if(nativePlayback)return;const video=videoRef.current;if(tv){video.volume=1;video.muted=false;return;}video.volume=volume;video.muted=muted;try{localStorage.setItem('rf-player-volume',String(volume));}catch{}},[volume,muted,tv]);
+ useEffect(()=>{if(!nativePlayback)videoRef.current.playbackRate=tv?1:rate;},[rate,tv]);
  useEffect(()=>()=>{clearTimeout(feedbackTimer.current);clearTimeout(cueTimer.current);clearTimeout(switchTimer.current);accumulator.current.cancel();},[]);
  useEffect(()=>{if(error||ended)document.querySelector('.player-dialog .player-state button')?.focus({preventScroll:true});},[error,ended]);
 
@@ -83,12 +83,12 @@ export function Player({item,start,save,close,change,seasons,series,intros={},se
   setError('');setLoading(true);setShowLoader(false);setEnded(false);setPaused(true);setMedia(emptyMedia);setLevels([]);setQuality(-1);setAudioTracks([]);setCaptions([]);setCaption(-1);setCue('');if(document.activeElement?.closest('.playback-sidebar'))videoRef.current?.focus({preventScroll:true});setOptions(false);lastSaved.current=-1;accumulator.current.cancel();accumulator.current.settle();setPendingSeek(null);setScrub(null);
   // A new episode in the same dialog resumes from its own history entry.
   if(startFor.current!==item.id){startFor.current=item.id;resumeAt.current=start;}setNextCard(false);setStillThere(false);nextDismissed.current=false;lastPosition.current=0;
-  const health=createPlaybackHealth({readPosition:()=>engine()?.currentTime||0,readSeeking:()=>!isTizen&&(video.seeking||seekingRef.current),onFailure:message=>{setLoading(false);setError(message);},onHealthy:()=>{const restore=document.activeElement?.closest('.player-state');setError('');setLoading(false);setPaused(false);setEnded(false);if(restore)requestAnimationFrame(()=>{if(healthRef.current===health)document.querySelector('.player-dialog .playback-toggle')?.focus({preventScroll:true});});},onWaiting:()=>setLoading(true)});healthRef.current=health;
+  const health=createPlaybackHealth({readPosition:()=>engine()?.currentTime||0,readSeeking:()=>!nativePlayback&&(video.seeking||seekingRef.current),onFailure:message=>{setLoading(false);setError(message);},onHealthy:()=>{const restore=document.activeElement?.closest('.player-state');setError('');setLoading(false);setPaused(false);setEnded(false);if(restore)requestAnimationFrame(()=>{if(healthRef.current===health)document.querySelector('.player-dialog .playback-toggle')?.focus({preventScroll:true});});},onWaiting:()=>setLoading(true)});healthRef.current=health;
   const visibility=()=>health.visibility(document.hidden);document.addEventListener('visibilitychange',visibility);visibility();
   const clearHealth=()=>{health.dispose();if(healthRef.current===health)healthRef.current=null;document.removeEventListener('visibilitychange',visibility);};
-  if(isTizen){
+  if(nativePlayback){
    document.documentElement.classList.add('native-playback');
-   if(!window.webapis?.avplay){setLoading(false);setError('El reproductor Samsung no est\u00e1 disponible.');return()=>{clearHealth();document.documentElement.classList.remove('native-playback');};}
+   if(!window.webapis?.avplay){setLoading(false);setError('El reproductor de la TV no est\u00e1 disponible.');return()=>{clearHealth();document.documentElement.classList.remove('native-playback');};}
    const driver=createAVPlayer(window.webapis.avplay,{url:item.url,live:item.kind==='iptv',start:resumeAt.current,onTracks:(tracks,subtitles)=>{setAudioTracks(named(tracks,'audio'));if(tracks.length)setAudio(tracks[0].index);setCaptions(named(subtitles,'subtitle'));},onEvent:(type,value)=>{
     if(type==='waiting')health.waiting();
     if(['canplay','seeked'].includes(type)){if(type==='seeked'){health.reposition();settled();if(engine()?.paused)setLoading(false);}sync();}
@@ -96,7 +96,7 @@ export function Player({item,start,save,close,change,seasons,series,intros={},se
     if(type==='playing'){health.resume();health.waiting();setPaused(false);}
     if(type==='pause'){health.pause();setLoading(false);setPaused(true);}
     if(type==='suspended'){setLoading(false);setPaused(true);}
-    if(type==='error')health.fault('No pudimos reproducir esta fuente en Samsung TV.');
+    if(type==='error')health.fault('No pudimos reproducir esta fuente en la TV.');
     if(type==='subtitle'){setCue(value.text);clearTimeout(cueTimer.current);cueTimer.current=setTimeout(()=>setCue(''),value.duration||3000);}
     if(type==='trackerror')flash('Esta pista no est\u00e1 disponible');
     if(type==='ended'){health.ended();saveRef.current(0,item.id,{ended:true});setEnded(true);setLoading(false);setPaused(true);}
@@ -137,8 +137,8 @@ export function Player({item,start,save,close,change,seasons,series,intros={},se
   };
  },[item.url,item.feedId,item.id,retry]);
 
- const pausePlayback=()=>{userPaused.current=true;if(!isTizen)videoRef.current.autoplay=false;healthRef.current?.pause();setLoading(false);engine().pause();};
- const play=()=>{const video=engine();if(video.paused){userPaused.current=false;if(!isTizen)video.autoplay=true;healthRef.current?.resume();setEnded(false);video.play().catch(()=>healthRef.current?.fault('No pudimos iniciar la reproducción.'));}else pausePlayback();};
+ const pausePlayback=()=>{userPaused.current=true;if(!nativePlayback)videoRef.current.autoplay=false;healthRef.current?.pause();setLoading(false);engine().pause();};
+ const play=()=>{const video=engine();if(video.paused){userPaused.current=false;if(!nativePlayback)video.autoplay=true;healthRef.current?.resume();setEnded(false);video.play().catch(()=>healthRef.current?.fault('No pudimos iniciar la reproducción.'));}else pausePlayback();};
  const seek=value=>{if(!seekable)return;engine().currentTime=clamp(value,from,Math.max(from,to-.1));resumeAt.current=engine().currentTime;setEnded(false);sync();};
  const flash=label=>{setFeedback(label);clearTimeout(feedbackTimer.current);feedbackTimer.current=setTimeout(()=>setFeedback(''),700);};
  const skip=seconds=>{if(tv&&!seekable)return;seek(engine().currentTime+seconds);flash(`${seconds>0?'+':''}${seconds} s`);};
@@ -169,12 +169,12 @@ export function Player({item,start,save,close,change,seasons,series,intros={},se
  };
  const dismissNext=()=>{nextDismissed.current=true;setNextCard(false);videoRef.current?.focus({preventScroll:true});};
  const changeVolume=value=>{setVolume(value);setMuted(value===0);};
- const replay=()=>{if(isTizen){resumeAt.current=0;setRetry(prev=>prev+1);return;}seek(from);setEnded(false);engine().play().catch(()=>{});};
+ const replay=()=>{if(nativePlayback){resumeAt.current=0;setRetry(prev=>prev+1);return;}seek(from);setEnded(false);engine().play().catch(()=>{});};
  // E2: one side panel for language, subtitles, quality, speed and signal; closing returns the focus to the button that opened it.
  const openOptions=(e,section)=>{optionsRef.current=e.currentTarget;setOptions(prev=>prev?false:section);};
  const closeOptions=()=>{setOptions(false);optionsRef.current?.focus({preventScroll:true});};
- const selectAudio=index=>{setAudio(index);if(isTizen)nativeRef.current?.selectAudio(index);else if(hlsRef.current)hlsRef.current.audioTrack=index;};
- const selectCaption=index=>{setCaption(index);setCue('');if(isTizen){if(index>=0)nativeRef.current?.selectSubtitle(index);}else Array.from(videoRef.current.textTracks).forEach((track,position)=>track.mode=position===index?'showing':'disabled');};
+ const selectAudio=index=>{setAudio(index);if(nativePlayback)nativeRef.current?.selectAudio(index);else if(hlsRef.current)hlsRef.current.audioTrack=index;};
+ const selectCaption=index=>{setCaption(index);setCue('');if(nativePlayback){if(index>=0)nativeRef.current?.selectSubtitle(index);}else Array.from(videoRef.current.textTracks).forEach((track,position)=>track.mode=position===index?'showing':'disabled');};
  const selectQuality=index=>{setQuality(index);if(hlsRef.current)hlsRef.current.currentLevel=index;};
  // One route for menu, error state and channel keys: App resolves the URL and replaces `item`; this dialog stays mounted.
  const pill=label=>{setSwitching(label);clearTimeout(switchTimer.current);switchTimer.current=setTimeout(()=>setSwitching(''),1500);};
@@ -237,7 +237,7 @@ export function Player({item,start,save,close,change,seasons,series,intros={},se
    if(!['MediaPlay','MediaPause','MediaPlayPause','MediaStop','MediaRewind','MediaFastForward'].includes(event.key))return;
    event.preventDefault();
    const seekKey=playerKeyAction({key:event.key,repeat:event.repeat,seekable});if(seekKey){seekBy(seekKey);return;}if(event.repeat)return;
-   if(event.key==='MediaPlay'){userPaused.current=false;if(!isTizen)videoRef.current.autoplay=true;healthRef.current?.resume();engine().play().catch(()=>{});}
+   if(event.key==='MediaPlay'){userPaused.current=false;if(!nativePlayback)videoRef.current.autoplay=true;healthRef.current?.resume();engine().play().catch(()=>{});}
    else if(event.key==='MediaPause')pausePlayback();
    else if(event.key==='MediaPlayPause')play();
    else if(event.key==='MediaStop')close();
@@ -273,7 +273,7 @@ export function Player({item,start,save,close,change,seasons,series,intros={},se
 
  return <Dialog immersive player tvMode={tv} chromeHidden={chromeHidden} close={close} label={`Reproduciendo ${title}`} restoreFocus={restoreFocus} onKeyDownCapture={keyboard}>
   <div className="video-stage">
-   <video ref={videoRef} controls={false} autoPlay playsInline tabIndex={0} aria-label={`Vídeo: ${title}`} onClick={play} onKeyUpCapture={e=>{if(e.code==='Space'){e.preventDefault();e.stopPropagation();}}} onWaiting={()=>healthRef.current?.waiting()} onSeeking={()=>{seekingRef.current=true;healthRef.current?.waiting();}} onSeeked={()=>{healthRef.current?.reposition();seekingRef.current=false;settled();if(videoRef.current.paused)setLoading(false);sync();}} onEmptied={()=>{seekingRef.current=false;healthRef.current?.reposition();}} onPlaying={()=>healthRef.current?.playing()} onPause={()=>setPaused(true)} onCanPlay={sync} onProgress={sync} onDurationChange={sync} onVolumeChange={e=>{if(tv)return;setVolume(e.currentTarget.volume);setMuted(e.currentTarget.muted);}} onTimeUpdate={()=>{healthRef.current?.progress();sync();resumeAt.current=videoRef.current.currentTime;const seconds=Math.floor(videoRef.current.currentTime);if(item.kind!=='iptv'&&seconds%5===0&&seconds!==lastSaved.current){lastSaved.current=seconds;saveRef.current(seconds,item.id,{duration:videoRef.current.duration});}}} onError={()=>{if(!isTizen)healthRef.current?.fault('No pudimos reproducir esta fuente.');}} onEnded={()=>{healthRef.current?.ended();saveRef.current(0,item.id,{ended:true});setEnded(true);setLoading(false);}}/>
+   <video ref={videoRef} controls={false} autoPlay playsInline tabIndex={0} aria-label={`Vídeo: ${title}`} onClick={play} onKeyUpCapture={e=>{if(e.code==='Space'){e.preventDefault();e.stopPropagation();}}} onWaiting={()=>healthRef.current?.waiting()} onSeeking={()=>{seekingRef.current=true;healthRef.current?.waiting();}} onSeeked={()=>{healthRef.current?.reposition();seekingRef.current=false;settled();if(videoRef.current.paused)setLoading(false);sync();}} onEmptied={()=>{seekingRef.current=false;healthRef.current?.reposition();}} onPlaying={()=>healthRef.current?.playing()} onPause={()=>setPaused(true)} onCanPlay={sync} onProgress={sync} onDurationChange={sync} onVolumeChange={e=>{if(tv)return;setVolume(e.currentTarget.volume);setMuted(e.currentTarget.muted);}} onTimeUpdate={()=>{healthRef.current?.progress();sync();resumeAt.current=videoRef.current.currentTime;const seconds=Math.floor(videoRef.current.currentTime);if(item.kind!=='iptv'&&seconds%5===0&&seconds!==lastSaved.current){lastSaved.current=seconds;saveRef.current(seconds,item.id,{duration:videoRef.current.duration});}}} onError={()=>{if(!nativePlayback)healthRef.current?.fault('No pudimos reproducir esta fuente.');}} onEnded={()=>{healthRef.current?.ended();saveRef.current(0,item.id,{ended:true});setEnded(true);setLoading(false);}}/>
    {isTizen&&<object className="avplay-surface" type="application/avplayer" aria-hidden="true"/>}
    {showLoader&&loading&&!error&&!ended&&<div className="player-loading" role="status" aria-label="Cargando vídeo"><KingdomLoader className="player-kingdom-loader" label={item.trying&&media.current===0?'Probando otra señal…':media.current>0?'Cargando…':title} phrase={loaderPhrase(tick)}/></div>}
    {!tv&&paused&&!loading&&!error&&!ended&&<button className="player-resume" aria-label="Reanudar reproducción" onClick={play}><Play size={36} fill="currentColor"/></button>}

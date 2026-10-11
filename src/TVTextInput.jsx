@@ -1,7 +1,7 @@
 import React,{useEffect,useRef,useState} from 'react';
 import {createPortal} from 'react-dom';
 import {Check,ArrowRight,Keyboard,ArrowLeft} from 'lucide-react';
-import {isTVBuild} from './platform.js';
+import {isTVBuild,isAndroidTV} from './platform.js';
 import {isTextField,inputReturnHint,nextInputControl,textInputAction} from './tvTextInput.js';
 import './tvTextInput.css';
 let inputBoundary;
@@ -16,7 +16,8 @@ export function installTVInputBoundary(){
 export function TVTextInput(){
  const [field,setField]=useState(null),active=useRef(null),finish=useRef(),bypass=useRef(new WeakSet());
  useEffect(()=>{
-  const enabled=element=>isTextField(element)&&!element.disabled&&!element.readOnly&&(isTVBuild||Boolean(element.closest('.tv-mode')));
+  // A field at rest on Android TV (data-tv-idle: walked past, keyboard closed) shows no «Listo» bar until OK starts typing.
+  const enabled=element=>isTextField(element)&&!element.disabled&&!element.readOnly&&element.dataset.tvIdle!=='true'&&(isTVBuild||Boolean(element.closest('.tv-mode')));
   let consumed=null;
   const exit=(element,done)=>{
    if(!element?.isConnected)return;
@@ -27,8 +28,10 @@ export function TVTextInput(){
     if(document.activeElement===element){element.blur();nextInputControl(element)?.focus({preventScroll:true});}
     return;
    }
-   element.blur();
-   if(done)nextInputControl(element)?.focus({preventScroll:true});
+   // Android TV: focus the next control directly, so a next text field inherits the open keyboard (platform.js).
+   const next=done&&nextInputControl(element);
+   if(!(isAndroidTV&&next))element.blur();
+   if(next)next.focus({preventScroll:true});
    else{const scope=element.closest('[role="dialog"],form');(scope?.querySelector('button:not(:disabled)')||document.querySelector('.topbar nav button.active,.profile-grid button'))?.focus({preventScroll:true});}
   };
   finish.current=done=>exit(active.current,done);
@@ -40,7 +43,7 @@ export function TVTextInput(){
   };
   const key=event=>{
    if(bypass.current.has(event))return;
-   const action=textInputAction(event),code=event.keyCode||event.key;
+   const action=textInputAction(event,{enterIsDone:isAndroidTV}),code=event.keyCode||event.key;
    // A held/released Return must not escape into a dialog or the app after blur.
    if(consumed&&consumed.code===code&&(event.type==='keyup'||event.repeat)&&performance.now()-consumed.at<600){event.preventDefault();event.stopImmediatePropagation();if(event.type==='keyup')consumed=null;return;}
    if(event.type!=='keydown'||!action||!enabled(event.target))return;
