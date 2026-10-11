@@ -59,14 +59,21 @@ export function footballMatchup(item){
  if(!result&&versus.length===1&&FOOTBALL.test(`${title} ${item.genre||''} ${item.category||''}`)){const team=identify(title);result=team?{sport:'futbol',teams:[team]}:null;}
  cache.set(item,result);return result;
 }
-// League of a channel or event: official (ESPN), named in the title, or the one both clubs share.
+// League names as providers write them. Whole words only: «USL Championship» and «CONCACAF Champions Cup» are not
+// the Champions League, «Serie A Ecuador» and «Canadian Premier League» are not the European ones.
+const NAMED=[['eng.1',/\b(?:english premier league|premier league)\b/,/\b(?:canadian|egyptian|ukrainian|russian|bangladesh|nepal|ghana|kenya|trinidad|welsh|scottish)\s+premier league\b/],['esp.1',/\b(?:laliga|la liga)\b(?! (?:mx|expansion|2|hypermotion|smartbank|f\b))/,null],['ita.1',/\bserie a\b/,/\bserie a\b (?:ecuador|brasil|brazil|b\b)|\b(?:ligapro|brasileirao|ecuador|brasil)\b/],['ger.1',/\bbundesliga\b(?! 2)/,/\b(?:2\.? bundesliga|austrian|osterreich|frauen)\b/],['fra.1',/\bligue 1\b/,/\bligue 1\b (?:cameroun|tunisie|algerie|senegal)/],['uefa.champions',/\b(?:uefa champions league|champions league|liga de campeones|ucl)\b/,/\b(?:concacaf|afc|caf|women|femenina)\b/],['uefa.europa',/\b(?:uefa europa league|europa league)\b/,/\bconference\b/]];
+const named=value=>{const words=normalized(value);return NAMED.find(([,test,not])=>test.test(words)&&!not?.test(words))?.[0]||null;};
+// League of a channel or event: official (ESPN), the clubs' shared league, or named in the title or category.
+// A duel of unknown clubs («A vs B») never takes a league from its name: other leagues reuse those words.
 export function footballLeague(item){
  if(item?.eventLeague)return item.eventLeague;
- const words=normalized(`${item?.title||''} ${item?.genre||''}`);
- const named=[['premier league','Premier League'],['laliga','LaLiga'],['la liga','LaLiga'],['serie a','Serie A'],['bundesliga','Bundesliga'],['ligue 1','Ligue 1'],['champions','Champions League'],['europa league','Europa League']].find(([key])=>words.includes(key));
- if(named)return named[1];
- const matchup=footballMatchup(item);if(matchup?.teams.length!==2)return null;
- const [first,second]=matchup.teams,shared=first.leagues.filter(league=>second.leagues.includes(league));
- const domestic=shared.find(league=>!league.startsWith('uefa.'));
- return leagueLabel.get(domestic||(shared.length===1?shared[0]:''))||null;
+ const matchup=footballMatchup(item),title=named(item?.title);
+ if(matchup?.teams.length===2){
+  const [first,second]=matchup.teams,shared=first.leagues.filter(league=>second.leagues.includes(league));
+  if(title&&shared.includes(title))return leagueLabel.get(title);
+  const domestic=shared.find(league=>!league.startsWith('uefa.'));
+  return leagueLabel.get(domestic||(shared.length===1?shared[0]:''))||null;
+ }
+ if(VERSUS.test(String(item?.title||'')))return null;
+ return leagueLabel.get(title||named(item?.genre))||null;
 }

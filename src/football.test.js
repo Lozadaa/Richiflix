@@ -85,3 +85,13 @@ test('league chips filter the football hub; followed clubs have names',()=>{
  assert.equal(rows('Premier League').length,1);assert.equal(rows('Serie A').length,0);assert.equal(rows('Todas').length,2);
  assert.deepEqual(eventTeams(events[0]),['futbol:83','futbol:86']);assert.equal(teamLabel('futbol:86'),'Real Madrid');assert.equal(teamLabel(147),'Yankees');
 });
+test('league chips use whole league names: Championship, CONCACAF and Serie A Ecuador stay out',()=>{
+ const league=(title,genre='')=>footballLeague({kind:'iptv',title,genre});
+ assert.equal(league('21:00 ◘ Sacramento Republic FC vs. Colorado Springs Switchbacks FC ◘ USL Championship ◘◘','⚽ EFL ENGLAND'),null);
+ assert.equal(league('Zona TUDN (MX)','CONCACAF CHAMPIONS CUP'),null);
+ assert.equal(league('GolTV Ecuador','LIGA PRO| SERIE A ECUADOR'),null);
+ assert.equal(league('Canadian Premier League: Forge vs Pacific'),null);
+ assert.equal(league('M. Liga de Campeones 1 FHD','🇪🇸 M. LIGA DE CAMPEONES'),'Champions League');
+ assert.equal(league('DAZN Serie A','⚽ SERIE A ITALIA'),'Serie A');
+ assert.equal(league('Champions League: Barcelona vs Real Madrid'),'Champions League','the title picks among the leagues both clubs share');
+});

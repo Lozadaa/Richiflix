@@ -21,8 +21,13 @@ app.whenReady().then(()=>{
  if(process.platform==='win32')window.setAppDetails({appId:'local.richiflix',appIconPath:icon,relaunchDisplayName:'Kingdom Player',relaunchCommand:app.isPackaged?`"${process.execPath}"`:`"${process.execPath}" "${app.getAppPath()}"`});
  window.webContents.setWindowOpenHandler(()=>({action:'deny'}));
  // Identify the local app to YouTube's embed API; no IPTV request is altered.
- window.webContents.session.webRequest.onBeforeSendHeaders({urls:['https://www.youtube.com/embed/*','https://www.youtube-nocookie.com/embed/*']},(details,callback)=>{
-  const headers={...details.requestHeaders};if(!headers.Referer&&!headers.referer)headers.Referer='https://local.richiflix/';callback({requestHeaders:headers});
+ // ESPN's edge answers 403 to any User-Agent naming Electron: football scores and league tables drop that token.
+ // A session takes a single onBeforeSendHeaders listener, so both live here.
+ window.webContents.session.webRequest.onBeforeSendHeaders({urls:['https://www.youtube.com/embed/*','https://www.youtube-nocookie.com/embed/*','https://site.api.espn.com/*']},(details,callback)=>{
+  const headers={...details.requestHeaders};
+  if(details.url.startsWith('https://site.api.espn.com/')){const agent=Object.keys(headers).find(key=>key.toLowerCase()==='user-agent');if(agent)headers[agent]=headers[agent].replace(/\s(?:richiflix|Electron)\/\S+/gi,'');}
+  else if(!headers.Referer&&!headers.referer)headers.Referer='https://local.richiflix/';
+  callback({requestHeaders:headers});
  });
  window.webContents.on('will-navigate',e=>e.preventDefault());
  window.webContents.on('before-input-event',(event,input)=>{if(input.type==='keyDown'&&input.key.toUpperCase()==='F11'){event.preventDefault();window.setFullScreen(!window.isFullScreen());}});

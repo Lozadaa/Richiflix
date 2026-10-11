@@ -1,0 +1,39 @@
+/* «Fútbol» league panel: standings + leaders. Static; only the tabs take focus. */
+.league-stats{margin:6px 0 34px;padding:26px 28px 28px;border-radius:26px;background:rgba(var(--surface-rgb),0.42);border:1px solid #ffffff0d;scroll-margin-top:110px}
+.league-stats-heading{display:flex;align-items:baseline;justify-content:space-between;gap:20px;margin-bottom:18px}
+.league-stats-heading h2{margin:0;font:800 clamp(22px,1.5vw,32px)/1.15 'Bricolage Grotesque',Arial,sans-serif;color:var(--text)}
+.league-stats-heading p{margin:0;color:var(--text-2);font-size:14px;white-space:nowrap}
+.league-stats-body{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:34px;align-items:start}
+.league-empty{margin:8px 0;color:var(--text-2);font-size:16px}
+.league-crest{display:inline-grid;place-items:center;flex:0 0 auto;width:26px;height:26px}
+.league-crest img{width:100%;height:100%;object-fit:contain}
+.league-crest b{font-size:10px;color:var(--text-2)}
+/* Standings */
+.league-table{font-variant-numeric:tabular-nums}
+.league-table-row{display:grid;grid-template-columns:34px minmax(0,1fr) repeat(4,38px) 62px 44px 46px;align-items:center;gap:4px;min-height:34px;padding:0 10px 0 12px;border-radius:10px;color:var(--text-2);font-size:15px;position:relative;text-align:center}
+.league-table-row:nth-child(even):not(.league-table-head){background:#ffffff06}
+.league-table-row[data-zone]:before{content:'';position:absolute;left:0;top:7px;bottom:7px;width:4px;border-radius:4px;background:var(--zone)}
+.league-table-head{min-height:30px;font-size:12px;font-weight:800;letter-spacing:.06em;color:#8394b0}
+.league-club{display:flex;align-items:center;gap:10px;min-width:0;text-align:left;color:var(--text);font-weight:700}
+.league-club>span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.league-table-head .league-club,.league-table-head span:nth-child(2){text-align:left}
+.league-rank{font-weight:800;color:var(--text-2)}
+.league-points{font-weight:900;color:var(--text)}
+.league-goals{white-space:nowrap}
+.league-zones{display:flex;flex-wrap:wrap;gap:8px 18px;margin:14px 0 0;padding:0 12px;list-style:none;color:var(--text-2);font-size:13px}
+.league-zones li{display:flex;align-items:center;gap:8px}.league-zones li:before{content:'';width:10px;height:10px;border-radius:3px;background:var(--zone)}
+/* Leaders */
+.league-tabs{display:flex;gap:10px;margin-bottom:12px}
+.league-tab{min-height:46px;padding:10px 20px;border-radius:16px;background:#202b3e;color:#bac6d9;font-size:16px;font-weight:700;position:relative}
+.league-tab.selected{background:var(--accent);color:var(--bg)}
+.league-tab:focus-visible,.tv-mode .league-tab:focus{outline:none;box-shadow:0 0 0 3px rgba(var(--focus-rgb),0.6)}
+.league-leaders{margin:0;padding:0;list-style:none}
+.league-leaders li{display:grid;grid-template-columns:30px minmax(0,1fr) 46px;align-items:center;gap:10px;min-height:52px;padding:4px 10px;border-radius:12px}
+.league-leaders li:nth-child(odd){background:#ffffff06}
+.league-player{display:flex;flex-direction:column;min-width:0}
+.league-player b{color:var(--text);font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.league-player span{display:flex;align-items:center;gap:6px;color:var(--text-2);font-size:13px;overflow:hidden;white-space:nowrap}
+.league-player .league-crest{width:18px;height:18px}
+.league-value{font:900 24px/1 'Bricolage Grotesque',Arial,sans-serif;color:var(--accent);text-align:right;font-variant-numeric:tabular-nums}
+.tv-mode .league-table-row{min-height:38px;font-size:17px}.tv-mode .league-player b{font-size:18px}
+@media(max-width:1100px){.league-stats-body{grid-template-columns:1fr}.league-stats{padding:20px 16px}}
