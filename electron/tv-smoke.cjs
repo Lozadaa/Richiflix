@@ -29,6 +29,8 @@ const {addTestSource}=require('./test-source.cjs');
   await page.keyboard.press('ArrowLeft');await expect.poll(()=>page.evaluate(()=>document.activeElement.getAttribute('aria-label'))).toBe('Retroceder 10 segundos');
   await page.keyboard.press('ArrowRight');await expect.poll(()=>page.evaluate(()=>document.activeElement.classList.contains('playback-toggle'))).toBe(true);
   await page.screenshot({path:path.join(__dirname,'../player-tv-preview.png')});
+  // D2: from the button row the first Back returns to the video, the second closes the player.
+  await page.keyboard.press('Escape');await expect.poll(()=>page.evaluate(()=>document.activeElement.tagName)).toBe('VIDEO');await expect(page.getByRole('dialog')).toHaveCount(1);
   await page.keyboard.press('Escape');await expect(page.getByRole('dialog')).toHaveCount(0);
   await page.getByRole('button',{name:'Modo TV',exact:true}).click();await page.locator('.hero .primary').click();
   await page.waitForFunction(()=>document.querySelector('video')?.currentTime>1,{},{timeout:30000});
@@ -36,7 +38,8 @@ const {addTestSource}=require('./test-source.cjs');
   assert.equal(await page.locator('.player-volume').count(),1);
   assert.equal(await page.locator('video').evaluate(video=>video.volume),0.35);
   assert.equal(await page.getByRole('button',{name:'Salir de pantalla completa',exact:true}).count(),1);
-  await page.getByRole('button',{name:'Opciones de reproducción',exact:true}).click();assert.equal(await page.getByLabel('Velocidad de reproducción').count(),1);
+  // E2: options live in the «Idioma y subtítulos» side panel; the desktop player offers speed there.
+  await page.getByRole('button',{name:'Idioma y subtítulos',exact:true}).click();await expect(page.getByRole('radiogroup',{name:'Velocidad',exact:true})).toHaveCount(1);await expect(page.getByRole('radiogroup',{name:'Velocidad',exact:true}).getByRole('radio',{name:'Normal'})).toHaveAttribute('aria-checked','true');
   console.log('TV/desktop OK: volumen del mando, preferencia de escritorio conservada, controles útiles, un Play, autoocultado con foco y restauración del player de escritorio.');
  }finally{
   await app?.close();const resolved=path.resolve(userData);

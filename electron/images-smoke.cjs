@@ -61,7 +61,8 @@ const {addTestSource}=require('./test-source.cjs');
   await page.getByRole('button',{name:'TV en vivo',exact:true}).click();
   const logo=page.getByRole('button',{name:'Logo de prueba',exact:true}).locator('.quality-logo');
   await expect(logo).toHaveAttribute('data-image-state','low-resolution');
-  const dimensions=await logo.locator('img').last().evaluate(img=>({width:img.getBoundingClientRect().width,height:img.getBoundingClientRect().height,dpr:devicePixelRatio}));
+  // The drawn bitmap, not the element box: object-fit:contain letterboxes a square logo inside a wide box.
+  const dimensions=await logo.locator('img').last().evaluate(img=>{const box=img.getBoundingClientRect(),scale=getComputedStyle(img).objectFit==='contain'?Math.min(box.width/img.naturalWidth,box.height/img.naturalHeight):1;return {width:img.naturalWidth*scale,height:img.naturalHeight*scale,dpr:devicePixelRatio};});
   assert.ok(dimensions.width*dimensions.dpr<=16.01&&dimensions.height*dimensions.dpr<=16.01,'Un logo diminuto nunca se amplía');
   assert.equal(await logo.locator('.channel-identity').count(),1);assert.equal(await logo.locator('img').last().evaluate(img=>getComputedStyle(img).opacity),'0');assert.equal(await page.locator('img[src*="unsplash"]').count(),0);assert.deepEqual(errors,[]);
   console.log('Imágenes OK: ocultas hasta decode, resolución validada en hero y detalle, resize sin pixelado, logos sin ampliar, error y cambio rápido seguros. ICO Windows con 7 tamaños.');

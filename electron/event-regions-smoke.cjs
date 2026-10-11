@@ -6,6 +6,10 @@ const fs=require('node:fs/promises'),path=require('node:path'),os=require('node:
   // Reuse the owner's encrypted connection and cached labels in isolated data.
   // No login is entered, no stream is opened, and originals are never modified.
   const saved=path.join(process.env.APPDATA,'richiflix');
+  // An owner-specific check: it needs the catalogue saved on 5 Oct 2026 (Yankees vs. Rays, Cerro Porteño). Elsewhere,
+  // or after that catalogue is refreshed, it is skipped with a reason instead of failing on missing data.
+  let catalogue='';try{catalogue=await fs.readFile(path.join(saved,'xtream-catalogue.json'),'utf8');}catch{}
+  if(!catalogue.includes('New York Yankees vs. Tampa Bay Rays')||!catalogue.includes('Cerro Porteño')){console.log('Regiones de eventos OMITIDA: requiere el catálogo guardado del 5 oct 2026 en %APPDATA%/richiflix (no es un fallo).');return;}
   for(const file of ['Local State','xtream-account.enc','xtream-sources.enc','metadata-token.enc','xtream-catalogue.json'])try{await fs.copyFile(path.join(saved,file),path.join(temp,file));}catch(error){if(error.code!=='ENOENT')throw error;}
   app=await electron.launch({executablePath:require('electron'),args:[path.join(__dirname,'main.cjs')],env:{...process.env,RICHIFLIX_USER_DATA:temp}});
   await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().forEach(window=>window.webContents.setBackgroundThrottling(false)));

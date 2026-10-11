@@ -6,13 +6,15 @@ const fs=require('node:fs/promises'),os=require('node:os'),path=require('node:pa
  const server=createServer((request,response)=>{const data=fixtureResponse('http://localhost'+request.url);if(data.info)data.info.plot='Secondary fixture description';response.setHeader('Content-Type','application/json');response.end(JSON.stringify(data));});
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const host=`http://127.0.0.1:${server.address().port}`;
  try{
-  const env={...process.env,RICHIFLIX_USER_DATA:userData};delete env.RICHIFLIX_TEST_EMPTY_SOURCE;
+  // A fixture preset stands in for the personal .env.local one (VITE_DEFAULT_SOURCE); its host is answered below.
+  const preset={name:'eterboxtv',host:'http://preset.fixture.test:8080',username:'preset-user',password:'preset-password'};
+  const env={...process.env,RICHIFLIX_USER_DATA:userData,VITE_DEFAULT_SOURCE:JSON.stringify(preset)};delete env.RICHIFLIX_TEST_EMPTY_SOURCE;
   app=await electron.launch({executablePath:require('electron'),args:[path.join(__dirname,'main.cjs')],env});
   // Replace only network responses; the shipped account and first-run path are unchanged.
   const {defaultMetadataToken}=await import('../src/metadataDefaults.js');
   const actions=['','get_live_categories','get_vod_categories','get_series_categories','get_live_streams','get_vod_streams','get_series','get_vod_info','get_series_info'],fixtures=Object.fromEntries(actions.map(action=>[action,fixtureResponse('http://fixture/player_api.php?action='+action)]));
   fixtures.get_vod_info.info.tmdb_id=999901;
-  await app.evaluate(({net,BrowserWindow},{fixtures,preset})=>{const original=net.fetch.bind(net);net.fetch=async(address,options)=>{const url=new URL(address);if(String(address).startsWith('http://ebxvip.xyz:8080/player_api.php'))return new Response(JSON.stringify(fixtures[url.searchParams.get('action')||'']));if(url.hostname==='api.themoviedb.org'){
+  await app.evaluate(({net,BrowserWindow},{fixtures,preset})=>{const original=net.fetch.bind(net);net.fetch=async(address,options)=>{const url=new URL(address);if(String(address).startsWith('http://preset.fixture.test:8080/player_api.php'))return new Response(JSON.stringify(fixtures[url.searchParams.get('action')||'']));if(url.hostname==='api.themoviedb.org'){
    let data={title:'Fixture Movie',overview:'Sinopsis española de prueba',vote_average:8.7,vote_count:1500};
    if(url.pathname.includes('/genre/'))data={genres:[{id:18,name:'Drama'}]};
    else if(url.pathname.includes('/discover/')){const tv=url.pathname.endsWith('/tv');data={results:Number(url.searchParams.get('page'))===1?[{id:tv?999902:999901,[tv?'name':'title']:tv?'Fixture Show':'Fixture Movie',vote_average:8.7,vote_count:1500,genre_ids:[18],[tv?'first_air_date':'release_date']:new Date().toISOString().slice(0,10)}]:[]};}
