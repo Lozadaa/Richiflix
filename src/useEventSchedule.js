@@ -1,4 +1,5 @@
-import {useEffect,useMemo,useState,useSyncExternalStore} from 'react';
+import {useEffect,useMemo,useState} from 'react';
+import {publishScores} from './gameScores.js';
 import {MLB_SCHEDULE_URL,mlbEventDate,scheduleGames,reconcileMLBEvent} from './mlbSchedule.js';
 const TTL=5*60000,LIVE_TTL=2*60000,WATCHED_TTL=55000,key='rf-mlb-schedule-v1';
 const playing=games=>games.some(game=>/in progress|live/i.test(game.detail||'')||(!/final|game over|completed|postponed|cancel/i.test(game.detail||'')&&game.startsAt<=Date.now()&&Date.now()<game.startsAt+3.5*3600000));
@@ -9,15 +10,7 @@ const watched=()=>!document.hidden&&Boolean(document.querySelector('.mlb-artwork
 const ttl=games=>playing(games)?watched()?WATCHED_TTL:LIVE_TTL:TTL;
 const same=(a,b)=>a?.range===b?.range&&JSON.stringify(a.games)===JSON.stringify(b.games);
 function cached(range){try{const data=JSON.parse(localStorage.getItem(key));return data?.range===range&&Array.isArray(data.games)&&Date.now()-data.updatedAt<ttl(data.games)?data:null;}catch{return null;}}
-// Scores by gamePk for MatchupArtwork, which only receives the matchup; a crest rerenders only when its own game changes.
-let scores=new Map();const listeners=new Set();
-function publish(games){
- const next=new Map();for(const game of games)if(game.score){const old=scores.get(game.id);next.set(game.id,JSON.stringify(old)===JSON.stringify(game.score)?old:game.score);}
- if(next.size===scores.size&&[...next].every(([id,score])=>scores.get(id)===score))return;
- scores=next;for(const listener of listeners)listener();
-}
-const subscribe=listener=>{listeners.add(listener);return()=>listeners.delete(listener);};
-export const useGameScore=id=>useSyncExternalStore(subscribe,()=>id?scores.get(id)||null:null,()=>null);
+export {useGameScore} from './gameScores.js';
 export function useEventSchedule(channels){
  const range=useMemo(()=>{
   const dates=[...new Set(channels.filter(item=>/\bmlb\b|baseball|b[eé]isbol/i.test(`${item.title} ${item.genre||''}`)).map(mlbEventDate).filter(Boolean))].sort();
@@ -51,6 +44,6 @@ export function useEventSchedule(channels){
   return()=>{disposed=true;controller?.abort();clearInterval(interval);document.removeEventListener('visibilitychange',refresh);};
  },[range]);
  const games=schedule?.range===range?schedule.games:null;
- useEffect(()=>publish(games||[]),[games]);
+ useEffect(()=>publishScores('mlb',games||[]),[games]);
  return useMemo(()=>games?channels.map(item=>reconcileMLBEvent(item,games)):channels,[channels,games]);
 }

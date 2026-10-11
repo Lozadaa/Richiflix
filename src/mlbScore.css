@@ -11,3 +11,5 @@
 .focus-stage-visual .has-score .mlb-teams{bottom:calc(13% + 72px)}
 /* The PC panel's media is a short strip: crests only there; its copy already says the phase. */
 .card-expansion:not(.expansion-tv) .mlb-score{display:none}.card-expansion:not(.expansion-tv) .has-score .mlb-location{display:inline}.card-expansion:not(.expansion-tv) .has-score .mlb-teams{bottom:16%}
+/* Football crests are square shields, taller than MLB caps: on cards they start below the phase label. */
+.mlb-poster .mlb-artwork[data-sport=futbol] .mlb-teams{top:22%}

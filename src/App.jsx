@@ -29,7 +29,9 @@ import {MetadataSettings} from './MetadataSettings.jsx';
 import {displayText} from './displayText.js';
 import {scheduledEventTime,eventDisplayTitle} from './eventTime.js';
 import {useEventSchedule} from './useEventSchedule.js';
-import {groupLiveEvents,splitLiveEvents,homeLiveEvents,liveNowCount,preferredFeed,rememberFeed,liveHubRows,liveChipItems} from './liveEvents.js';
+import {useFootballSchedule} from './useFootballSchedule.js';
+import {footballMatchup,FOOTBALL} from './footballArtwork.js';
+import {groupLiveEvents,splitLiveEvents,homeLiveEvents,liveNowCount,preferredFeed,rememberFeed,liveHubRows,liveChipItems,FOOTBALL_HUB_CHIPS} from './liveEvents.js';
 import {LiveHub} from './LiveHub.jsx';
 import {useChannelGuide} from './useChannelGuide.js';
 import {useLivePhases,useEventPhase} from './EventBadge.jsx';
@@ -65,6 +67,8 @@ const read=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))??fa
 // G5a: 128 px avatars for the 38-54 px header (the 1254 px originals cost a 1.6 Mpx decode).
 const avatar=kind=>`${import.meta.env.BASE_URL}avatars/${kind==='kids'?'kids-kitten':'adult-raccoon'}-128.png`;
 const count=number=>number.toLocaleString('es-CL'),isBaseball=item=>/\bmlb\b|baseball|b[eé]isbol/i.test((item.searchText||item.title)+' '+item.genre);
+// «Fútbol»: football words in the title or category, or one or two identified European clubs.
+const isFootball=item=>!isBaseball(item)&&(FOOTBALL.test((item.searchText||item.title)+' '+item.genre)||Boolean(footballMatchup(item)));
 // Fase G: one preconnect per provider origin (URL.origin drops any credentials).
 const preconnected=new Set();
 export default function App({profile,changeProfile}){
@@ -98,7 +102,7 @@ export default function App({profile,changeProfile}){
   const timed={...item,eventStartsAt:scheduledEventTime(item,{updatedAt:item.catalogueUpdatedAt||catalogue.updatedAt,host:source?.host})};
   return {...timed,eventDisplayTitle:eventDisplayTitle(timed)};
  }),[catalogue.preparedChannels,isKids,catalogue.channels,catalogue.updatedAt,catalogue.sources,catalogue.connection.sources,profile]);
- const channels=useEventSchedule(scheduledChannels);
+ const channels=useFootballSchedule(useEventSchedule(scheduledChannels));
  // Fase L1: one card per event (its signals are feeds); lists follow phase changes, not every minute.
  const groupedLive=useMemo(()=>groupLiveEvents(channels),[channels]),livePhases=useLivePhases(groupedLive.events);
  const {events:liveEvents,channels:liveChannels}=useMemo(()=>splitLiveEvents(groupedLive),[groupedLive,livePhases]);
@@ -319,17 +323,19 @@ export default function App({profile,changeProfile}){
  };
  const baseballEvents=useMemo(()=>liveEvents.filter(isBaseball),[liveEvents]),baseballChannels=useMemo(()=>liveChannels.filter(isBaseball),[liveChannels]);
  const baseball=useMemo(()=>[...baseballEvents,...baseballChannels],[baseballEvents,baseballChannels]);
+ const footballEvents=useMemo(()=>liveEvents.filter(isFootball),[liveEvents]),footballChannels=useMemo(()=>liveChannels.filter(isFootball),[liveChannels]);
+ const football=useMemo(()=>[...footballEvents,...footballChannels],[footballEvents,footballChannels]);
  // Fase L3: live pages are rows by phase plus a channel grid; recomputed per catalogue, chip, favourites and phase/day change.
- const livePage=!isKids&&(page==='TV en vivo'||page==='MLB');
- const hub=useMemo(()=>livePage?liveHubRows({events:page==='MLB'?baseballEvents:liveEvents,channels:page==='MLB'?baseballChannels:liveChannels,category,favorites:favoritesForLive,now:Date.now()}):null,[livePage,page,liveEvents,liveChannels,baseballEvents,baseballChannels,category,favoritesForLive,livePhases]);
- const searchSource=collectionItems||(page==='Películas'?movies:page==='Series'?shows:page==='TV en vivo'?live:page==='Mi lista'?savedItems:page==='MLB'?baseball:all);
+ const livePage=!isKids&&(page==='TV en vivo'||page==='MLB'||page==='Fútbol');
+ const hub=useMemo(()=>livePage?liveHubRows({events:page==='MLB'?baseballEvents:page==='Fútbol'?footballEvents:liveEvents,channels:page==='MLB'?baseballChannels:page==='Fútbol'?footballChannels:liveChannels,category,favorites:favoritesForLive,now:Date.now()}):null,[livePage,page,liveEvents,liveChannels,baseballEvents,baseballChannels,footballEvents,footballChannels,category,favoritesForLive,livePhases]);
+ const searchSource=collectionItems||(page==='Películas'?movies:page==='Series'?shows:page==='TV en vivo'?live:page==='Mi lista'?savedItems:page==='MLB'?baseball:page==='Fútbol'?football:all);
  const smartSearch=categoryItems(searchSource)||(livePage?liveChipItems(searchSource,category):null);
  const search=useCatalogueSearch(index,smartSearch||searchSource,query,smartSearch?'Todas':category),searchResults=search.items;
  // Bloque B: TMDB is only asked when the catalogue has no exact title and fewer than three approximate ones.
  const tmdbAbsent=useTmdbSuggestion(query,!isKids&&!search.loading&&!searchResults.length&&search.fuzzy.length<3);
  const rail=(title,items)=>items.length?<VirtualCarousel title={title} items={items} open={tv?open:inspect} history={history} favorites={favorites} toggle={toggle} {...previewProps} actionFocus={rowActionFocus}/>:null;
  const searchScoped=page!=='Inicio'||category!=='Todas'||Boolean(collectionItems),searched=query.trim();
- const searchEmpty=()=><EmptyState tv={tv} art={page==='Series'?'series':page==='TV en vivo'?'live':page==='MLB'?'baseball':'cinema'} title={`No encontramos "${searched}"`} text={search.suggestions.length?'¿Quisiste decir…?':'Revisa cómo se escribe o prueba con otro nombre.'}
+ const searchEmpty=()=><EmptyState tv={tv} art={page==='Series'?'series':page==='TV en vivo'||page==='Fútbol'?'live':page==='MLB'?'baseball':'cinema'} title={`No encontramos "${searched}"`} text={search.suggestions.length?'¿Quisiste decir…?':'Revisa cómo se escribe o prueba con otro nombre.'}
   actions={[...search.suggestions.map(name=>({label:name,onClick:()=>{searchSubmitted.current=tv;setQuery(name);}})),...(searchScoped?[{label:'Buscar en todo el catálogo',onClick:()=>{searchSubmitted.current=tv;setCollectionView(null);setCategory('Todas');setPage('Inicio');}}]:[]),{label:'Limpiar búsqueda',onClick:()=>{setQuery('');searchRef.current?.focus();}}]}>
   {search.fuzzy.length>0&&<div className="empty-state-extra">{rail(`Parecidos a "${searched}"`,search.fuzzy)}</div>}
   {absentMatch&&<div className="empty-state-extra">{rail(`En tu catálogo: "${displayTitle(absentMatch)}"`,[absentMatch])}</div>}
@@ -365,10 +371,10 @@ export default function App({profile,changeProfile}){
  useLayoutEffect(()=>{if(tv)window.dispatchEvent(new Event('richiflix-preview-layout'));},[tv,tvStage]);
  const nearby=useMemo(()=>{
   if(query)return searchResults;
-  const source=collectionItems||(page==='Series'?shows:page==='TV en vivo'?live:page==='MLB'?baseball:page==='Mi lista'?savedItems:movies);
+  const source=collectionItems||(page==='Series'?shows:page==='TV en vivo'?live:page==='MLB'?baseball:page==='Fútbol'?football:page==='Mi lista'?savedItems:movies);
   const chosen=smartCollections.find(group=>group.name===category&&group.type===(source===movies?'movie':source===shows?'series':null));
   return chosen?.items||index.filter(source,'',category);
- },[index,query,searchResults,page,shows,live,baseball,savedItems,movies,category,smartCollections,collectionItems]);
+ },[index,query,searchResults,page,shows,live,baseball,football,savedItems,movies,category,smartCollections,collectionItems]);
  useEffect(()=>{
   if(banner.moving||!previewActive)return;
   const context=previewContext.current;
@@ -380,7 +386,7 @@ export default function App({profile,changeProfile}){
  return <FollowContext.Provider value={follow}><div onFocusCapture={event=>{setCardFocus(Boolean(event.target.closest('.card,.card-expansion')));headerPreview(event);}} onKeyDownCapture={event=>{if(event.key.startsWith('Arrow')&&event.target.closest('.card'))lastDirection.current=event.key;pointerPosition.current.itemId=null;pointerPosition.current.cardId=null;}} onMouseMoveCapture={event=>{const previous=pointerPosition.current,moved=event.clientX!==previous.x||event.clientY!==previous.y;event.nativeEvent.richiflixPointerMoved=moved;if(moved){const card=event.target.closest('.card');pointerPosition.current={x:event.clientX,y:event.clientY,itemId:card?.dataset.contentId,cardId:card?.dataset.cardId,at:performance.now()};}}} className={`app ${tv?'tv-mode':''} ${tvStage?'has-tv-stage':''} ${isKids?'kids-space':''} ${page==='Inicio'&&!query&&!collectionView&&featured.length?'scenic':''}`}>
   <header className={`topbar ${scrolled?'is-scrolled':''}`}>
    <a className="brand" href="#" onClick={event=>{event.preventDefault();navigate('Inicio');}}><Brand/></a>
-   <nav aria-label="Principal">{(isKids?['Inicio','Películas','Series','Mi lista']:['Inicio','Películas','Series','TV en vivo','MLB','Mi lista']).map(name=><button className={page===name?'active':''} aria-current={page===name?'page':undefined} key={name} onClick={()=>navigate(name)}>{name}</button>)}</nav>
+   <nav aria-label="Principal">{(isKids?['Inicio','Películas','Series','Mi lista']:['Inicio','Películas','Series','TV en vivo','MLB','Fútbol','Mi lista']).map(name=><button className={page===name?'active':''} aria-current={page===name?'page':undefined} key={name} onClick={()=>navigate(name)}>{name}</button>)}</nav>
    <div className="header-tools"><div className={`search ${query?'has-query':''}`}><Search size={21}/><input ref={searchRef} aria-label="Buscar títulos y canales" placeholder={page==='Películas'?'Buscar películas':page==='Series'?'Buscar series':'Buscar'} value={query} onChange={event=>setQuery(event.target.value)} data-tv-search={tv?'true':undefined} onKeyDown={event=>{if(tv){submitSearch(event);return;}if(event.key==='Escape'){setQuery('');event.currentTarget.blur();}}}/>{query&&<button aria-label="Limpiar búsqueda" onClick={()=>{setQuery('');searchRef.current?.focus();}}><X size={16}/></button>}</div>
     {!isTVBuild&&<button className={`icon-button ${tv?'selected':''}`} aria-label="Modo TV" aria-pressed={tv} onClick={()=>setTv(!tv)}><Monitor size={21}/></button>}
     <button className={`small-avatar ${isKids?'kids':'adult'}`} aria-label="Cambiar perfil" title={displayText(profile.name)} onClick={changeProfile}><QualityImage src={avatar(profile.kind)} eager fallback={false}/></button>
@@ -399,7 +405,7 @@ export default function App({profile,changeProfile}){
      {page==='Inicio'&&<>{row('Continuar viendo',continuing)}{row(isKids?'Una gran aventura':'Películas',movies)}{row('Series',shows)}{row('Top 10 en Kingdom',top,{variant:'ranked'})}{row('Nuevo esta semana',fresh)}{!isKids&&row(liveNow?`Ahora en vivo · ${liveNow} en juego`:'Ahora en vivo',homeLive)}{(tv?homeRowsForTV(smartCollections):smartCollections.filter(group=>group.name===TMDB_BEST||group.name===TMDB_RECENT).sort((a,b)=>Number(a.name===TMDB_RECENT)-Number(b.name===TMDB_RECENT))).map(group=><React.Fragment key={`${group.type}:${group.name}`}>{row(group.name===TMDB_RECENT?(group.type==='movie'?'Películas recientes mejor valoradas · TMDB':'Series recientes mejor valoradas · TMDB'):(group.type==='movie'?'Películas mejor valoradas · TMDB':'Series mejor valoradas · TMDB'),group.items)}</React.Fragment>)}{discovery.groups.length>0&&<section className="home-discovery" aria-label="Descubre algo diferente"><div className="discovery-heading"><div><h2>Tu próximo mood</h2><p>Historias para descubrir, a tu ritmo.</p></div>{smartCollections.filter(group=>group.kind==='discovery').length>1&&<button className="discovery-refresh" onClick={discovery.change}><Shuffle aria-hidden="true"/>Otra selección</button>}</div>{discovery.groups.map(group=><React.Fragment key={group.key}>{row(group.name,group.items,{eyebrow:'PARA TI'})}</React.Fragment>)}</section>}{isKids&&all.length===0&&<div className="empty-inline kids-empty"><h1>No hay títulos verificados para Kids</h1><p>Solo aparecen contenidos con edad confirmada de hasta 10 años.</p></div>}</>}
      {page==='Películas'&&catalogueGrid('Películas',movies)}
      {page==='Series'&&catalogueGrid('Series',shows)}
-     {hub&&<LiveHub chips={page==='MLB'?['Eventos hoy']:undefined} title={page==='MLB'?'MLB · Béisbol en vivo':'TV en vivo'} subtitle={page==='MLB'?`Hoy · ${hub.today} ${hub.today===1?'partido':'partidos'}`:`Horarios de Santiago · Hoy · ${hub.today} ${hub.today===1?'evento':'eventos'}`} hub={hub} categories={categoryNames(page==='MLB'?baseball:live)} category={category} setCategory={setCategory} open={tv?open:inspect} history={history} favorites={favorites} toggle={toggle} {...previewProps} loading={catalogue.loading}/>}
+     {hub&&<LiveHub chips={page==='MLB'?['Eventos hoy']:page==='Fútbol'?FOOTBALL_HUB_CHIPS:undefined} art={page==='MLB'?'baseball':'live'} title={page==='MLB'?'MLB · Béisbol en vivo':page==='Fútbol'?'Fútbol · Ligas europeas':'TV en vivo'} subtitle={page==='MLB'||page==='Fútbol'?`Hoy · ${hub.today} ${hub.today===1?'partido':'partidos'}`:`Horarios de Santiago · Hoy · ${hub.today} ${hub.today===1?'evento':'eventos'}`} hub={hub} categories={categoryNames(page==='MLB'?baseball:page==='Fútbol'?football:live)} category={category} setCategory={setCategory} open={tv?open:inspect} history={history} favorites={favorites} toggle={toggle} {...previewProps} loading={catalogue.loading}/>}
      {page==='Mi lista'&&<><PageTitle title="Mi lista"/>{savedItems.length?cards(savedItems):<EmptyState tv={tv} art="cinema" title="Tu lista está vacía" text="Guarda películas y series con el corazón para encontrarlas aquí." actions={[{label:'Explorar películas',primary:true,onClick:()=>navigate('Películas')}]}><div className="empty-state-extra">{rail('Mejor valoradas',smartCollections.find(group=>group.name===TMDB_BEST&&group.type==='movie')?.items||[])}</div></EmptyState>}</>}
     </>}
    </div>

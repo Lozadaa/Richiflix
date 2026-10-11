@@ -3,7 +3,7 @@ import {ArrowUpRight,Check,ChevronLeft,ChevronRight,Heart,Info,Play} from 'lucid
 import {QualityImage} from './QualityImage.jsx';
 import {artworkURL,displayTitle} from './artwork.js';
 import {ContentIdentity,identityStyle,channelTitle} from './ContentIdentity.jsx';
-import {mlbMatchup} from './mlbArtwork.js';
+import {matchupFor} from './matchup.js';
 import {MatchupArtwork} from './MatchupArtwork.jsx';
 import {displayText} from './displayText.js';
 import {CategoryMark} from './CategoryMark.jsx';
@@ -36,7 +36,7 @@ export const Card=memo(function Card({item:original,instanceId,metadata:fallback
  const duration=item.durationSeconds||Number.parseFloat(item.duration)*60;
  // H2-T4: facts line and audio codes are static data, memoized per item (a key only changes `selected`, never `item`).
  const {facts,audio}=useMemo(()=>({facts:item.kind==='iptv'||item.resumeLabel?'':cardFacts(item),audio:item.languages?.slice(0,3).join(' · ')||''}),[item]);
- const matchup=mlbMatchup(item),guideLine=item.kind==='iptv'&&!item.isEvent?guideNowLine(item.guide):'';
+ const matchup=matchupFor(item),guideLine=item.kind==='iptv'&&!item.isEvent?guideNowLine(item.guide):'';
  return <div ref={anchor} className={`card ${selected?'is-previewed':''} ${favorite?'is-favorite':''} ${item.kind==='iptv'?'live-card':'portrait-card'}`} data-content-id={item.id} data-card-id={instanceId} style={{'--card-index':Math.min(index,11)}} onKeyDown={event=>expansion.current?.keyDown(event)} onKeyUp={event=>expansion.current?.keyUp(event)} onMouseEnter={event=>pointerPreview?.(item,event,instanceId)} onMouseMove={event=>{if(tv&&event.nativeEvent.richiflixPointerMoved)pointerPreview?.(item,event,instanceId);}} onMouseLeave={leave} onFocus={event=>{if(event.target.classList.contains('card-open')&&!event.currentTarget.contains(event.relatedTarget)&&!sameOwner(event.relatedTarget))preview?.(item,instanceId,index);}} onBlur={event=>{if(!event.currentTarget.contains(event.relatedTarget)&&!sameOwner(event.relatedTarget))leave?.();}}>
   <button className="card-open" aria-label={displayText(item.displayTitle||item.title)} onClick={()=>open(item)}>
    {original.rank>0&&<b className="card-rank" aria-hidden="true">{original.rank}</b>}

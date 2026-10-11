@@ -1,10 +1,12 @@
-import {mlbMatchup,mlbTeams} from './mlbArtwork.js';
+import {mlbTeams} from './mlbArtwork.js';
+import {footballTeams} from './footballArtwork.js';
+import {matchupFor} from './matchup.js';
 import {eventPhase} from './liveEvents.js';
 import {eventInstant} from './eventTime.js';
 
-// Fase L7: followed MLB teams. Pure; App owns the clock and the toast.
-const MIN=60000,ALERT_WINDOW=10*MIN,byId=new Map(mlbTeams.map(team=>[team.id,team]));
-export const eventTeams=event=>mlbMatchup(event)?.teams.map(team=>team.id)||[];
+// Fase L7: followed MLB teams and football clubs (ids `futbol:<espnId>`). Pure; App owns the clock and the toast.
+const MIN=60000,ALERT_WINDOW=10*MIN,byId=new Map([...mlbTeams,...footballTeams].map(team=>[team.id,team]));
+export const eventTeams=event=>matchupFor(event)?.teams.map(team=>team.id)||[];
 export function followedEventIds(events,teams){const followed=new Set(teams),ids=new Set();if(followed.size)for(const event of events)if(eventTeams(event).some(id=>followed.has(id)))ids.add(event.id);return ids;}
 export const teamLabel=id=>byId.get(id)?.teamName||'';
 export const teamAbbreviation=id=>byId.get(id)?.abbreviation||'';

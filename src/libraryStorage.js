@@ -2,9 +2,9 @@ import {deviceStorage} from './deviceStorage.js';
 
 const favorites=value=>Array.isArray(value)?[...new Set(value.filter(id=>typeof id==='string'))]:[];
 const history=value=>value&&typeof value==='object'&&!Array.isArray(value)?Object.fromEntries(Object.entries(value).filter(([id,time])=>id&&Number.isFinite(time)&&time>=0)):{};
-// Fase L7: followed MLB team ids. Older envelopes without `teams` load as [].
+// Fase L7: followed MLB team ids (numbers) and football clubs (`futbol:<espnId>`). Older envelopes without `teams` load as [].
 export const TEAM_LIMIT=10;
-const teams=value=>Array.isArray(value)?[...new Set(value.filter(Number.isInteger))].slice(0,TEAM_LIMIT):[];
+const teams=value=>Array.isArray(value)?[...new Set(value.filter(id=>Number.isInteger(id)||/^futbol:\d{1,8}$/.test(id)))].slice(0,TEAM_LIMIT):[];
 // D4: intro marks learned per `seriesId:season`; older envelopes load as {}. Capped so a long life cannot grow the backup without bound.
 export const INTRO_LIMIT=200;
 const finite=value=>Number.isFinite(value)&&value>=0;

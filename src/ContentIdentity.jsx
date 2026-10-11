@@ -2,7 +2,7 @@ import React from 'react';
 import {displayTitle} from './artwork.js';
 import {QualityImage} from './QualityImage.jsx';
 import {artworkCategory} from './categoryArtwork.js';
-import {mlbMatchup} from './mlbArtwork.js';
+import {matchupFor} from './matchup.js';
 import {MatchupArtwork} from './MatchupArtwork.jsx';
 import {displayText} from './displayText.js';
 
@@ -17,7 +17,7 @@ export function CategoryArtwork({item,wide=false}){
 }
 // G5b: artwork=false skips the category PNG (627×941 decode): the TV veil over a loading poster is gradient + glyph only.
 export function ContentIdentity({item,channel=false,wide=false,artwork=true}){
- const matchup=mlbMatchup(item);
+ const matchup=matchupFor(item);
  if(matchup)return <MatchupArtwork matchup={matchup} wide={wide}/>;
  const title=channel?channelTitle(item):displayTitle(item),words=title.replace(/[^\p{L}\p{N}\s]/gu,' ').split(/\s+/).filter(Boolean);
  const letters=words[0]?.length<=4?words[0]:words.slice(0,2).map(word=>word[0]).join('');

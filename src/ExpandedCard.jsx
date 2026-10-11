@@ -5,7 +5,7 @@ import {Play,Plus,Check,ArrowRight} from 'lucide-react';
 import {QualityImage} from './QualityImage.jsx';
 import {ContentIdentity,identityStyle,channelTitle} from './ContentIdentity.jsx';
 import {MatchupArtwork} from './MatchupArtwork.jsx';
-import {mlbMatchup} from './mlbArtwork.js';
+import {matchupFor} from './matchup.js';
 import {artworkURL,displayTitle,titleFacts,logoURL} from './artwork.js';
 import {displayText} from './displayText.js';
 import {tvPanelPoster} from './responsiveArtwork.js';
@@ -54,7 +54,7 @@ export function ExpandedCard({item,instanceId,expansion,metadataPending,favorite
  const logo=logoURL(item.logoImage),[logoReady,setLogoReady]=useState('');
  useEffect(()=>{if(!logo||!opened)return;let current=true;const image=new Image();image.src=logo;image.decode().then(()=>{if(current)setLogoReady(logo);},()=>{});return()=>{current=false;};},[logo,opened]);
  const position=expansion.placement;if(!position)return null;
- const live=item.kind==='iptv',matchup=mlbMatchup(item),title=live?channelTitle(item):displayTitle(item),facts=titleFacts(item);
+ const live=item.kind==='iptv',matchup=matchupFor(item),title=live?channelTitle(item):displayTitle(item),facts=titleFacts(item);
  const artwork=live?(item.imageGeneric?undefined:artworkURL(item.image)):tv?artworkURL(item.image)||artworkURL(item.backdropImage,true):artworkURL(item.backdropImage,true)||artworkURL(item.image);
  // The card's poster URL (w342 at 1080p): same key, same retained blob, no decode.
  const cardPoster=tv&&!live&&!matchup?tvPanelPoster(artwork,artworkURL(item.image)):null;

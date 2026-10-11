@@ -4,7 +4,7 @@ import {identityStyle,channelTitle} from './ContentIdentity.jsx';
 import {displayTitle,logoURL} from './artwork.js';
 import {BannerArtwork} from './BannerArtwork.jsx';
 import {TrailerPreview} from './TrailerPreview.jsx';
-import {mlbMatchup} from './mlbArtwork.js';
+import {matchupFor,scoreLabelFor} from './matchup.js';
 import {displayText} from './displayText.js';
 import {CategoryMark} from './CategoryMark.jsx';
 import {useEventPhase} from './EventBadge.jsx';
@@ -12,7 +12,6 @@ import {eventCountdown} from './eventTime.js';
 import {eventPhaseLine} from './liveEvents.js';
 import {guideNowLine} from './channelGuide.js';
 import {isTVBuild} from './platform.js';
-import {scoreLabel} from './mlbSchedule.js';
 import {TitleFacts} from './UserScore.jsx';
 import {createCardPress,okHint} from './cardExpansion.js';
 import {bannerKeyAction,knobOn,hexToRgb,dotCycle} from './bannerFlow.js';
@@ -58,7 +57,7 @@ export const FocusStage=memo(function FocusStage({item,active,visible=true,loadi
  const [knobs,setKnobs]=useState(null),[dot,setDot]=useState(null),[frozen,setFrozen]=useState(false),stageRef=useRef();
  if(carousel){const nextDot=dotCycle(dot,{slide,paused});if(nextDot!==dot)setDot(nextDot);}
  useEffect(()=>{if(!tv)return;const style=getComputedStyle(document.querySelector('.app')||document.documentElement);setKnobs({kenburns:knobOn(style.getPropertyValue('--tv-kenburns')),ambient:knobOn(style.getPropertyValue('--tv-ambient'))});},[tv]);
- if(!item)return null;const live=item.kind==='iptv',matchup=mlbMatchup(item),remoteActions=isTVBuild&&tv,dormant=remoteActions&&!actionsFocused;
+ if(!item)return null;const live=item.kind==='iptv',matchup=matchupFor(item),remoteActions=isTVBuild&&tv,dormant=remoteActions&&!actionsFocused;
  const out=carousel&&layers.out&&layers.out.id!==item.id?layers.out:null,upcomingArt=carousel&&next&&next.id!==item.id&&next.id!==out?.id?next:null;
  useEffect(()=>{if(next?.logoImage)decodeLogo(logoURL(next.logoImage)).catch(()=>{});},[next?.logoImage]);
  // Paused carousel (focus in the rows, dialogs, hidden tab): the Ken Burns is frozen at its current scale as a static
@@ -78,7 +77,7 @@ export const FocusStage=memo(function FocusStage({item,active,visible=true,loadi
   <div className="focus-stage-copy">
    <React.Fragment key={item.id}><span className="focus-eyebrow"><CategoryMark item={item}/>{displayText(live?(!event?['EN DIRECTO',item.genre]:event.phase==='upcoming'?[event.label.toLocaleUpperCase('es'),eventCountdown(item).label]:[event.label.toLocaleUpperCase('es'),event.phase==='postponed'?'':event.time,item.genre]).filter(Boolean).join(' · '):item.contentGenre||item.genre)}{loading&&<span className="focus-info-loader" role="status" aria-label="Cargando información"/>}</span>
    <StageTitle item={item} live={live}/>
-   <p className="focus-description">{displayText(live?event?event.phase==='live'&&matchup?.teams[1]&&scoreLabel(item.eventScore,matchup.teams[0].id)?`En juego · ${scoreLabel(item.eventScore,matchup.teams[0].id).text}`:eventPhaseLine(item,event):guideNowLine(item.guide)||['Televisión en directo',item.genre].filter(Boolean).join(' · '):item.description||item.genre)}</p>
+   <p className="focus-description">{displayText(live?event?event.phase==='live'&&matchup?.teams[1]&&scoreLabelFor(item.eventScore,matchup.teams[0].id)?`En juego · ${scoreLabelFor(item.eventScore,matchup.teams[0].id).text}`:eventPhaseLine(item,event):guideNowLine(item.guide)||['Televisión en directo',item.genre].filter(Boolean).join(' · '):item.description||item.genre)}</p>
    <TitleFacts item={item}/>
    {item.cast&&<p className="focus-cast">{displayText(item.cast)}</p>}</React.Fragment>
    <div className={`focus-actions${hidden?' is-direct':''}`} role="group" aria-label="Acciones del título seleccionado" aria-hidden={dormant?true:undefined} onKeyDown={keyDown} onKeyUp={keyUp}><button className="primary" tabIndex={dormant?-1:undefined} aria-label={item.mediaType==='series'?'Ver episodios':'Reproducir'} onClick={()=>item.mediaType==='series'?inspect(item):open(item)}><Play fill="currentColor" aria-hidden="true"/></button><button className="secondary" tabIndex={dormant||hidden?-1:undefined} aria-label={favorite?'Quitar de Mi lista':'Guardar en Mi lista'} aria-pressed={favorite} onClick={()=>toggle(item)}>{favorite?<Check aria-hidden="true"/>:<Heart aria-hidden="true"/>}</button>{hidden&&hintOn&&<span className="focus-remote-hint">Mantén OK para Mi lista</span>}</div>

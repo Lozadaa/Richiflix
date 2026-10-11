@@ -1,0 +1,1655 @@
+[
+ {
+  "id": "83",
+  "name": "Barcelona",
+  "shortName": "Barcelona",
+  "abbreviation": "BAR",
+  "leagues": [
+   "esp.1",
+   "uefa.champions"
+  ],
+  "color": "990000",
+  "alternateColor": "FCE38A",
+  "logo": true
+ },
+ {
+  "id": "85",
+  "name": "Celta Vigo",
+  "shortName": "Celta Vigo",
+  "abbreviation": "CEL",
+  "leagues": [
+   "esp.1",
+   "uefa.europa"
+  ],
+  "color": "6cace4",
+  "alternateColor": "004996",
+  "logo": true
+ },
+ {
+  "id": "86",
+  "name": "Real Madrid",
+  "shortName": "Real Madrid",
+  "abbreviation": "RMA",
+  "leagues": [
+   "esp.1",
+   "uefa.champions"
+  ],
+  "color": "ffffff",
+  "alternateColor": "1B4D3E",
+  "logo": true
+ },
+ {
+  "id": "87",
+  "name": "Racing Santander",
+  "shortName": "Racing",
+  "abbreviation": "RAC",
+  "leagues": [
+   "esp.1"
+  ],
+  "color": "ffffff",
+  "alternateColor": "3B6C1A",
+  "logo": true
+ },
+ {
+  "id": "88",
+  "name": "Espanyol",
+  "shortName": "Espanyol",
+  "abbreviation": "ESP",
+  "leagues": [
+   "esp.1"
+  ],
+  "color": "3366CC",
+  "alternateColor": "C8142F",
+  "logo": true
+ },
+ {
+  "id": "89",
+  "name": "Real Sociedad",
+  "shortName": "Real Sociedad",
+  "abbreviation": "RSO",
+  "leagues": [
+   "esp.1",
+   "uefa.europa"
+  ],
+  "color": "3366CC",
+  "alternateColor": "000000",
+  "logo": true
+ },
+ {
+  "id": "90",
+  "name": "Deportivo",
+  "shortName": "Deportivo",
+  "abbreviation": "DEP",
+  "leagues": [
+   "esp.1"
+  ],
+  "color": "3366CC",
+  "alternateColor": "000000",
+  "logo": true
+ },
+ {
+  "id": "93",
+  "name": "Athletic Club",
+  "shortName": "Athletic",
+  "abbreviation": "ATH",
+  "leagues": [
+   "esp.1"
+  ],
+  "color": "C8142F",
+  "alternateColor": "000000",
+  "logo": true
+ },
+ {
+  "id": "94",
+  "name": "Valencia",
+  "shortName": "Valencia",
+  "abbreviation": "VAL",
+  "leagues": [
+   "esp.1"
+  ],
+  "color": "ffffff",
+  "alternateColor": "FF6F00",
+  "logo": true
+ },
+ {
+  "id": "96",
+  "name": "Alavés",
+  "shortName": "Alavés",
+  "abbreviation": "ALA",
+  "leagues": [
+   "esp.1"
+  ],
+  "color": "0000ff",
+  "alternateColor": "FFC0CB",
+  "logo": true
+ },
+ {
+  "id": "97",
+  "name": "Osasuna",
+  "shortName": "Osasuna",
+  "abbreviation": "OSA",
+  "leagues": [
+   "esp.1"
+  ],
+  "color": "cd0000",
+  "alternateColor": "ffffff",
+  "logo": true
+ },
+ {
+  "id": "99",
+  "name": "Málaga",
+  "shortName": "Málaga",
+  "abbreviation": "MCF",
+  "leagues": [
+   "esp.1"
+  ],
+  "color": "b9e8f0",
+  "alternateColor": "D19CA4",
+  "logo": true
+ },
+ {
+  "id": "101",
+  "name": "Rayo Vallecano",
+  "shortName": "Rayo",
+  "abbreviation": "RAY",
+  "leagues": [
+   "esp.1"
+  ],
+  "color": "ffffff",
+  "alternateColor": "cd0000",
+  "logo": true
+ },
+ {
+  "id": "102",
+  "name": "Villarreal",
+  "shortName": "Villarreal",
+  "abbreviation": "VIL",
+  "leagues": [
+   "esp.1",
+   "uefa.champions"
+  ],
+  "color": "ffff00",
+  "alternateColor": "6cace4",
+  "logo": true
+ },
+ {
+  "id": "103",
+  "name": "AC Milan",
+  "shortName": "Milan",
+  "abbreviation": "MIL",
+  "leagues": [
+   "ita.1",
+   "uefa.europa"
+  ],
+  "color": "e4002b",
+  "alternateColor": "ffffff",
+  "logo": true
+ },
+ {
+  "id": "104",
+  "name": "AS Roma",
+  "shortName": "AS Roma",
+  "abbreviation": "ROMA",
+  "leagues": [
+   "ita.1",
+   "uefa.champions"
+  ],
+  "color": "990a2c",
+  "alternateColor": "F5F3E5",
+  "logo": true
+ },
+ {
+  "id": "105",
+  "name": "Atalanta",
+  "shortName": "Atalanta",
+  "abbreviation": "ATA",
+  "leagues": [
+   "ita.1"
+  ],
+  "color": "1157bf",
+  "alternateColor": "ffffff",
+  "logo": true
+ },
+ {
+  "id": "107",
+  "name": "Bologna",
+  "shortName": "Bologna",
+  "abbreviation": "BOL",
+  "leagues": [
+   "ita.1"
+  ],
+  "color": "04043d",
+  "alternateColor": "ffffff",
+  "logo": true
+ },
+ {
+  "id": "109",
+  "name": "Fiorentina",
+  "shortName": "Fiorentina",
+  "abbreviation": "FIO",
+  "leagues": [
+   "ita.1"
+  ],
+  "color": "4c1d84",
+  "alternateColor": "ffffff",
+  "logo": true
+ },
+ {
+  "id": "110",
+  "name": "Internazionale",
+  "shortName": "Inter Milan",
+  "abbreviation": "INT",
+  "leagues": [
+   "ita.1",
+   "uefa.champions"
+  ],
+  "color": "00239c",
+  "alternateColor": "ffffff",
+  "logo": true
+ },
+ {
+  "id": "111",
+  "name": "Juventus",
+  "shortName": "Juventus",
+  "abbreviation": "JUV",
+  "leagues": [
+   "ita.1",
+   "uefa.europa"
+  ],
+  "color": "000000",
+  "alternateColor": "E8A2B0",
+  "logo": true
+ },
+ {
+  "id": "112",
+  "name": "Lazio",
+  "shortName": "Lazio",
+  "abbreviation": "LAZ",
+  "leagues": [
+   "ita.1"
+  ],
+  "color": "74bde7",
+  "alternateColor": "FFFFFF",
+  "logo": true
+ },
+ {
+  "id": "113",
+  "name": "Lecce",
+  "shortName": "Lecce",
+  "abbreviation": "LEC",
+  "leagues": [
+   "ita.1"
+  ],
+  "color": "FCED0B",
+  "alternateColor": "08305d",
+  "logo": true
+ },
+ {
+  "id": "114",
+  "name": "Napoli",
+  "shortName": "Napoli",
+  "abbreviation": "NAP",
+  "leagues": [
+   "ita.1",
+   "uefa.champions"
+  ],
+  "color": "0677d2",
+  "alternateColor": "ffffff",
+  "logo": true
+ },
+ {
+  "id": "115",
+  "name": "Parma",
+  "shortName": "Parma",
+  "abbreviation": "PAR",
+  "leagues": [
+   "ita.1"
+  ],
+  "color": "19161D",
+  "alternateColor": "ffdd30",
+  "logo": true
+ },
+ {
+  "id": "118",
+  "name": "Udinese",
+  "shortName": "Udinese",
+  "abbreviation": "UDI",
+  "leagues": [
+   "ita.1"
+  ],
+  "color": "19161D",
+  "alternateColor": "0F1C3F",
+  "logo": true
+ },
+ {
+  "id": "122",
+  "name": "FC Cologne",
+  "shortName": "Cologne",
+  "abbreviation": "KOE",
+  "leagues": [
+   "ger.1"
+  ],
+  "color": "ffffff",
+  "alternateColor": "DA0308",
+  "logo": true
+ },
+ {
+  "id": "124",
+  "name": "Borussia Dortmund",
+  "shortName": "Dortmund",
+  "abbreviation": "DOR",
+  "leagues": [
+   "ger.1",
+   "uefa.champions"
+  ],
+  "color": "ffee00",
+  "alternateColor": "272726",
+  "logo": true
+ },
+ {
+  "id": "125",
+  "name": "Eintracht Frankfurt",
+  "shortName": "Frankfurt",
+  "abbreviation": "SGE",
+  "leagues": [
+   "ger.1"
+  ],
+  "color": "ffffff",
+  "alternateColor": "272726",
+  "logo": true
+ },
+ {
+  "id": "126",
+  "name": "SC Freiburg",
+  "shortName": "Freiburg",
+  "abbreviation": "SCF",
+  "leagues": [
+   "ger.1"
+  ],
+  "color": "DA0308",
+  "alternateColor": "ffffff",
+  "logo": true
+ },
+ {
+  "id": "127",
+  "name": "Hamburg SV",
+  "shortName": "Hamburg",
+  "abbreviation": "HSV",
+  "leagues": [
+   "ger.1"
+  ],
+  "color": "1a26af",
+  "alternateColor": "1a1a1a",
+  "logo": true
+ },
+ {
+  "id": "131",
+  "name": "Bayer Leverkusen",
+  "shortName": "Leverkusen",
+  "abbreviation": "B04",
+  "leagues": [
+   "ger.1",
+   "uefa.europa"
+  ],
+  "color": "DA0308",
+  "alternateColor": "f9fbfc",
+  "logo": true
+ },
+ {
+  "id": "132",
+  "name": "Bayern Munich",
+  "shortName": "Bayern",
+  "abbreviation": "MUN",
+  "leagues": [
+   "ger.1",
+   "uefa.champions"
+  ],
+  "color": "dc052d",
+  "alternateColor": "1a1a1a",
+  "logo": true
+ },
+ {
+  "id": "133",
+  "name": "Schalke 04",
+  "shortName": "Schalke",
+  "abbreviation": "S04",
+  "leagues": [
+   "ger.1"
+  ],
+  "color": "0000dd",
+  "alternateColor": "ffffff",
+  "logo": true
+ },
+ {
+  "id": "134",
+  "name": "VfB Stuttgart",
+  "shortName": "Stuttgart",
+  "abbreviation": "VFB",
+  "leagues": [
+   "ger.1",
+   "uefa.champions"
+  ],
+  "color": "ffffff",
+  "alternateColor": "DA0308",
+  "logo": true
+ },
+ {
+  "id": "137",
+  "name": "Werder Bremen",
+  "shortName": "Bremen",
+  "abbreviation": "SVW",
+  "leagues": [
+   "ger.1"
+  ],
+  "color": "03915c",
+  "alternateColor": "ffffff",
+  "logo": true
+ },
+ {
+  "id": "140",
+  "name": "AZ Alkmaar",
+  "shortName": "AZ Alkmaar",
+  "abbreviation": "AZ",
+  "leagues": [
+   "uefa.europa"
+  ],
+  "color": "ef2f24",
+  "alternateColor": "ffffff",
+  "logo": true
+ },
+ {
+  "id": "142",
+  "name": "Feyenoord Rotterdam",
+  "shortName": "Feyenoord",
+  "abbreviation": "FEY",
+  "leagues": [
+   "uefa.champions"
+  ],
+  "color": "ef2f24",
+  "alternateColor": "000000",
+  "logo": true
+ },
+ {
+  "id": "147",
+  "name": "NEC Nijmegen",
+  "shortName": "NEC",
+  "abbreviation": "NEC",
+  "leagues": [
+   "uefa.europa"
+  ],
+  "color": "ef2f24",
+  "alternateColor": "84aee7",
+  "logo": true
+ },
+ {
+  "id": "148",
+  "name": "PSV Eindhoven",
+  "shortName": "PSV",
+  "abbreviation": "PSV",
+  "leagues": [
+   "uefa.champions"
+  ],
+  "color": "ef2f24",
+  "alternateColor": "000000",
+  "logo": true
+ },
+ {
+  "id": "160",
+  "name": "Paris Saint-Germain",
+  "shortName": "PSG",
+  "abbreviation": "PSG",
+  "leagues": [
+   "fra.1",
+   "uefa.champions"
+  ],
+  "color": "011F68",
+  "alternateColor": "ffffff",
+  "logo": true
+ },
+ {
+  "id": "166",
+  "name": "Lille",
+  "shortName": "Lille",
+  "abbreviation": "LILL",
+  "leagues": [
+   "fra.1",
+   "uefa.champions"
+  ],
+  "color": "c2051b",
+  "alternateColor": "e2d3d7",
+  "logo": true
+ },
+ {
+  "id": "167",
+  "name": "Lyon",
+  "shortName": "Lyon",
+  "abbreviation": "LYON",
+  "leagues": [
+   "fra.1",
+   "uefa.europa"
+  ],
+  "color": "ffffff",
+  "alternateColor": "1a1a1a",
+  "logo": true
+ },
+ {
+  "id": "169",
+  "name": "Stade Rennais",
+  "shortName": "Rennes",
+  "abbreviation": "REN",
+  "leagues": [
+   "fra.1",
+   "uefa.europa"
+  ],
+  "color": "ef2f24",
+  "alternateColor": "ffffff",
+  "logo": true
+ },
+ {
+  "id": "170",
+  "name": "Troyes",
+  "shortName": "Troyes",
+  "abbreviation": "TRY",
+  "leagues": [
+   "fra.1"
+  ],
+  "color": "0000bf",
+  "alternateColor": "fafafc",
+  "logo": true
+ },
+ {
+  "id": "172",
+  "name": "AJ Auxerre",
+  "shortName": "Auxerre",
+  "abbreviation": "AUX",
+  "leagues": [
+   "fra.1"
+  ],
+  "color": "ffffff",
+  "alternateColor": "1a1a1a",
+  "logo": true
+ },
+ {
+  "id": "174",
+  "name": "AS Monaco",
+  "shortName": "Monaco",
+  "abbreviation": "MON",
+  "leagues": [
+   "fra.1"
+  ],
+  "color": "E91514",
+  "alternateColor": "004c37",
+  "logo": true
+ },
+ {
+  "id": "175",
+  "name": "Lens",
+  "shortName": "Lens",
+  "abbreviation": "RCL",
+  "leagues": [
+   "fra.1",
+   "uefa.champions"
+  ],
+  "color": "E91514",
+  "alternateColor": "004c37",
+  "logo": true
+ },
+ {
+  "id": "176",
+  "name": "Marseille",
+  "shortName": "Marseille",
+  "abbreviation": "OLM",
+  "leagues": [
+   "fra.1",
+   "uefa.europa"
+  ],
+  "color": "ffffff",
+  "alternateColor": "011F68",
+  "logo": true
+ },
+ {
+  "id": "179",
+  "name": "Toulouse",
+  "shortName": "Toulouse",
+  "abbreviation": "TOU",
+  "leagues": [
+   "fra.1"
+  ],
+  "color": "560080",
+  "alternateColor": "ffff00",
+  "logo": true
+ },
+ {
+  "id": "180",
+  "name": "Strasbourg",
+  "shortName": "Strasbourg",
+  "abbreviation": "STR",
+  "leagues": [
+   "fra.1"
+  ],
+  "color": "0000bf",
+  "alternateColor": "ffffff",
+  "logo": true
+ },
+ {
+  "id": "239",
+  "name": "Torino",
+  "shortName": "Torino",
+  "abbreviation": "TOR",
+  "leagues": [
+   "ita.1"
+  ],
+  "color": "9f0000",
+  "alternateColor": "ffffff",
+  "logo": true
+ },
+ {
+  "id": "243",
+  "name": "Sevilla",
+  "shortName": "Sevilla",
+  "abbreviation": "SEV",
+  "leagues": [
+   "esp.1"
+  ],
+  "color": "ffffff",
+  "alternateColor": "d81022",
+  "logo": true
+ },
+ {
+  "id": "244",
+  "name": "Real Betis",
+  "shortName": "Betis",
+  "abbreviation": "BET",
+  "leagues": [
+   "esp.1",
+   "uefa.champions"
+  ],
+  "color": "288A00",
+  "alternateColor": "0A422D",
+  "logo": true
+ },
+ {
+  "id": "256",
+  "name": "Celtic",
+  "shortName": "Celtic",
+  "abbreviation": "CEL",
+  "leagues": [
+   "uefa.europa"
+  ],
+  "color": "009921",
+  "alternateColor": "f9e900",
+  "logo": true
+ },
+ {
+  "id": "268",
+  "name": "Borussia Mönchengladbach",
+  "shortName": "Gladbach",
+  "abbreviation": "BMG",
+  "leagues": [
+   "ger.1"
+  ],
+  "color": "ffffff",
+  "alternateColor": "03915c",
+  "logo": true
+ },
+ {
+  "id": "273",
+  "name": "Lorient",
+  "shortName": "Lorient",
+  "abbreviation": "LOR",
+  "leagues": [
+   "fra.1"
+  ],
+  "color": "f46100",
+  "alternateColor": "1a1a1a",
+  "logo": true
+ },
+ {
+  "id": "306",
+  "name": "Hull City",
+  "shortName": "Hull",
+  "abbreviation": "HUL",
+  "leagues": [
+   "eng.1"
+  ],
+  "color": "f28800",
+  "alternateColor": "ffffff",
+  "logo": true
+ },
+ {
+  "id": "331",
+  "name": "Brighton & Hove Albion",
+  "shortName": "Brighton",
+  "abbreviation": "BHA",
+  "leagues": [
+   "eng.1"
+  ],
+  "color": "0606fa",
+  "alternateColor": "005F60",
+  "logo": true
+ },
+ {
+  "id": "337",
+  "name": "Brentford",
+  "shortName": "Brentford",
+  "abbreviation": "BRE",
+  "leagues": [
+   "eng.1"
+  ],
+  "color": "f42727",
+  "alternateColor": "0f1c3f",
+  "logo": true
+ },
+ {
+  "id": "349",
+  "name": "AFC Bournemouth",
+  "shortName": "Bournemouth",
+  "abbreviation": "BOU",
+  "leagues": [
+   "eng.1",
+   "uefa.europa"
+  ],
+  "color": "f42727",
+  "alternateColor": "B57EDC",
+  "logo": true
+ },
+ {
+  "id": "357",
+  "name": "Leeds United",
+  "shortName": "Leeds",
+  "abbreviation": "LEE",
+  "leagues": [
+   "eng.1"
+  ],
+  "color": "ffffff",
+  "alternateColor": "FFCD00",
+  "logo": true
+ },
+ {
+  "id": "359",
+  "name": "Arsenal",
+  "shortName": "Arsenal",
+  "abbreviation": "ARS",
+  "leagues": [
+   "eng.1",
+   "uefa.champions"
+  ],
+  "color": "e20520",
+  "alternateColor": "003399",
+  "logo": true
+ },
+ {
+  "id": "360",
+  "name": "Manchester United",
+  "shortName": "Man United",
+  "abbreviation": "MAN",
+  "leagues": [
+   "eng.1",
+   "uefa.champions"
+  ],
+  "color": "da020e",
+  "alternateColor": "4169E1",
+  "logo": true
+ },
+ {
+  "id": "361",
+  "name": "Newcastle United",
+  "shortName": "Newcastle",
+  "abbreviation": "NEW",
+  "leagues": [
+   "eng.1"
+  ],
+  "color": "000000",
+  "alternateColor": "0B1B3D",
+  "logo": true
+ },
+ {
+  "id": "362",
+  "name": "Aston Villa",
+  "shortName": "Aston Villa",
+  "abbreviation": "AVL",
+  "leagues": [
+   "eng.1",
+   "uefa.champions"
+  ],
+  "color": "660e36",
+  "alternateColor": "000000",
+  "logo": true
+ },
+ {
+  "id": "363",
+  "name": "Chelsea",
+  "shortName": "Chelsea",
+  "abbreviation": "CHE",
+  "leagues": [
+   "eng.1"
+  ],
+  "color": "144992",
+  "alternateColor": "FFFFFF",
+  "logo": true
+ },
+ {
+  "id": "364",
+  "name": "Liverpool",
+  "shortName": "Liverpool",
+  "abbreviation": "LIV",
+  "leagues": [
+   "eng.1",
+   "uefa.champions"
+  ],
+  "color": "d11317",
+  "alternateColor": "FFFFFF",
+  "logo": true
+ },
+ {
+  "id": "366",
+  "name": "Sunderland",
+  "shortName": "Sunderland",
+  "abbreviation": "SUN",
+  "leagues": [
+   "eng.1",
+   "uefa.europa"
+  ],
+  "color": "EB172B",
+  "alternateColor": "FFB6C1",
+  "logo": true
+ },
+ {
+  "id": "367",
+  "name": "Tottenham Hotspur",
+  "shortName": "Spurs",
+  "abbreviation": "TOT",
+  "leagues": [
+   "eng.1"
+  ],
+  "color": "ffffff",
+  "alternateColor": "0B1426",
+  "logo": true
+ },
+ {
+  "id": "368",
+  "name": "Everton",
+  "shortName": "Everton",
+  "abbreviation": "EVE",
+  "leagues": [
+   "eng.1"
+  ],
+  "color": "0606fa",
+  "alternateColor": "ffffff",
+  "logo": true
+ },
+ {
+  "id": "370",
+  "name": "Fulham",
+  "shortName": "Fulham",
+  "abbreviation": "FUL",
+  "leagues": [
+   "eng.1"
+  ],
+  "color": "ffffff",
+  "alternateColor": "CC0000",
+  "logo": true
+ },
+ {
+  "id": "373",
+  "name": "Ipswich Town",
+  "shortName": "Ipswich",
+  "abbreviation": "IPS",
+  "leagues": [
+   "eng.1"
+  ],
+  "color": "0000fa",
+  "alternateColor": "F5F2DC",
+  "logo": true
+ },
+ {
+  "id": "382",
+  "name": "Manchester City",
+  "shortName": "Man City",
+  "abbreviation": "MNC",
+  "leagues": [
+   "eng.1",
+   "uefa.champions"
+  ],
+  "color": "99c5ea",
+  "alternateColor": "000000",
+  "logo": true
+ },
+ {
+  "id": "384",
+  "name": "Crystal Palace",
+  "shortName": "C Palace",
+  "abbreviation": "CRY",
+  "leagues": [
+   "eng.1",
+   "uefa.europa"
+  ],
+  "color": "0202fb",
+  "alternateColor": "000000",
+  "logo": true
+ },
+ {
+  "id": "388",
+  "name": "Coventry City",
+  "shortName": "Coventry",
+  "abbreviation": "COV",
+  "leagues": [
+   "eng.1"
+  ],
+  "color": "87cced",
+  "alternateColor": "ffffff",
+  "logo": true
+ },
+ {
+  "id": "393",
+  "name": "Nottingham Forest",
+  "shortName": "Nottm Forest",
+  "abbreviation": "NFO",
+  "leagues": [
+   "eng.1"
+  ],
+  "color": "c8102e",
+  "alternateColor": "1B3624",
+  "logo": true
+ },
+ {
+  "id": "432",
+  "name": "Galatasaray",
+  "shortName": "Galatasaray",
+  "abbreviation": "GAL",
+  "leagues": [
+   "uefa.champions"
+  ],
+  "color": "aa0031",
+  "alternateColor": "ffffff",
+  "logo": true
+ },
+ {
+  "id": "433",
+  "name": "Sparta Prague",
+  "shortName": "Sparta",
+  "abbreviation": "SPP",
+  "leagues": [
+   "uefa.europa"
+  ],
+  "color": "791b29",
+  "alternateColor": "ffffff",
+  "logo": true
+ },
+ {
+  "id": "435",
+  "name": "Olympiacos",
+  "shortName": "Olympiacos",
+  "abbreviation": "OLY",
+  "leagues": [
+   "uefa.europa"
+  ],
+  "color": "d01729",
+  "alternateColor": "0202fb",
+  "logo": true
+ },
+ {
+  "id": "436",
+  "name": "Fenerbahce",
+  "shortName": "Fenerbahce",
+  "abbreviation": "FEN",
+  "leagues": [
+   "uefa.champions"
+  ],
+  "color": "ffff00",
+  "alternateColor": "ffffff",
+  "logo": true
+ },
+ {
+  "id": "437",
+  "name": "FC Porto",
+  "shortName": "FC Porto",
+  "abbreviation": "FCP",
+  "leagues": [
+   "uefa.champions"
+  ],
+  "color": "0000dd",
+  "alternateColor": "ffa000",
+  "logo": true
+ },
+ {
+  "id": "441",
+  "name": "Anderlecht",
+  "shortName": "Anderlecht",
+  "abbreviation": "AND",
+  "leagues": [
+   "uefa.europa"
+  ],
+  "color": "695196",
+  "alternateColor": "fafafc",
+  "logo": true
+ },
+ {
+  "id": "490",
+  "name": "Levski Sofia",
+  "shortName": "Levski Sofia",
+  "abbreviation": "LEV",
+  "leagues": [
+   "uefa.europa"
+  ],
+  "color": "6182cf",
+  "alternateColor": "fcfcfc",
+  "logo": true
+ },
+ {
+  "id": "493",
+  "name": "Shakhtar Donetsk",
+  "shortName": "Shakhtar",
+  "abbreviation": "SHK",
+  "leagues": [
+   "uefa.champions"
+  ],
+  "color": "ff5900",
+  "alternateColor": "1a1a1a",
+  "logo": true
+ },
+ {
+  "id": "494",
+  "name": "Slavia Prague",
+  "shortName": "Slavia Prague",
+  "abbreviation": "SLP",
+  "leagues": [
+   "uefa.champions"
+  ],
+  "color": "dc1f26",
+  "alternateColor": "81c0ff",
+  "logo": true
+ },
+ {
+  "id": "510",
+  "name": "Viking FK",
+  "shortName": "Viking FK",
+  "abbreviation": "VIK",
+  "leagues": [
+   "uefa.champions"
+  ],
+  "color": "000080",
+  "alternateColor": "ffffff",
+  "logo": true
+ },
+ {
+  "id": "521",
+  "name": "Slovan Bratislava",
+  "shortName": "S Bratislava",
+  "abbreviation": "SLB",
+  "leagues": [
+   "uefa.champions"
+  ],
+  "color": "81c0ff",
+  "alternateColor": "1a1a1a",
+  "logo": true
+ },
+ {
+  "id": "570",
+  "name": "Club Brugge",
+  "shortName": "Club Brugge",
+  "abbreviation": "BRU",
+  "leagues": [
+   "uefa.champions"
+  ],
+  "color": "0081ff",
+  "alternateColor": "ffffff",
+  "logo": true
+ },
+ {
+  "id": "597",
+  "name": "Dinamo Zagreb",
+  "shortName": "Dinamo Zagreb",
+  "abbreviation": "DZG",
+  "leagues": [
+   "uefa.europa"
+  ],
+  "color": "0000bb",
+  "alternateColor": "ccff00",
+  "logo": true
+ },
+ {
+  "id": "598",
+  "name": "1. FC Union Berlin",
+  "shortName": "Union Berlin",
+  "abbreviation": "FCU",
+  "leagues": [
+   "ger.1"
+  ],
+  "color": "DA0308",
+  "alternateColor": "d4d4d4",
+  "logo": true
+ },
+ {
+  "id": "617",
+  "name": "Omonia Nicosia",
+  "shortName": "Omonia",
+  "abbreviation": "OMON",
+  "leagues": [
+   "uefa.europa"
+  ],
+  "color": "025719",
+  "alternateColor": "ffffff",
+  "logo": true
+ },
+ {
+  "id": "622",
+  "name": "Ferencvaros",
+  "shortName": "Ferencvaros",
+  "abbreviation": "FER",
+  "leagues": [
+   "uefa.europa"
+  ],
+  "color": "239B56",
+  "alternateColor": "000000",
+  "logo": true
+ },
+ {
+  "id": "887",
+  "name": "AEK Athens",
+  "shortName": "AEK Athens",
+  "abbreviation": "AEK",
+  "leagues": [
+   "uefa.champions"
+  ],
+  "color": "ffff00",
+  "alternateColor": "000000",
+  "logo": true
+ },
+ {
+  "id": "987",
+  "name": "Lillestrom",
+  "shortName": "Lillestrom",
+  "abbreviation": "LSK",
+  "leagues": [
+   "uefa.europa"
+  ],
+  "color": "e8e337",
+  "alternateColor": "FF0000",
+  "logo": true
+ },
+ {
+  "id": "1010",
+  "name": "OFI Crete",
+  "shortName": "OFI Crete",
+  "abbreviation": "OFI",
+  "leagues": [
+   "uefa.europa"
+  ],
+  "color": "FFFFFF",
+  "alternateColor": "000000",
+  "logo": true
+ },
+ {
+  "id": "1068",
+  "name": "Atlético Madrid",
+  "shortName": "Atlético",
+  "abbreviation": "ATM",
+  "leagues": [
+   "esp.1",
+   "uefa.champions"
+  ],
+  "color": "ca3624",
+  "alternateColor": "000000",
+  "logo": true
+ },
+ {
+  "id": "1538",
+  "name": "Levante",
+  "shortName": "Levante",
+  "abbreviation": "LEV",
+  "leagues": [
+   "esp.1"
+  ],
+  "color": "C8142F",
+  "alternateColor": "000000",
+  "logo": true
+ },
+ {
+  "id": "1895",
+  "name": "Besiktas",
+  "shortName": "Besiktas",
+  "abbreviation": "BES",
+  "leagues": [
+   "uefa.europa"
+  ],
+  "color": "ffffff",
+  "alternateColor": "1a1a1a",
+  "logo": true
+ },
+ {
+  "id": "1929",
+  "name": "Benfica",
+  "shortName": "Benfica",
+  "abbreviation": "SLB",
+  "leagues": [
+   "uefa.europa"
+  ],
+  "color": "ca281d",
+  "alternateColor": "1a1a1a",
+  "logo": true
+ },
+ {
+  "id": "2250",
+  "name": "Sporting CP",
+  "shortName": "Sporting",
+  "abbreviation": "SCP",
+  "leagues": [
+   "uefa.champions"
+  ],
+  "color": "008127",
+  "alternateColor": "ffffff",
+  "logo": true
+ },
+ {
+  "id": "2502",
+  "name": "Nice",
+  "shortName": "Nice",
+  "abbreviation": "NICE",
+  "leagues": [
+   "fra.1"
+  ],
+  "color": "ef2f24",
+  "alternateColor": "e2d3d7",
+  "logo": true
+ },
+ {
+  "id": "2572",
+  "name": "Como",
+  "shortName": "Como",
+  "abbreviation": "COMO",
+  "leagues": [
+   "ita.1",
+   "uefa.champions"
+  ],
+  "color": "4169E1",
+  "alternateColor": "FFFFFF",
+  "logo": true
+ },
+ {
+  "id": "2697",
+  "name": "Le Mans",
+  "shortName": "Le Mans",
+  "abbreviation": "MNS",
+  "leagues": [
+   "fra.1"
+  ],
+  "color": "d62b11",
+  "alternateColor": "d62b11",
+  "logo": true
+ },
+ {
+  "id": "2790",
+  "name": "RB Salzburg",
+  "shortName": "RB Salzburg",
+  "abbreviation": "SLZ",
+  "leagues": [
+   "uefa.europa"
+  ],
+  "color": "d82c3a",
+  "alternateColor": "052a87",
+  "logo": true
+ },
+ {
+  "id": "2922",
+  "name": "Getafe",
+  "shortName": "Getafe",
+  "abbreviation": "GET",
+  "leagues": [
+   "esp.1"
+  ],
+  "color": "0000ff",
+  "alternateColor": "7F1734",
+  "logo": true
+ },
+ {
+  "id": "2925",
+  "name": "Cagliari",
+  "shortName": "Cagliari",
+  "abbreviation": "CAG",
+  "leagues": [
+   "ita.1"
+  ],
+  "color": "282846",
+  "alternateColor": "ffffff",
+  "logo": true
+ },
+ {
+  "id": "2950",
+  "name": "Mainz",
+  "shortName": "Mainz",
+  "abbreviation": "M05",
+  "leagues": [
+   "ger.1"
+  ],
+  "color": "DA0308",
+  "alternateColor": "000055",
+  "logo": true
+ },
+ {
+  "id": "2980",
+  "name": "Bodo/Glimt",
+  "shortName": "Bodo/Glimt",
+  "abbreviation": "BODO",
+  "leagues": [
+   "uefa.champions"
+  ],
+  "color": "FCEE33",
+  "alternateColor": "ffffff",
+  "logo": true
+ },
+ {
+  "id": "2990",
+  "name": "Lech Poznan",
+  "shortName": "Lech Poznan",
+  "abbreviation": "LECH",
+  "leagues": [
+   "uefa.europa"
+  ],
+  "color": "004B92",
+  "alternateColor": "ffffff",
+  "logo": true
+ },
+ {
+  "id": "3236",
+  "name": "Le Havre AC",
+  "shortName": "Le Havre AC",
+  "abbreviation": "HAC",
+  "leagues": [
+   "fra.1"
+  ],
+  "color": "011F68",
+  "alternateColor": "ededed",
+  "logo": true
+ },
+ {
+  "id": "3263",
+  "name": "Genoa",
+  "shortName": "Genoa",
+  "abbreviation": "GEN",
+  "leagues": [
+   "ita.1"
+  ],
+  "color": "08305d",
+  "alternateColor": "ffffff",
+  "logo": true
+ },
+ {
+  "id": "3307",
+  "name": "SC Paderborn 07",
+  "shortName": "Paderborn",
+  "abbreviation": "SCP",
+  "leagues": [
+   "ger.1"
+  ],
+  "color": "0000dd",
+  "alternateColor": "ffffff",
+  "logo": true
+ },
+ {
+  "id": "3362",
+  "name": "NK Celje",
+  "shortName": "NK Celje",
+  "abbreviation": "NKC",
+  "leagues": [
+   "uefa.europa"
+  ],
+  "color": "000099",
+  "alternateColor": "ff6600",
+  "logo": true
+ },
+ {
+  "id": "3746",
+  "name": "SK Sturm Graz",
+  "shortName": "Sturm Graz",
+  "abbreviation": "STG",
+  "leagues": [
+   "uefa.europa"
+  ],
+  "color": "ffffff",
+  "alternateColor": "000000",
+  "logo": true
+ },
+ {
+  "id": "3751",
+  "name": "Elche",
+  "shortName": "Elche",
+  "abbreviation": "ELC",
+  "leagues": [
+   "esp.1"
+  ],
+  "color": "288A00",
+  "alternateColor": "4B2B67",
+  "logo": true
+ },
+ {
+  "id": "3841",
+  "name": "FC Augsburg",
+  "shortName": "Augsburg",
+  "abbreviation": "FCA",
+  "leagues": [
+   "ger.1"
+  ],
+  "color": "ffffff",
+  "alternateColor": "03915c",
+  "logo": true
+ },
+ {
+  "id": "3997",
+  "name": "Sassuolo",
+  "shortName": "Sassuolo",
+  "abbreviation": "SAS",
+  "leagues": [
+   "ita.1"
+  ],
+  "color": "0fa653",
+  "alternateColor": "ADAEB0",
+  "logo": true
+ },
+ {
+  "id": "4007",
+  "name": "Monza",
+  "shortName": "Monza",
+  "abbreviation": "MON",
+  "leagues": [
+   "ita.1"
+  ],
+  "color": "C8142F",
+  "alternateColor": "ffffff",
+  "logo": true
+ },
+ {
+  "id": "4057",
+  "name": "Frosinone",
+  "shortName": "Frosinone",
+  "abbreviation": "FRO",
+  "leagues": [
+   "ita.1"
+  ],
+  "color": "FACF08",
+  "alternateColor": "ffffff",
+  "logo": true
+ },
+ {
+  "id": "4411",
+  "name": "LASK Linz",
+  "shortName": "LASK Linz",
+  "abbreviation": "LAS",
+  "leagues": [
+   "uefa.champions"
+  ],
+  "color": "ffffff",
+  "alternateColor": "000000",
+  "logo": true
+ },
+ {
+  "id": "5807",
+  "name": "Union St.-Gilloise",
+  "shortName": "Union SG",
+  "abbreviation": "USG",
+  "leagues": [
+   "uefa.europa"
+  ],
+  "color": "FCEE33",
+  "alternateColor": "ffffff",
+  "logo": true
+ },
+ {
+  "id": "6851",
+  "name": "Paris FC",
+  "shortName": "Paris FC",
+  "abbreviation": "PAR",
+  "leagues": [
+   "fra.1"
+  ],
+  "color": "000000",
+  "alternateColor": "000000",
+  "logo": true
+ },
+ {
+  "id": "6997",
+  "name": "Brest",
+  "shortName": "Brest",
+  "abbreviation": "BRE",
+  "leagues": [
+   "fra.1"
+  ],
+  "color": "ef2f24",
+  "alternateColor": "ffffff",
+  "logo": true
+ },
+ {
+  "id": "7868",
+  "name": "Angers",
+  "shortName": "Angers",
+  "abbreviation": "ANG",
+  "leagues": [
+   "fra.1"
+  ],
+  "color": "1a1a1a",
+  "alternateColor": "ffffff",
+  "logo": true
+ },
+ {
+  "id": "7911",
+  "name": "TSG Hoffenheim",
+  "shortName": "Hoffenheim",
+  "abbreviation": "TSG",
+  "leagues": [
+   "ger.1",
+   "uefa.europa"
+  ],
+  "color": "003399",
+  "alternateColor": "000055",
+  "logo": true
+ },
+ {
+  "id": "10388",
+  "name": "SV Elversberg",
+  "shortName": "Elversberg",
+  "abbreviation": "ELV",
+  "leagues": [
+   "ger.1"
+  ],
+  "color": "000000",
+  "alternateColor": "FFFFFF",
+  "logo": true
+ },
+ {
+  "id": "11420",
+  "name": "RB Leipzig",
+  "shortName": "RB Leipzig",
+  "abbreviation": "RBL",
+  "leagues": [
+   "ger.1",
+   "uefa.champions"
+  ],
+  "color": "ffffff",
+  "alternateColor": "740c14",
+  "logo": true
+ },
+ {
+  "id": "11505",
+  "name": "Jagiellonia Bialystok",
+  "shortName": "Jagiellonia ",
+  "abbreviation": "JAG",
+  "leagues": [
+   "uefa.europa"
+  ],
+  "color": "FFED00",
+  "alternateColor": "D81921",
+  "logo": true
+ },
+ {
+  "id": "11706",
+  "name": "Viktoria Plzen",
+  "shortName": "Viktoria Plzen",
+  "abbreviation": "PLZ",
+  "leagues": [
+   "uefa.europa"
+  ],
+  "color": "0000dd",
+  "alternateColor": "000000",
+  "logo": true
+ },
+ {
+  "id": "13083",
+  "name": "Hapoel Be'er",
+  "shortName": "Hapoel Be'er",
+  "abbreviation": "HBE",
+  "leagues": [
+   "uefa.europa"
+  ],
+  "color": "fd0000",
+  "alternateColor": "C60000",
+  "logo": true
+ },
+ {
+  "id": "17530",
+  "name": "Venezia",
+  "shortName": "Venezia",
+  "abbreviation": "VEN",
+  "leagues": [
+   "ita.1"
+  ],
+  "color": "000000",
+  "alternateColor": "ffffff",
+  "logo": true
+ },
+ {
+  "id": "20024",
+  "name": "Ararat-Armenia",
+  "shortName": "Ararat-Armenia",
+  "abbreviation": "ARA",
+  "leagues": [
+   "uefa.europa"
+  ],
+  "color": "000000",
+  "alternateColor": "C60000",
+  "logo": true
+ },
+ {
+  "id": "21615",
+  "name": "Torreense",
+  "shortName": "Torreense",
+  "abbreviation": "TOR",
+  "leagues": [
+   "uefa.europa"
+  ],
+  "color": "950025",
+  "alternateColor": "293D87",
+  "logo": true
+ },
+ {
+  "id": "21922",
+  "name": "Sabah FK",
+  "shortName": "Sabah",
+  "abbreviation": "SAB",
+  "leagues": [
+   "uefa.champions"
+  ],
+  "color": "000000",
+  "alternateColor": "FF1493",
+  "logo": true
+ }
+]

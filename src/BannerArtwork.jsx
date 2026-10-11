@@ -1,7 +1,7 @@
 import React,{useCallback,useEffect,useState} from 'react';
 import {QualityImage} from './QualityImage.jsx';
 import {artworkURL} from './artwork.js';
-import {mlbMatchup} from './mlbArtwork.js';
+import {matchupFor} from './matchup.js';
 import {MatchupArtwork} from './MatchupArtwork.jsx';
 
 function useArtworkState(src){
@@ -12,7 +12,7 @@ function useArtworkState(src){
 }
 
 export function BannerArtwork({item,metadataPending=false,variant='focus',className,onState,tint}){
- const live=item.kind==='iptv',focus=variant==='focus',matchup=live?mlbMatchup(item):null;
+ const live=item.kind==='iptv',focus=variant==='focus',matchup=live?matchupFor(item):null;
  const backdrop=live?(focus?undefined:item.imageGeneric?undefined:artworkURL(item.image)):artworkURL(item.backdropImage,true);
  const [backdropState,backdropChanged]=useArtworkState(backdrop);
  const ready=backdropState==='ready';

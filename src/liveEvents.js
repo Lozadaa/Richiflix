@@ -1,6 +1,7 @@
 import {eventInstant,eventDisplayTitle,eventTimeShort,eventDay,eventCountdown} from './eventTime.js';
 import {catalogueCategories} from './catalogueCategories.js';
 import {mlbMatchup} from './mlbArtwork.js';
+import {footballMatchup,footballLeague,FOOTBALL_LEAGUE_LABELS} from './footballArtwork.js';
 import {displayText} from './displayText.js';
 
 // Fase L1: one card per match. Provider signals (ES/EN, several sources) become
@@ -15,15 +16,18 @@ export function feedLanguage(item){
  const title=displayText(item.title),all=words(item);
  return /spanish|espa[nñ]ol/i.test(all)||/\b(?:ES|LAT)\b/.test(title)?'es':/english|ingl[eé]s/i.test(all)||/\b(?:EN|ENG)\b/.test(title)?'en':null;
 }
-const duration=item=>BASEBALL.test(words(item))||mlbMatchup(item)?3.5*H:SOCCER.test(words(item))?2.25*H:3*H;
+const duration=item=>BASEBALL.test(words(item))||mlbMatchup(item)?3.5*H:SOCCER.test(words(item))||footballMatchup(item)?2.25*H:3*H;
 
 export function eventKey(item){
  if(item?.kind!=='iptv')return null;
- if(item.eventOfficialId)return `mlb:${item.eventOfficialId}`;
+ // Official ids: MLB gamePk (number) or ESPN's `futbol:<id>`.
+ if(item.eventOfficialId)return typeof item.eventOfficialId==='string'?item.eventOfficialId:`mlb:${item.eventOfficialId}`;
  const time=eventInstant(item.eventStartsAt);
  if(time===null&&!/\bvs\b/i.test(displayText(item.title)))return null;
  const day=time===null?'':eventDay(time).key,matchup=mlbMatchup(item);
  if(matchup?.teams.length===2)return `mlb:${matchup.teams.map(team=>team.id).sort((a,b)=>a-b).join('-')}:${day}`;
+ const football=matchup?null:footballMatchup(item);
+ if(football?.teams.length===2)return `futbol:${football.teams.map(team=>team.espnId).sort((a,b)=>a-b).join('-')}:${day}`;
  const name=normal(item.eventDisplayTitle||eventDisplayTitle(item));return name?`${name}:${day}`:null;
 }
 
@@ -33,7 +37,7 @@ function createEvent(key,items){
   .map(({index,art,...feed})=>{let label=[feed.language?.toUpperCase(),feed.source].filter(Boolean).join(' · ')||'Señal';const used=(labels.get(label)||0)+1;labels.set(label,used);if(used>1)label+=` ${used}`;return {...feed,label};});
  const preferred=feeds[0].item,official=items.find(item=>item.eventOfficialId)||preferred;
  // The event keeps every field of its preferred signal so Card, ExpandedCard, FocusStage and policies work unchanged.
- return {...preferred,id:`event:${key}`,isEvent:true,key,title:preferred.eventDisplayTitle||eventDisplayTitle(preferred),eventStartsAt:official.eventStartsAt,eventScheduleState:official.eventScheduleState||null,eventOfficialId:official.eventOfficialId||null,eventDetail:official.eventDetail||null,eventScore:official.eventScore||null,eventDuration:duration(preferred),feeds,preferredFeedId:feeds[0].id,searchText:[...new Set(items.map(item=>displayText(item.title)))].join(' ')};
+ return {...preferred,id:`event:${key}`,isEvent:true,key,title:preferred.eventDisplayTitle||eventDisplayTitle(preferred),eventStartsAt:official.eventStartsAt,eventScheduleState:official.eventScheduleState||null,eventOfficialId:official.eventOfficialId||null,eventDetail:official.eventDetail||null,eventScore:official.eventScore||null,eventLeague:official.eventLeague||null,eventDuration:duration(preferred),feeds,preferredFeedId:feeds[0].id,searchText:[...new Set(items.map(item=>displayText(item.title)))].join(' ')};
 }
 
 export function groupLiveEvents(channels){
@@ -101,15 +105,19 @@ export function preferredFeed(event){const id=chosen.get(event.id)??event.prefer
 // any other value is a provider category. Pure; App memoizes it per catalogue, chip and phase/day change.
 const LIVE_CHIP_RULES=[['Deportes',/sport|deport|futbol|fútbol|mlb|nba|nfl|ufc|box/i],['Noticias',/news|notici/i],['Cine',/cine|movie|pel[ií]cul/i],['Infantil',/kids|infantil|cartoon|niñ/i],['Música',/music|m[uú]sica/i],['Documentales',/docu/i]];
 export const LIVE_HUB_CHIPS=['Eventos hoy',...LIVE_CHIP_RULES.map(([name])=>name)];
+// «Fútbol» page: one chip per league; an event matches by its official, named or shared league.
+export const FOOTBALL_HUB_CHIPS=['Eventos hoy',...FOOTBALL_LEAGUE_LABELS];
+const leagueOf=item=>item.isEvent?footballLeague(item)||item.feeds.map(feed=>footballLeague(feed.item)).find(Boolean)||null:footballLeague(item);
 const itemCategories=item=>item.isEvent?item.feeds.flatMap(feed=>catalogueCategories(feed.item)):catalogueCategories(item);
 // null for «Todas»: no filter. A function for a fixed chip or provider category.
 function liveCategoryTest(category){
  if(!category||category==='Todas')return null;
  if(category==='Eventos hoy')return item=>Boolean(item.isEvent);
+ if(FOOTBALL_LEAGUE_LABELS.includes(category))return item=>leagueOf(item)===category;
  const rule=LIVE_CHIP_RULES.find(([name])=>name===category)?.[1];
  return rule?item=>itemCategories(item).some(name=>rule.test(name)):item=>itemCategories(item).includes(category);
 }
-export const isLiveChip=category=>category==='Eventos hoy'||LIVE_CHIP_RULES.some(([name])=>name===category);
+export const isLiveChip=category=>category==='Eventos hoy'||FOOTBALL_LEAGUE_LABELS.includes(category)||LIVE_CHIP_RULES.some(([name])=>name===category);
 export function liveChipItems(items,category){const test=isLiveChip(category)&&liveCategoryTest(category);return test?items.filter(test):null;}
 export function liveHubRows({events,channels,category='Todas',favorites=[],now=Date.now()}){
  const test=liveCategoryTest(category),saved=new Set(favorites),today=eventDay(now).day,buckets={live:[],today:[],tomorrow:[],later:[],ended:[]};let count=0;

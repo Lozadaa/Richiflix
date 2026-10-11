@@ -1,22 +1,23 @@
 import React,{useLayoutEffect,useRef,useState} from 'react';
 import {QualityImage} from './QualityImage.jsx';
-import {scoreLabel} from './mlbSchedule.js';
 import {eventPhase} from './liveEvents.js';
-import {useGameScore} from './useEventSchedule.js';
+import {useGameScore} from './gameScores.js';
+import {scoreLabelFor,officialGameId} from './matchup.js';
 import './mlbScore.css';
 
 // Fase L5: Card and ExpandedCard pass only the matchup, so the game comes from the nearest
-// `data-content-id` (`event:mlb:<gamePk>`); the banner passes its item. Text only, nothing animates.
+// `data-content-id` (`event:mlb:<gamePk>`, `event:futbol:<espnId>`); the banner passes its item. Text only, nothing animates.
+// Football clubs bring their own crest and league line; MLB keeps its city line and local SVG marks.
 export function MatchupArtwork({matchup,wide=false,item}){
  const [first,second]=matchup.teams,root=useRef(),[owner,setOwner]=useState(null);
- useLayoutEffect(()=>{if(!item)setOwner(Number(/^event:mlb:(\d+)$/.exec(root.current?.closest('[data-content-id]')?.dataset.contentId||'')?.[1])||null);});
- const score=useGameScore(item?item.eventOfficialId:owner),label=second&&scoreLabel(score,first.id),live=item?eventPhase(item)==='live':score?.state==='Live'&&!score.stale;
- return <div ref={root} className={`mlb-artwork ${wide?'mlb-wide':''} ${second?'mlb-duel':'mlb-team'} ${label?'has-score':''}`} style={{'--team-first':first.color,'--team-second':(second||first).color}} aria-hidden="true" data-mlb-teams={matchup.teams.map(team=>team.id).join(',')} data-live={live?'':undefined}>
+ useLayoutEffect(()=>{if(!item)setOwner(officialGameId(root.current?.closest('[data-content-id]')?.dataset.contentId));});
+ const score=useGameScore(item?item.eventOfficialId:owner),label=second&&scoreLabelFor(score,first.id),live=item?eventPhase(item)==='live':score?.state==='Live'&&!score.stale;
+ return <div ref={root} className={`mlb-artwork ${wide?'mlb-wide':''} ${second?'mlb-duel':'mlb-team'} ${label?'has-score':''}`} style={{'--team-first':first.color,'--team-second':(second||first).color}} aria-hidden="true" data-mlb-teams={matchup.teams.map(team=>team.id).join(',')} data-sport={matchup.sport||'mlb'} data-live={live?'':undefined}>
   <div className="mlb-color mlb-color-first"/><div className="mlb-color mlb-color-second"/>
   {second&&<><div className="mlb-divider"/><span className="mlb-versus">VS</span></>}
   <div className="mlb-teams">{matchup.teams.map(team=><div className="mlb-side" key={team.id}>
-   <QualityImage className="mlb-mark" src={`${import.meta.env.BASE_URL}artwork/mlb/${team.id}.svg`} fit="contain" eager={wide} fallback={<span className="mlb-abbreviation">{team.abbreviation}</span>}/>
-   <span className="mlb-location">{team.name.replace(new RegExp(`\s*${team.id===109?'Diamondbacks':team.teamName}$`),'').trim()}</span>
+   <QualityImage className="mlb-mark" src={team.sport==='futbol'?team.logo&&import.meta.env.BASE_URL+team.logo:`${import.meta.env.BASE_URL}artwork/mlb/${team.id}.svg`} fit="contain" eager={wide} fallback={<span className="mlb-abbreviation">{team.abbreviation}</span>}/>
+   <span className="mlb-location">{team.sport==='futbol'?team.location:team.name.replace(new RegExp(`\s*${team.id===109?'Diamondbacks':team.teamName}$`),'').trim()}</span>
    <span className="mlb-team-name">{team.teamName}</span>
   </div>)}</div>
   {label&&<div className="mlb-score" data-stale={score.stale?'':undefined}>
