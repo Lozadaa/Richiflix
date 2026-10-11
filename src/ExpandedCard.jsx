@@ -1,7 +1,8 @@
 import {AgeBadge} from './AgeBadge.jsx';
 import React,{createContext,useContext,useEffect,useLayoutEffect,useMemo,useRef,useState} from 'react';
 import {createPortal} from 'react-dom';
-import {Play,Plus,Check,ArrowRight} from 'lucide-react';
+import {Play,Plus,Check,ArrowRight,ListOrdered} from 'lucide-react';
+import {MatchDetailContext} from './matchContext.js';
 import {QualityImage} from './QualityImage.jsx';
 import {ContentIdentity,identityStyle,channelTitle} from './ContentIdentity.jsx';
 import {MatchupArtwork} from './MatchupArtwork.jsx';
@@ -42,7 +43,9 @@ export function ExpandedCard({item,instanceId,expansion,metadataPending,favorite
  // Decided once per opening, so counting this opening never hides the hint mid-view.
  const showHint=useMemo(()=>Boolean(tv&&opened&&hint?.visible()),[tv,opened,hint]);
  useEffect(()=>{if(showHint)hint.shown();},[showHint,hint]);
- const phase=useEventPhase(item.isEvent?item:null,true),follow=useContext(FollowContext);
+ const phase=useEventPhase(item.isEvent?item:null,true),follow=useContext(FollowContext),matchDetail=useContext(MatchDetailContext);
+ // Football events reconciled with ESPN open «Detalle del partido» (goals, cards, stats, line-ups).
+ const detailId=matchDetail.openMatch&&item.isEvent&&item.eventLeagueSlug&&/^futbol:\d+$/.test(item.eventOfficialId||'')?item.eventOfficialId.slice(7):null;
  const [sharpFor,setSharpFor]=useState(null);
  useEffect(()=>{if(!tv||!opened)return;const timer=setTimeout(()=>setSharpFor(item.id),PANEL_SHARP_DELAY_MS);return()=>{clearTimeout(timer);setSharpFor(previous=>previous===null?previous:null);};},[tv,opened,item.id]);
  useLayoutEffect(()=>{
@@ -79,7 +82,7 @@ export function ExpandedCard({item,instanceId,expansion,metadataPending,favorite
   <div className="expansion-body">{logo&&logoReady===logo?<img className="title-logo is-panel" src={logo} alt={title}/>:<h3>{title}</h3>}
    {item.isEvent?<p className="expansion-event-phase" data-event-state={phase?.phase}>{phaseLine}</p>:guide?<div className="expansion-guide"><p className="expansion-guide-now">Ahora · {displayText(guide.now.title)}</p>{guideBar!=null&&<span className="expansion-guide-bar" aria-hidden="true"><i style={{transform:`scaleX(${guideBar})`}}/></span>}{guideNext&&<p className="expansion-guide-next">{displayText(guideNext)}</p>}</div>:description&&!genericLive?<p className="expansion-description">{description}</p>:metadataPending&&!live?<div className="expansion-synopsis-loading" role="status" aria-label="Cargando información"><span/><span/></div>:null}
    {!guide&&<div className="expansion-facts">{!live&&!kids&&<UserScore item={item} compact/>}{!live&&facts&&<span>{facts}{audio&&!facts.includes(audio)?` · ${audio}`:''}</span>}{live&&<span>{displayText(item.isEvent?item.genre:item.source||item.genre)}</span>}{(tv||item.resumeLabel)&&remaining&&<span className="expansion-remaining">{remaining}</span>}</div>}
-   <div className="expansion-actions" onKeyDown={key}><button className="expansion-play" aria-label={`${item.mediaType==='series'?'Ver episodios de':'Reproducir'} ${title}`} onClick={()=>open(item)} tabIndex={tv?-1:0}>{item.mediaType==='series'?<ArrowRight aria-hidden="true"/>:<Play fill="currentColor" aria-hidden="true"/>}</button><button className="expansion-save" aria-label={`${favorite?'Quitar':'Guardar'} ${title} ${favorite?'de':'en'} Mi lista`} aria-pressed={favorite} onClick={()=>toggle(item)} tabIndex={tv?-1:0}>{favorite?<Check aria-hidden="true"/>:<Plus aria-hidden="true"/>}</button>{teams.map(id=>{const followed=follow.teams.includes(id);return <button key={id} className="expansion-follow" aria-pressed={followed} aria-label={`${followed?'Dejar de seguir a':'Seguir a'} ${teamLabel(id)}`} onClick={()=>follow.toggleTeam(id)} tabIndex={tv?-1:0}>{teamAbbreviation(id)}</button>;})}{tv&&total>0&&<span className="expansion-position">{(index+1).toLocaleString('es-CL')} de {total.toLocaleString('es-CL')}</span>}{showHint&&<span className="expansion-remote-hint">Mantén OK para opciones</span>}</div>
+   <div className="expansion-actions" onKeyDown={key}><button className="expansion-play" aria-label={`${item.mediaType==='series'?'Ver episodios de':'Reproducir'} ${title}`} onClick={()=>open(item)} tabIndex={tv?-1:0}>{item.mediaType==='series'?<ArrowRight aria-hidden="true"/>:<Play fill="currentColor" aria-hidden="true"/>}</button><button className="expansion-save" aria-label={`${favorite?'Quitar':'Guardar'} ${title} ${favorite?'de':'en'} Mi lista`} aria-pressed={favorite} onClick={()=>toggle(item)} tabIndex={tv?-1:0}>{favorite?<Check aria-hidden="true"/>:<Plus aria-hidden="true"/>}</button>{teams.map(id=>{const followed=follow.teams.includes(id);return <button key={id} className="expansion-follow" aria-pressed={followed} aria-label={`${followed?'Dejar de seguir a':'Seguir a'} ${teamLabel(id)}`} onClick={()=>follow.toggleTeam(id)} tabIndex={tv?-1:0}>{teamAbbreviation(id)}</button>;})}{detailId&&<button className="expansion-follow expansion-detail" aria-label="Detalle del partido" title="Detalle del partido" onClick={()=>matchDetail.openMatch({slug:item.eventLeagueSlug,id:detailId})} tabIndex={tv?-1:0}><ListOrdered aria-hidden="true"/></button>}{tv&&total>0&&<span className="expansion-position">{(index+1).toLocaleString('es-CL')} de {total.toLocaleString('es-CL')}</span>}{showHint&&<span className="expansion-remote-hint">Mantén OK para opciones</span>}</div>
    {feeds&&<div className="expansion-feeds" role="group" aria-label="Señales">{feeds.map(feed=><button key={feed.id} className="expansion-feed" aria-pressed={feed.id===chosen.id} aria-label={`Ver con señal ${feed.label}`} tabIndex={tv?-1:0} onClick={()=>{rememberFeed(item,feed.id);open(item);}}>{feed.label}</button>)}</div>}
   </div>
  </section>,document.body);

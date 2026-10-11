@@ -37,7 +37,7 @@ function createEvent(key,items){
   .map(({index,art,...feed})=>{let label=[feed.language?.toUpperCase(),feed.source].filter(Boolean).join(' · ')||'Señal';const used=(labels.get(label)||0)+1;labels.set(label,used);if(used>1)label+=` ${used}`;return {...feed,label};});
  const preferred=feeds[0].item,official=items.find(item=>item.eventOfficialId)||preferred;
  // The event keeps every field of its preferred signal so Card, ExpandedCard, FocusStage and policies work unchanged.
- return {...preferred,id:`event:${key}`,isEvent:true,key,title:preferred.eventDisplayTitle||eventDisplayTitle(preferred),eventStartsAt:official.eventStartsAt,eventScheduleState:official.eventScheduleState||null,eventOfficialId:official.eventOfficialId||null,eventDetail:official.eventDetail||null,eventScore:official.eventScore||null,eventLeague:official.eventLeague||null,eventDuration:duration(preferred),feeds,preferredFeedId:feeds[0].id,searchText:[...new Set(items.map(item=>displayText(item.title)))].join(' ')};
+ return {...preferred,id:`event:${key}`,isEvent:true,key,title:preferred.eventDisplayTitle||eventDisplayTitle(preferred),eventStartsAt:official.eventStartsAt,eventScheduleState:official.eventScheduleState||null,eventOfficialId:official.eventOfficialId||null,eventDetail:official.eventDetail||null,eventScore:official.eventScore||null,eventLeague:official.eventLeague||null,eventLeagueSlug:official.eventLeagueSlug||null,eventDuration:duration(preferred),feeds,preferredFeedId:feeds[0].id,searchText:[...new Set(items.map(item=>displayText(item.title)))].join(' ')};
 }
 
 export function groupLiveEvents(channels){

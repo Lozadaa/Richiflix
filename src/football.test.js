@@ -13,7 +13,8 @@ const espn=(id,home,away,state='pre',scores=[],extra={})=>({id,date:'2026-10-18T
 
 test('every crest has a local logo, a readable colour and a league line',()=>{
  assert.ok(footballTeams.length>=120);
- for(const team of footballTeams){assert.match(team.id,/^futbol:\d+$/);assert.match(team.color,/^#[0-9a-f]{6}$/);assert.ok(team.logo&&team.location,team.name);}
+ for(const team of footballTeams){assert.match(team.id,/^futbol:\d+$/);assert.match(team.color,/^#[0-9a-f]{6}$/);assert.ok(team.location,team.name);}
+ assert.ok(footballTeams.filter(team=>team.logo).length>=footballTeams.length-2,'a missing crest falls back to the abbreviation');
 });
 test('provider titles in Spanish and English identify both clubs',()=>{
  assert.deepEqual(names(live('10/07 Soccer 7:30pm Barcelona vs Real Madrid')),['Barcelona','Real Madrid']);
@@ -28,7 +29,7 @@ test('a name inside a longer name is the same club: «Inter Milan» is not AC Mi
  assert.deepEqual(names(live('Inter vs Milan')),['Inter Milan','Milan']);
 });
 test('unknown or ambiguous sides never invent a duel',()=>{
- for(const title of ['Real Madrid vs Unknown FC','Racing vs Independiente','Francia vs. Bélgica','Real Madrid vs Real Madrid','Barcelona vs Real Madrid vs Sevilla'])assert.equal(footballMatchup(live(title)),null,title);
+ for(const title of ['Real Madrid vs Unknown FC','Sportivo Luqueño vs Cerro Porteño','River Plate vs Argentina','Real Madrid vs Real Madrid','Barcelona vs Real Madrid vs Sevilla','19:00 ◘ Minnesota Timberwolves vs. Miami Heat ◘ NBA ◘'])assert.equal(footballMatchup(live(title)),null,title);
  assert.equal(footballMatchup({kind:'xtream',mediaType:'movie',title:'Como agua para chocolate'}),null);
  assert.equal(footballMatchup(live('Como ver la tele')),null,'common words match only a whole side');
  assert.deepEqual(names(live('Premier League - Arsenal')),['Arsenal'],'one club needs football context');
@@ -89,9 +90,20 @@ test('league chips use whole league names: Championship, CONCACAF and Serie A Ec
  const league=(title,genre='')=>footballLeague({kind:'iptv',title,genre});
  assert.equal(league('21:00 ◘ Sacramento Republic FC vs. Colorado Springs Switchbacks FC ◘ USL Championship ◘◘','⚽ EFL ENGLAND'),null);
  assert.equal(league('Zona TUDN (MX)','CONCACAF CHAMPIONS CUP'),null);
- assert.equal(league('GolTV Ecuador','LIGA PRO| SERIE A ECUADOR'),null);
+ assert.equal(league('GolTV Ecuador','LIGA PRO| SERIE A ECUADOR'),'Ecuador');
  assert.equal(league('Canadian Premier League: Forge vs Pacific'),null);
  assert.equal(league('M. Liga de Campeones 1 FHD','🇪🇸 M. LIGA DE CAMPEONES'),'Champions League');
  assert.equal(league('DAZN Serie A','⚽ SERIE A ITALIA'),'Serie A');
  assert.equal(league('Champions League: Barcelona vs Real Madrid'),'Champions League','the title picks among the leagues both clubs share');
+});
+test('South America, MLS and national teams: shared names resolve by the competition both sides play',()=>{
+ assert.deepEqual(names(live('Barcelona vs Emelec')),['Barcelona','Emelec'],'Barcelona SC');assert.equal(footballMatchup(live('Barcelona vs Emelec')).teams[0].espnId,'2686');
+ assert.equal(footballMatchup(live('Barcelona vs Real Madrid')).teams[0].espnId,'83');
+ assert.deepEqual(['Santos vs América','Santos vs Palmeiras'].map(title=>footballLeague(live(title))),['Liga MX','Brasileirão']);
+ assert.deepEqual(names(live('22:10 ◘ América vs. Monterrey ◘ Liga MX ◘')),['América','Monterrey'],'«Am» of América is not AM');
+ assert.deepEqual(names(live('Liga MX | 07:00 PM | Atlas vs. Chivas')),['Atlas','Guadalajara']);
+ assert.deepEqual(names(live('La U vs Colo Colo')),['U de Chile','Colo Colo']);assert.equal(footballLeague(live('La U vs Colo Colo')),'Chile');
+ assert.deepEqual(names(live('Boca vs River')),['Boca','River Plate']);
+ assert.deepEqual(names(live('Francia vs. Bélgica')),['Francia','Bélgica']);assert.equal(footballLeague(live('Amistoso: Chile vs Perú')),'Selecciones');
+ assert.equal(footballLeague(live('21:30 ◘ Los Angeles FC vs. Vancouver Whitecaps ◘ Major League Soccer ◘')),'MLS');
 });

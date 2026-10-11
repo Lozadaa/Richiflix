@@ -9,7 +9,7 @@ export function footballEventDate(item){
  return `${parts.year}${parts.month}${parts.day}`;
 }
 // One scoreboard per league and day, only for leagues both identified clubs play in. ESPN rejects day ranges for soccer.
-export function scoreboardRequests(items,limit=12){
+export function scoreboardRequests(items,limit=16){
  const requests=new Set();
  for(const item of items){
   // The date first: it is cheap, and most of a provider's channels have no kick-off time.
@@ -55,5 +55,5 @@ export function reconcileFootballEvent(item,games){
  const matches=games.filter(game=>ids.every(id=>game.teams.includes(id))&&Math.abs(game.startsAt-start)<=12*H).sort((a,b)=>Math.abs(a.startsAt-start)-Math.abs(b.startsAt-start));
  if(!matches.length)return item;
  const game=matches[0],unavailable=game.detail==='Postponed';
- return {...item,eventStartsAt:unavailable?null:game.startsAt,eventScheduleSource:'ESPN',eventScheduleState:unavailable?'postponed':null,eventOfficialId:game.id,eventDetail:game.detail,eventScore:game.score||null,eventLeague:leagueLabel.get(game.league)||null};
+ return {...item,eventStartsAt:unavailable?null:game.startsAt,eventScheduleSource:'ESPN',eventScheduleState:unavailable?'postponed':null,eventOfficialId:game.id,eventDetail:game.detail,eventScore:game.score||null,eventLeague:leagueLabel.get(game.league)||null,eventLeagueSlug:game.league};
 }

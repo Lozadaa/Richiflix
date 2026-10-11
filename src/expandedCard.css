@@ -39,3 +39,6 @@
 .expansion-tv.expansion-event .expansion-body{gap:10px}.expansion-media .live-label.is-event,.expansion-media .live-label.is-channel{width:auto;right:auto;padding:6px 12px;border-radius:12px;font-size:18px;font-weight:800;letter-spacing:0;z-index:3}
 /* The panel's art has no score badge: long certificates (PG-13, TV-MA) stay top-right instead of the card's lower corner. */
 .card-expansion .expansion-media .age-badge[data-age-long='true']{top:12px;bottom:auto}.card-expansion.expansion-tv .expansion-media .age-badge[data-age-long='true']{top:14px}
+
+/* «Detalle del partido» beside the follow buttons of a football event. */
+.expansion-detail{display:inline-grid;place-items:center}.expansion-detail svg{width:20px;height:20px}
