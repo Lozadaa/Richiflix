@@ -30,6 +30,7 @@ import {displayText} from './displayText.js';
 import {scheduledEventTime,eventDisplayTitle} from './eventTime.js';
 import {useEventSchedule} from './useEventSchedule.js';
 import {useFootballSchedule} from './useFootballSchedule.js';
+import {prefetchLeagues} from './useLeagueStats.js';
 import {footballMatchup,FOOTBALL,FOOTBALL_LEAGUE_LABELS} from './footballArtwork.js';
 import {groupLiveEvents,splitLiveEvents,homeLiveEvents,liveNowCount,preferredFeed,rememberFeed,liveHubRows,liveChipItems,FOOTBALL_HUB_CHIPS} from './liveEvents.js';
 import {LiveHub} from './LiveHub.jsx';
@@ -327,6 +328,8 @@ export default function App({profile,changeProfile}){
  const football=useMemo(()=>[...footballEvents,...footballChannels],[footballEvents,footballChannels]);
  // Fase L3: live pages are rows by phase plus a channel grid; recomputed per catalogue, chip, favourites and phase/day change.
  const livePage=!isKids&&(page==='TV en vivo'||page==='MLB'||page==='Fútbol');
+ // League tables load in the background as soon as «Fútbol» opens: every chip then switches instantly.
+ useEffect(()=>{if(page==='Fútbol'&&!isKids)prefetchLeagues();},[page,isKids]);
  const hub=useMemo(()=>livePage?liveHubRows({events:page==='MLB'?baseballEvents:page==='Fútbol'?footballEvents:liveEvents,channels:page==='MLB'?baseballChannels:page==='Fútbol'?footballChannels:liveChannels,category,favorites:favoritesForLive,now:Date.now()}):null,[livePage,page,liveEvents,liveChannels,baseballEvents,baseballChannels,footballEvents,footballChannels,category,favoritesForLive,livePhases]);
  const searchSource=collectionItems||(page==='Películas'?movies:page==='Series'?shows:page==='TV en vivo'?live:page==='Mi lista'?savedItems:page==='MLB'?baseball:page==='Fútbol'?football:all);
  const smartSearch=categoryItems(searchSource)||(livePage?liveChipItems(searchSource,category):null);

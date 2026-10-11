@@ -26,6 +26,8 @@ export function useRemoteNavigation(){
   if(controller&&target.matches('.card-open')){controller.focus(virtualCardIndex(target));return;}
   revealRowFor(target).focus({preventScroll:true});const card=target.closest('.card');if(card)card.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});
  };
+ // Entering the «Fútbol» league panel shows it whole (scroll-margin keeps the header clear); pointer focus never scrolls.
+ const toLeague=(event,target)=>{move(event,target);target.closest('.league-stats')?.scrollIntoView({block:'start',behavior:'instant'});};
  function navigation(e){
   if(e.defaultPrevented||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key))return;
   const current=document.activeElement,tv=Boolean(document.querySelector('.tv-mode')),dialog=document.querySelector('[role="dialog"]');
@@ -36,7 +38,7 @@ export function useRemoteNavigation(){
    // Up can focus the preserved banner control and reveal the same recommendation again.
    if(e.key==='ArrowDown'&&current.closest('.topbar')){const primary=document.querySelector('.app.has-tv-stage .focus-actions .primary')||document.querySelector('main .catalog-controls button')||document.querySelector('.card-open');if(primary){move(e,primary);return;}}
    if(e.key==='ArrowDown'&&current.closest('.focus-actions')){const filter=document.querySelector('main .category-filter-entry')||document.querySelector('main .live-hub .category-chip.selected');if(filter){move(e,filter);return;}let target=lastCard?.isConnected?lastCard:null;if(!target&&lastGroup?.isConnected){if(Number(lastGroup.dataset.virtualCount)>0)announce(e);target=restoreVirtualFocus(lastGroup,lastIndex);}target??=document.querySelector('.card-open');if(target){move(e,target);return;}}
-   if(current.closest('.catalog-controls')){if(e.key==='ArrowUp'){move(e,document.querySelector('.app.has-tv-stage .focus-actions .primary')||document.querySelector('.topbar nav button.active'));return;}if(e.key==='ArrowDown'){const league=document.querySelector('main .league-stats .league-tab.selected');if(league){move(e,league);return;}const empty=document.querySelector('main .empty-state:not([role=alert]) .empty-state-actions button'),row=document.querySelector('main .catalog-row .cards');move(e,empty||(row?recalled(e,row):lastCard?.isConnected?lastCard:document.querySelector('.card-open')));return;}}
+   if(current.closest('.catalog-controls')){if(e.key==='ArrowUp'){move(e,document.querySelector('.app.has-tv-stage .focus-actions .primary')||document.querySelector('.topbar nav button.active'));return;}if(e.key==='ArrowDown'){const league=document.querySelector('main .league-stats [data-league-focus]');if(league){toLeague(e,league);return;}const empty=document.querySelector('main .empty-state:not([role=alert]) .empty-state-actions button'),row=document.querySelector('main .catalog-row .cards');move(e,empty||(row?recalled(e,row):lastCard?.isConnected?lastCard:document.querySelector('.card-open')));return;}}
    // Direct banner: Left/Right on the carousel's Play change the slide in FocusStage (bannerKeyAction, which
    // prevents the key); the dots are only an indicator. Up from the actions goes to the header.
    if(e.key==='ArrowUp'&&current.closest('.focus-actions')){move(e,document.querySelector('.topbar nav button.active'));return;}
@@ -48,7 +50,7 @@ export function useRemoteNavigation(){
     move(e,controls[controls.indexOf(current)+(e.key==='ArrowRight'?1:-1)]);return;
    }
    // «Fútbol» league panel: its two tabs sit between the chips and the event rows.
-   if(current.matches('.league-tab')){
+   if(current.closest('.league-stats')){
     if(e.key==='ArrowUp'){move(e,document.querySelector('main .live-hub .category-chip.selected'));return;}
     if(e.key==='ArrowDown'){const empty=document.querySelector('main .empty-state:not([role=alert]) .empty-state-actions button'),row=document.querySelector('main .catalog-row .cards'),grid=document.querySelector('main .live-hub .catalog-grid');move(e,empty||(row?recalled(e,row):grid?recalled(e,grid):null));return;}
     const tabs=[...current.parentElement.querySelectorAll('.league-tab')];move(e,tabs[tabs.indexOf(current)+(e.key==='ArrowRight'?1:-1)]);return;
@@ -88,7 +90,7 @@ export function useRemoteNavigation(){
      if(next){move(e,recalled(e,next));return;}
      const hub=group.closest('.live-hub');if(hub){const target=down?hub.querySelector('.catalog-grid'):hub.querySelector('.category-chip.selected');if(target){move(e,down?recalled(e,target):target);return;}}
     }
-    if(!down){move(e,group.closest('.empty-state')?.querySelector('.empty-state-actions button')||(group.closest('.live-hub')&&document.querySelector('main .league-stats .league-tab.selected'))||document.querySelector('.app.has-tv-stage .focus-actions .primary')||document.querySelector('.topbar nav button.active'));return;}
+    if(!down){const target=group.closest('.empty-state')?.querySelector('.empty-state-actions button')||(group.closest('.live-hub')&&document.querySelector('main .league-stats [data-league-focus]'))||document.querySelector('.app.has-tv-stage .focus-actions .primary')||document.querySelector('.topbar nav button.active');(target?.closest('.league-stats')?toLeague:move)(e,target);return;}
     move(e,null);return;
    }
   }
