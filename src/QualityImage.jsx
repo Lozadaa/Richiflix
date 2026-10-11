@@ -1,4 +1,4 @@
-import React,{memo,useEffect,useLayoutEffect,useRef,useState} from 'react';
+import React,{memo,useCallback,useEffect,useLayoutEffect,useRef,useState} from 'react';
 import {BrandMark} from './Brand.jsx';
 import {imagePresentation,isVectorSource} from './imageQuality.js';
 import {observeImageBox} from './imageObserver.js';
@@ -14,8 +14,20 @@ const reducedMotion=()=>window.matchMedia?.('(prefers-reduced-motion: reduce)').
 let lastNavigation=-Infinity;const quietMs=isTVBuild?700:250;
 window.addEventListener('richiflix-catalog-navigation',()=>{lastNavigation=performance.now();});
 
-// A new source gets its own component, so a late decode cannot reveal the old art.
-export function QualityImage(props){return <DecodedImage key={props.src||'empty'} {...props}/>;}
+// A new source gets its own component, so a late decode cannot reveal the old art. When a shown image is replaced
+// (the provider poster upgraded to TMDB's once metadata lands) the old one stays underneath until the new one has
+// faded in: a crossfade instead of a blank card for a moment. The incoming layer shows no loading veil over it; if it
+// fails, its own fallback appears as before. The held layer keeps the key it had (its src), so React keeps the
+// already decoded element instead of decoding it again. Only for absolutely placed media (every .quality-media but inline marks).
+const FADE_MS=450;
+export function QualityImage(props){
+ const {src,onReadyChange,inline=false}=props,[shown,setShown]=useState(null),[held,setHeld]=useState(null);
+ if(!inline&&shown&&src!==shown&&held!==shown)setHeld(shown);
+ const ready=useCallback(value=>{if(value&&src)setShown(src);onReadyChange?.(value);},[src,onReadyChange]);
+ useEffect(()=>{if(!held||shown!==src)return;const timer=setTimeout(()=>setHeld(null),FADE_MS);return()=>clearTimeout(timer);},[held,shown,src]);
+ const previous=held&&held!==src?held:null;
+ return <>{previous&&<DecodedImage key={previous} {...props} src={previous} pending={false} loader={false} onReadyChange={undefined} onStateChange={undefined}/>}<DecodedImage key={src||'empty'} {...props} fallbackWhileLoading={previous?false:props.fallbackWhileLoading} onReadyChange={ready}/></>;
+}
 
 // R6.2: memoized; `priority` (fetchPriority) only matters before the image is shown, so once a render saw it ready
 // a priority flip (card selected/unselected) does not rerender it. `fallback` may be a function of `failed` (no image or error).

@@ -51,7 +51,16 @@ export function ExpandedCard({item,instanceId,expansion,metadataPending,favorite
  useLayoutEffect(()=>{
   if(!expansion.placement||item.kind==='iptv')return;
   const frame=tv?expansion.placement.trailer:null;
-  return claimCardTrailer(trailer.current,item.trailerId,frame?.position||expansion.placement,frame?.stage||null);
+  // PC: the trailer covers the panel's picture strip only (layout offsets: transform-independent, read once on open),
+  // not the whole panel, so it sits where the art was and never over the title, synopsis or buttons.
+  const media=!tv?trailer.current?.closest('.card-expansion')?.querySelector('.expansion-media'):null,placement=expansion.placement;
+  const strip=()=>({left:placement.left+media.offsetLeft,top:placement.top+media.offsetTop,width:media.offsetWidth,height:media.offsetHeight});
+  if(!media)return claimCardTrailer(trailer.current,item.trailerId,frame?.position||placement,frame?.stage||null);
+  // The strip shrinks when the synopsis lands after the panel opened: the trailer follows it.
+  let release=claimCardTrailer(trailer.current,item.trailerId,strip(),null),last=media.offsetHeight;
+  const observer=window.ResizeObserver?new ResizeObserver(()=>{if(media.offsetHeight===last)return;last=media.offsetHeight;release();release=claimCardTrailer(trailer.current,item.trailerId,strip(),null);}):null;
+  observer?.observe(media);
+  return()=>{observer?.disconnect();release();};
  },[Boolean(expansion.placement),item.kind,item.trailerId,tv]);
  // H3: the title logo replaces the h3 only once decoded, and only while open (never per key); on failure the h3 stays.
  const logo=logoURL(item.logoImage),[logoReady,setLogoReady]=useState('');
