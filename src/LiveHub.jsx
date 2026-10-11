@@ -11,7 +11,8 @@ import {LeagueStats} from './LeagueStats.jsx';
 // Rows come from liveHubRows (memoized in App, which also takes the banner's first title from them).
 // Same virtual rails (≤11 cells) and grid (≤40) as the rest of the app; nothing new per second.
 // Memoized with flat, stable props: App rerenders on preview/banner state never touch the hub.
-export const LiveHub=memo(function LiveHub({title,subtitle,hub,categories,category,setCategory,loading,chips=LIVE_HUB_CHIPS,art='live',league=null,preview,...props}){
+export const LiveHub=memo(function LiveHub({title,subtitle,hub,categories,category,setCategory,loading,chips=LIVE_HUB_CHIPS,art='live',league=null,chipPreview,...props}){
+ // `chipPreview` (a focused competition chip) is not the cards' `preview`, which must reach them through props.
  const root=useRef(),focusedId=useRef();
  // Bloque B: with nothing live or still to come today, the empty state points to tomorrow's row or the channel grid.
  const nothingToday=!loading&&!hub.rows.some(row=>row.key==='live'||row.key==='today'),tomorrow=hub.rows.findIndex(row=>row.key==='tomorrow');
@@ -21,7 +22,7 @@ export const LiveHub=memo(function LiveHub({title,subtitle,hub,categories,catego
  useEffect(()=>{const id=focusedId.current,active=document.activeElement;if(!id||active&&active!==document.body)return;const rails=root.current.querySelectorAll('.catalog-row .cards');hub.rows.forEach((row,index)=>{const at=row.items.findIndex(item=>item.id===id);if(at>=0&&rails[index])restoreVirtualFocus(rails[index],at);});},[hub]);
  return <section className="live-hub" ref={root} onFocus={event=>{const card=event.target.closest('.card');if(card)focusedId.current=card.dataset.contentId;}}>
   <div className="page-title live-hub-title"><h1>{title}</h1><p>{subtitle}</p></div>
-  <div className="catalog-controls has-category-chips"><CategoryChips categories={chips} value={category} change={setCategory} title={title} allLabel="Todo" more={categories} limit={chips.length} preview={preview}/></div>
+  <div className="catalog-controls has-category-chips"><CategoryChips categories={chips} value={category} change={setCategory} title={title} allLabel="Todo" more={categories} limit={chips.length} preview={chipPreview}/></div>
   {league&&<LeagueStats league={league}/>}
   {nothingToday&&<EmptyState tv={props.tv} art={art} title={hub.rows.length||hub.channels.length?'Hoy no hay más eventos':'Sin señales en esta categoría'} text={tomorrow>=0?'Mira los próximos de mañana.':hub.channels.length?'Los canales siguen en vivo las 24 horas.':'Prueba con otra categoría.'} actions={emptyActions}/>}
   {hub.rows.map(row=><div key={row.key} className={row.ended?'live-hub-ended':undefined}><VirtualCarousel title={row.title} items={row.items} {...props}/></div>)}
