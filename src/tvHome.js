@@ -11,6 +11,13 @@ export function homeRowsForTV(collections,day=SESSION_DAY){
 // H2-T2: «Nuevo esta semana» and the NUEVO badge. `now` comes from the caller (App's useMemo per catalogue), never per key.
 const DAY=864e5;
 export function isNew(item,now,days=7){return Number.isFinite(item?.addedAt)&&item.addedAt>now-days*DAY;}
+// «Recién agregadas» filter of Películas and Series: the latest titles by date (added, else the series' last update),
+// newest first, with no time window, so the filter is never empty while the provider dates its titles.
+export const FRESH_CATEGORY='Recién agregadas';
+export function latestAdded(items,limit=60){
+ const date=item=>Number.isFinite(item?.addedAt)?item.addedAt:Number.isFinite(item?.updatedAt)?item.updatedAt:0;
+ return items.filter(item=>date(item)>0).sort((a,b)=>date(b)-date(a)).slice(0,limit);
+}
 export function recentlyAdded(items,now=Date.now(),days=7,limit=40){
  return items.filter(item=>isNew(item,now,days)).sort((a,b)=>b.addedAt-a.addedAt).slice(0,limit);
 }

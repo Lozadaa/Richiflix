@@ -67,7 +67,7 @@ import {loadHlsLibrary} from './hlsLibrary.js';
 import {registerPerformanceStats,recordAppRender} from './focusPaintDiagnostics.js';
 import {publishMetadata,setMetadataLayer,getMetadata,getPreviewDetails,resetMetadata,setMetadataPriority,getMetadataPriority,metadataStats,trackMetadataPending,useMetadataEntry} from './metadataStore.js';
 trackMetadataPending();
-import {homeRowsForTV,backTarget,recentlyAdded,isNew,topTen,rowEyebrow} from './tvHome.js';
+import {homeRowsForTV,backTarget,recentlyAdded,isNew,topTen,rowEyebrow,latestAdded,FRESH_CATEGORY} from './tvHome.js';
 const read=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))??fallback;}catch{return fallback;}};
 // G5a: 128 px avatars for the 38-54 px header (the 1254 px originals cost a 1.6 Mpx decode).
 const avatar=kind=>`${import.meta.env.BASE_URL}avatars/${kind==='kids'?'kids-kitten':'adult-raccoon'}-128.png`;
@@ -322,7 +322,7 @@ export default function App({profile,changeProfile}){
  const slide=bannerSlides[carousel.index],nextSlide=bannerSlides.length>1?bannerSlides[(carousel.index+1)%bannerSlides.length]:null;
  // Metadata replies rerender matching cards, so they wait until the 320 ms crossfade has ended.
  useEffect(()=>{const timer=setTimeout(()=>{for(const item of [slide,nextSlide])if(item)preparePreview(item);},400);return()=>clearTimeout(timer);},[slide?.id,nextSlide?.id,previewCache]);
- const categoryBundles=useMemo(()=>new Map([movies,shows].map(items=>{const groups=smartCollections.filter(group=>group.type===(items===shows?'series':'movie'));return [items,{groups,names:[...new Set([...groups.map(group=>group.name),...index.categories(items)])]}];})),[movies,shows,smartCollections,index]);
+ const categoryBundles=useMemo(()=>new Map([movies,shows].map(items=>{const type=items===shows?'series':'movie',latest=latestAdded(items),groups=[...(latest.length?[{name:FRESH_CATEGORY,label:FRESH_CATEGORY,kind:'fresh',type,items:latest}]:[]),...smartCollections.filter(group=>group.type===type)];return [items,{groups,names:[...new Set([...groups.map(group=>group.name),...index.categories(items)])]}];})),[movies,shows,smartCollections,index]);
  const smartFor=items=>categoryBundles.get(items)?.groups||[];
  const categoryNames=items=>categoryBundles.get(items)?.names||index.categories(items);
  const categoryControls=(title,items)=>(items===movies||items===shows)?<CategoryChips categories={categoryNames(items)} collections={smartFor(items)} value={category} change={setCategory} title={title}/>:<CategoryPicker categories={categoryNames(items)} value={category} change={setCategory} title={title}/>;

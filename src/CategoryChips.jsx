@@ -1,5 +1,5 @@
 import React,{useCallback,useLayoutEffect,useMemo,useRef,useState} from 'react';
-import {Check,ChevronLeft,ChevronRight,Sparkles,Trophy} from 'lucide-react';
+import {Check,ChevronLeft,ChevronRight,Clock,Sparkles,Trophy} from 'lucide-react';
 import {CategoryPicker} from './CategoryPicker.jsx';
 import {displayText} from './displayText.js';
 import {scrollViewport,glideViewportBy,viewportRevealDelta} from './virtualViewport.js';
@@ -10,7 +10,7 @@ import './discovery.css';
 // `preview(name)`: a chip was focused or hovered (the «Fútbol» page warms that competition's table).
 export function CategoryChips({categories,collections=[],value,change,title,allLabel='Todas',more,limit=14,preview}){
  const strip=useRef(),groups=useMemo(()=>new Map(collections.map(group=>[group.name,group])),[collections]);
- const shown=useMemo(()=>{const ordered=[...new Set(categories)],choices=[...ordered.filter(name=>!groups.has(name)),...ordered.filter(name=>groups.has(name))].slice(0,limit);if(value!=='Todas'&&!choices.includes(value))choices.push(value);return ['Todas',...choices.filter(name=>name!=='Todas')];},[categories,value,groups,limit]);
+ const shown=useMemo(()=>{const ordered=[...new Set(categories)],pinned=ordered.filter(name=>groups.get(name)?.kind==='fresh'),choices=[...pinned,...ordered.filter(name=>!groups.has(name)),...ordered.filter(name=>groups.has(name)&&!pinned.includes(name))].slice(0,limit);if(value!=='Todas'&&!choices.includes(value))choices.push(value);return ['Todas',...choices.filter(name=>name!=='Todas')];},[categories,value,groups,limit]);
  const reveal=event=>{const target=event.target,root=strip.current;if(!target.matches('button')||!root.contains(target))return;const box=target.getBoundingClientRect(),bounds=root.getBoundingClientRect(),reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;if(box.left<bounds.left+8||box.right>bounds.right-8)root.scrollBy({left:box.left<bounds.left?box.left-bounds.left-8:box.right-bounds.right+8,behavior:reduced?'instant':'smooth'});const viewport=scrollViewport(root);if(viewport!==window){const view=viewport.getBoundingClientRect();glideViewportBy(viewport,viewportRevealDelta({top:bounds.top,bottom:bounds.bottom,viewportTop:view.top,height:view.height,margin:12}));}};
  const navigate=event=>{
   const buttons=[...strip.current.querySelectorAll('button')],index=buttons.indexOf(event.target);if(index<0||!event.key.startsWith('Arrow'))return;
@@ -29,7 +29,7 @@ export function CategoryChips({categories,collections=[],value,change,title,allL
  const page=direction=>{const root=strip.current;root.scrollBy({left:direction*Math.max(240,root.clientWidth*0.7),behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});};
  return <div className="category-chips-wrap" data-start={edges.start?'':undefined} data-end={edges.end?'':undefined}><div className="category-chips" role="group" aria-label={`Filtrar ${title} por categoría`} ref={strip} onFocusCapture={reveal} onKeyDownCapture={navigate} onScroll={measure}>
   {!more&&<CategoryPicker categories={categories} value={value} change={change} title={title} filterEntry/>}
-  {shown.map(name=>{const group=groups.get(name),Icon=group?.kind==='ranking'||name.includes('· TMDB')?Trophy:Sparkles;return <button key={name} className={`category-chip ${name===value?'selected':''}`} aria-label={name==='Todas'?(allLabel==='Todas'?'Todas las categorías':allLabel):displayText(name)} aria-pressed={name===value} title={displayText(name)} onClick={()=>change(name)} onFocus={preview?()=>preview(name):undefined} onMouseEnter={preview?()=>preview(name):undefined}>{name===value?<Check aria-hidden="true"/>:group&&<Icon aria-hidden="true"/>}<span>{name==='Todas'?allLabel:displayText(group?.label||name)}</span></button>;})}
+  {shown.map(name=>{const group=groups.get(name),Icon=group?.kind==='fresh'?Clock:group?.kind==='ranking'||name.includes('· TMDB')?Trophy:Sparkles;return <button key={name} className={`category-chip ${name===value?'selected':''}`} aria-label={name==='Todas'?(allLabel==='Todas'?'Todas las categorías':allLabel):displayText(name)} aria-pressed={name===value} title={displayText(name)} onClick={()=>change(name)} onFocus={preview?()=>preview(name):undefined} onMouseEnter={preview?()=>preview(name):undefined}>{name===value?<Check aria-hidden="true"/>:group&&<Icon aria-hidden="true"/>}<span>{name==='Todas'?allLabel:displayText(group?.label||name)}</span></button>;})}
   {more&&<CategoryPicker categories={more} value={value} change={change} title={title} compact/>}
  </div>
   <button className="chips-arrow chips-prev" tabIndex={-1} aria-label="Ver categorías anteriores" onClick={()=>page(-1)}><ChevronLeft aria-hidden="true"/></button>

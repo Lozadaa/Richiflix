@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {homeRowsForTV,backTarget,recentlyAdded,isNew,topTen,rowEyebrow} from './tvHome.js';
+import {homeRowsForTV,backTarget,recentlyAdded,latestAdded,isNew,topTen,rowEyebrow} from './tvHome.js';
 import {normaliseItem} from './xtream.js';
 import {TMDB_BEST,TMDB_RECENT} from './tmdbSelections.js';
 
@@ -21,6 +21,11 @@ test('Back climbs from content to header, search, Inicio and profiles',()=>{
  assert.equal(backTarget({region:'header',query:'',page:'Inicio',collectionView:null}),'profiles');
 });
 const NOW=Date.UTC(2026,9,8,12),day=864e5;
+test('latestAdded: newest first by added date, else a series update, no time window, undated titles left out',()=>{
+ const items=[{id:'old',addedAt:NOW-400*day},{id:'none'},{id:'series',updatedAt:NOW-3*day},{id:'new',addedAt:NOW-1*day},{id:'both',addedAt:NOW-10*day,updatedAt:NOW}];
+ assert.deepEqual(latestAdded(items).map(item=>item.id),['new','series','both','old']);
+ assert.deepEqual(latestAdded(items,2).map(item=>item.id),['new','series']);
+});
 test('recentlyAdded keeps the last 7 days, newest first, up to the limit; isNew needs addedAt',()=>{
  const items=[{id:'old',addedAt:NOW-8*day},{id:'a',addedAt:NOW-2*day},{id:'none'},{id:'b',addedAt:NOW-1*day},{id:'nan',addedAt:NaN},{id:'c',addedAt:NOW-6.9*day}];
  assert.deepEqual(recentlyAdded(items,NOW).map(item=>item.id),['b','a','c']);
