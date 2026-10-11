@@ -73,3 +73,7 @@ test('followed football teams: a goal alerts once; the first score seen only set
  assert.equal(state.alerts.length,1);assert.equal(state.alerts[0].stage,'goal');assert.match(state.alerts[0].text,/^Gol de Colo Colo · Colo Colo 1 – 0 U de Chile/);
  state=upcomingAlerts({events:live(['1','0']),teams:['futbol:2688'],now:kickOff+31*60000,notified:state.notified});assert.equal(state.alerts.length,0,'once per goal');
 });
+test('one list with repeated positions becomes one table per group, in ESPN order',()=>{
+ const table=parseStandings({children:[{name:'First Stage',standings:{entries:[entry('17086',1,'74'),entry('17176',1,'39'),entry('9283',2,'51'),entry('4812',2,'37'),entry('4816',3,'46')]}}]});
+ assert.deepEqual(table.groups.map(group=>[group.name,group.rows.map(row=>row.name)]),[['Grupo 1',['Ind. del Valle','U. Católica','LDU']],['Grupo 2',['Mushuc Runa','Cuenca']]]);
+});

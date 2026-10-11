@@ -70,10 +70,12 @@ export const LeagueStats=memo(function LeagueStats({league}){
  const live=useMemo(()=>{const map=new Map();for(const match of fixtures||[])if(match.state==='live'){const label=`${match.home.score??0}–${match.away.score??0} · ${phaseLabel(match,kickOff)}`;map.set(match.home.id,label);map.set(match.away.id,label);}return map;},[fixtures]);
  if(!slug)return null;
  const hasData=status==='ready'||status==='refreshing',index=tabs.findIndex(([key])=>key===tab),groups=standings?.groups||[],group=Math.min(pickedGroup,Math.max(0,groups.length-1));
- const heading=[standings?.tournament,standings?.season&&`Temporada ${standings.season}`].filter(Boolean).join(' · ');
+ const heading=[standings?.stage||standings?.tournament,standings?.season&&`Temporada ${standings.season}`].filter(Boolean).join(' · ');
+ // With data and no table at all, the fixtures and leaders take the whole width instead of an empty half.
+ const showTable=table&&!(hasData&&!groups.some(option=>option.rows.length));
  const keyTab=event=>{if(['ArrowLeft','ArrowRight'].includes(event.key)&&!document.querySelector('.tv-mode')){event.preventDefault();const next=tabs[(index+(event.key==='ArrowRight'?1:tabs.length-1))%tabs.length][0];setTab(next);event.currentTarget.parentElement.querySelector(`[data-tab="${next}"]`)?.focus();}};
  const panel=tab==='fixtures'?<Fixtures fixtures={fixtures||[]} events={events||[]} followed={followed} open={openMatch||(()=>{})}/>:<Leaders key={tab} list={(tab==='goals'?leaders?.goals:leaders?.assists)||[]} unit={tabs[index][2]} followed={followed}/>;
- return <section className={`league-stats ${table?'':'league-stats-wide'}`} aria-label={`${league}: tabla, fecha y líderes`} aria-busy={status==='loading'||status==='refreshing'}>
+ return <section className={`league-stats ${showTable?'':'league-stats-wide'}`} aria-label={`${league}: tabla, fecha y líderes`} aria-busy={status==='loading'||status==='refreshing'}>
   <header className="league-stats-heading">
    <h2>{league}{heading&&<span> · {heading}</span>}</h2>
    <p className="league-status" aria-live="polite" data-state={status}>
@@ -88,7 +90,9 @@ export const LeagueStats=memo(function LeagueStats({league}){
    <p><b>No pudimos cargar {league}.</b> Revisa tu conexión e inténtalo de nuevo.</p>
    <button className="league-retry" data-league-focus="" onClick={retry}><RotateCw aria-hidden="true"/>Reintentar</button>
   </div>:<div className="league-stats-body" key={slug}>
-   {table&&<div className="league-table-panel">
+   {table&&!showTable&&<p className="league-stage-note">ESPN todavía no publica la tabla de {league}.</p>}
+   {showTable&&<div className="league-table-panel">
+    {standings?.earlier&&<p className="league-stage-note">{standings.stage} · ESPN aún no publica la tabla de la etapa en curso.</p>}
     {groups.length>1&&<div className="league-groups" role="group" aria-label="Grupo">{groups.map((option,at)=><button key={option.name||at} className={`league-group ${at===group?'selected':''}`} aria-pressed={at===group} onClick={()=>setGroup(at)}>{option.name||`Grupo ${at+1}`}</button>)}</div>}
     {hasData?groups[group]?.rows.length?<Standings key={group} rows={groups[group].rows} zones={standings.zones} form={form} live={live} followed={followed}/>:<p className="league-note league-reveal">Sin tabla publicada todavía.</p>:<TableSkeleton/>}
    </div>}

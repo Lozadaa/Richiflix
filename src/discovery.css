@@ -7,3 +7,16 @@
 .home-discovery{margin-top:30px}.discovery-heading{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:28px}.discovery-heading h2{font:800 30px/1.1 'Bricolage Grotesque',Arial,sans-serif;letter-spacing:-.8px;margin:0 0 8px}.discovery-heading p{font-size:16px;color:#aab8cb;margin:0}.discovery-refresh{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:700;min-height:50px;padding:12px 20px;border-radius:18px;background:#243249;color:#e1daf5}.discovery-refresh>svg{width:21px;height:21px}.discovery-refresh:hover{background:#35415c}.discovery-refresh:focus-visible{outline:3px solid var(--focus);outline-offset:4px}.tv-mode .discovery-heading h2{font-size:36px}.tv-mode .discovery-heading p{font-size:22px}.tv-mode .discovery-refresh{font-size:22px;min-height:58px;padding:14px 24px}
 @media(max-width:760px){.category-chip,.tv-mode .category-chip,.category-chips>.category-picker,.tv-mode .category-chips>.category-picker{font-size:15px;min-height:46px;max-width:280px;padding:10px 16px}.discovery-heading{align-items:flex-start;gap:16px}.discovery-heading h2,.tv-mode .discovery-heading h2{font-size:25px}.discovery-heading p,.tv-mode .discovery-heading p{font-size:14px}.discovery-refresh,.tv-mode .discovery-refresh{font-size:14px;white-space:nowrap;min-height:46px;padding:10px 14px}}
 @media(prefers-reduced-motion:reduce){.category-chip{transition:none;transform:none!important}.category-chips{scroll-behavior:auto}}
+
+/* Chip strip arrows: shown only on the side with hidden chips, over a fade so the cut chip reads as «more». */
+.category-chips-wrap{position:relative}
+.category-chips-wrap:before,.category-chips-wrap:after{content:'';position:absolute;top:0;bottom:4px;width:96px;pointer-events:none;opacity:0;transition:opacity .2s var(--ease-out);z-index:1}
+.category-chips-wrap:before{left:-6px;background:linear-gradient(90deg,var(--bg) 30%,rgba(var(--bg-rgb),0))}
+.category-chips-wrap:after{right:-6px;background:linear-gradient(270deg,var(--bg) 30%,rgba(var(--bg-rgb),0))}
+.category-chips-wrap[data-start]:before,.category-chips-wrap[data-end]:after{opacity:1}
+.chips-arrow{position:absolute;top:calc(50% - 25px);z-index:2;display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:#2a3650;color:var(--text);box-shadow:0 6px 18px #0006;opacity:0;pointer-events:none;transform:scale(.85);transition:opacity .2s var(--ease-out),transform .2s var(--ease-out),background .16s}
+.chips-arrow svg{width:22px;height:22px}
+.chips-prev{left:-4px}.chips-next{right:-4px}
+.category-chips-wrap[data-start] .chips-prev,.category-chips-wrap[data-end] .chips-next{opacity:1;pointer-events:auto;transform:none}
+.chips-arrow:hover{background:var(--accent);color:var(--bg)}
+@media(prefers-reduced-motion:reduce){.chips-arrow,.category-chips-wrap:before,.category-chips-wrap:after{transition:none}}

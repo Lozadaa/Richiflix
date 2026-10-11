@@ -91,6 +91,9 @@
 .league-fixture-extra small{color:#8394b0;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .league-iptv{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:8px;background:rgba(95,211,154,0.14);color:#7fe0ae;font-size:12px;font-style:normal;font-weight:800;white-space:nowrap}
 .league-iptv svg{width:13px;height:13px}
+/* A table from an earlier stage, or none at all */
+.league-stage-note{margin:0 0 12px;padding:9px 14px;border-radius:12px;background:#ffffff08;color:var(--text-2);font-size:14px}
+.league-stats-wide .league-stage-note{grid-column:1/-1;margin:0}
 /* Selecciones: no table, the fixtures take the whole width. */
 .league-stats-wide .league-stats-body{grid-template-columns:1fr}
 .league-stats-wide .league-tabpanel{min-height:0;max-height:760px}

@@ -5,7 +5,7 @@ import {footballTeam,competitionByLabel,FOOTBALL_COMPETITIONS} from './footballA
 export const leagueSlug=label=>competitionByLabel(label)?.key||null;
 export const competition=key=>FOOTBALL_COMPETITIONS.find(entry=>entry.key===key)||null;
 const API='https://site.api.espn.com/apis';
-export const STANDINGS_URL=slug=>`${API}/v2/sports/soccer/${slug}/standings`;
+export const STANDINGS_URL=(slug,stage)=>`${API}/v2/sports/soccer/${slug}/standings${stage?`?season=${stage.season}&seasontype=${stage.id}`:''}`;
 export const LEADERS_URL=slug=>`${API}/site/v2/sports/soccer/${slug}/statistics`;
 export const FIXTURES_URL=(slug,month)=>`${API}/site/v2/sports/soccer/${slug}/scoreboard?dates=${month}`;
 export const SUMMARY_URL=(slug,id)=>`${API}/site/v2/sports/soccer/${slug}/summary?event=${id}`;
@@ -30,12 +30,24 @@ export function parseStandings(data){
    return {...club(entry.team),rank:number(stats.rank),played:number(stats.gamesPlayed),wins:number(stats.wins),draws:number(stats.ties),losses:number(stats.losses),goalsFor:number(stats.pointsFor),goalsAgainst:number(stats.pointsAgainst),difference:number(stats.pointDifferential),points:number(stats.points),zone:zone(entry.note)};
   }).filter(row=>row.name&&row.rank!==null).sort((a,b)=>a.rank-b.rank);
   const name=/^\d{4}/.test(child.name||'')?null:translate(GROUPS,child.name);
-  return {name,rows};
- }).filter(group=>group.rows.length);
+  // Repeated positions mean two tables in one list (LigaPro's championship and relegation groups): each row goes to
+  // the first table that does not have its position yet, in ESPN's order.
+  if(new Set(rows.map(row=>row.rank)).size===rows.length)return [{name,rows}];
+  const split=[];for(const row of child.standings.entries.map(entry=>rows.find(candidate=>candidate.id===`futbol:${entry.team?.id}`)).filter(Boolean)){let table=split.find(list=>!list.some(other=>other.rank===row.rank));if(!table){table=[];split.push(table);}table.push(row);}
+  return split.map((list,index)=>({name:`Grupo ${index+1}`,rows:list.sort((x,y)=>x.rank-y.rank)}));
+ }).flat().filter(group=>group.rows.length);
  const season=/^\d{4}-\d{2}/.exec(children[0].standings.seasonDisplayName||'')?.[0]||/^\d{4}/.exec(children[0].name||'')?.[0]||null;
  const tournament=/^\d{4}\s+(.+)$/.exec(children[0].name||'')?.[1]||null;
  const zones=[...new Map(groups.flatMap(group=>group.rows).filter(row=>row.zone).map(row=>[row.zone.label,row.zone])).values()];
  return {season,tournament:tournament?translate([[/^torneo apertura$/i,'Apertura'],[/^torneo clausura$/i,'Clausura']],tournament):null,groups,rows:groups[0].rows,zones};
+}
+// Stages of the current season, newest first, except the one in progress: ESPN may publish no table for a stage
+// that just started (LigaPro Ecuador's «Final Stage»), so the panel shows the last stage that has one.
+const STAGES=[[/^first stage$/i,'Primera etapa'],[/^second stage$/i,'Segunda etapa'],[/^final stage$/i,'Etapa final'],[/apertura/i,'Apertura'],[/clausura/i,'Clausura']];
+export const stageName=name=>translate(STAGES,name);
+export function earlierStages(data,now=Date.now()){
+ const season=data?.seasons?.[0];if(!season?.year||!Array.isArray(season.types))return [];
+ return season.types.filter(type=>/^\d{1,3}$/.test(String(type.id))&&Date.parse(type.startDate)<=now&&!(Date.parse(type.endDate)>now)).reverse().map(type=>({season:season.year,id:String(type.id),name:stageName(type.name)}));
 }
 export function parseLeaders(data,limit=10){
  const list=name=>(data?.stats?.find(stat=>stat.name===name)?.leaders||[]).slice(0,limit).flatMap((leader,index)=>{

@@ -1,5 +1,5 @@
-import React,{useMemo,useRef} from 'react';
-import {Check,Sparkles,Trophy} from 'lucide-react';
+import React,{useCallback,useLayoutEffect,useMemo,useRef,useState} from 'react';
+import {Check,ChevronLeft,ChevronRight,Sparkles,Trophy} from 'lucide-react';
 import {CategoryPicker} from './CategoryPicker.jsx';
 import {displayText} from './displayText.js';
 import {scrollViewport,glideViewportBy,viewportRevealDelta} from './virtualViewport.js';
@@ -21,9 +21,18 @@ export function CategoryChips({categories,collections=[],value,change,title,allL
   const app=strip.current.closest('.app');if(event.key==='ArrowUp'){(app.querySelector('.has-tv-stage .focus-actions .primary')||app.querySelector('.topbar nav button.active'))?.focus({preventScroll:true});return;}
   const grid=app.querySelector('main .catalog-grid');if(grid){window.dispatchEvent(new CustomEvent('richiflix-catalog-navigation',{detail:{key:'ArrowDown',repeat:event.repeat}}));revealRowFor(restoreVirtualFocus(grid,0)||grid.querySelector('.card-open'))?.focus({preventScroll:true});}
  };
- return <div className="category-chips" role="group" aria-label={`Filtrar ${title} por categoría`} ref={strip} onFocusCapture={reveal} onKeyDownCapture={navigate}>
+ // Arrows for the pointer when chips overflow: they page the strip and fade in only on the side with hidden chips.
+ // Out of the tab order (tabIndex -1): the remote and the keyboard already scroll the strip while walking the chips.
+ const [edges,setEdges]=useState({start:false,end:false});
+ const measure=useCallback(()=>{const root=strip.current;if(!root)return;const start=root.scrollLeft>4,end=root.scrollLeft+root.clientWidth<root.scrollWidth-4;setEdges(previous=>previous.start===start&&previous.end===end?previous:{start,end});},[]);
+ useLayoutEffect(()=>{measure();if(!window.ResizeObserver)return;const observer=new ResizeObserver(measure);observer.observe(strip.current);return()=>observer.disconnect();},[measure,shown]);
+ const page=direction=>{const root=strip.current;root.scrollBy({left:direction*Math.max(240,root.clientWidth*0.7),behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});};
+ return <div className="category-chips-wrap" data-start={edges.start?'':undefined} data-end={edges.end?'':undefined}><div className="category-chips" role="group" aria-label={`Filtrar ${title} por categoría`} ref={strip} onFocusCapture={reveal} onKeyDownCapture={navigate} onScroll={measure}>
   {!more&&<CategoryPicker categories={categories} value={value} change={change} title={title} filterEntry/>}
   {shown.map(name=>{const group=groups.get(name),Icon=group?.kind==='ranking'||name.includes('· TMDB')?Trophy:Sparkles;return <button key={name} className={`category-chip ${name===value?'selected':''}`} aria-label={name==='Todas'?(allLabel==='Todas'?'Todas las categorías':allLabel):displayText(name)} aria-pressed={name===value} title={displayText(name)} onClick={()=>change(name)} onFocus={preview?()=>preview(name):undefined} onMouseEnter={preview?()=>preview(name):undefined}>{name===value?<Check aria-hidden="true"/>:group&&<Icon aria-hidden="true"/>}<span>{name==='Todas'?allLabel:displayText(group?.label||name)}</span></button>;})}
   {more&&<CategoryPicker categories={more} value={value} change={change} title={title} compact/>}
+ </div>
+  <button className="chips-arrow chips-prev" tabIndex={-1} aria-label="Ver categorías anteriores" onClick={()=>page(-1)}><ChevronLeft aria-hidden="true"/></button>
+  <button className="chips-arrow chips-next" tabIndex={-1} aria-label="Ver más categorías" onClick={()=>page(1)}><ChevronRight aria-hidden="true"/></button>
  </div>;
 }
