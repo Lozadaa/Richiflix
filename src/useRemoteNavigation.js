@@ -47,12 +47,12 @@ export function useRemoteNavigation(){
    // Down from the header enters the banner; leaving for the catalogue hides it.
    // Up can focus the preserved banner control and reveal the same recommendation again.
    if(e.key==='ArrowDown'&&current.closest('.topbar')){const primary=document.querySelector('.app.has-tv-stage .focus-actions .primary')||document.querySelector('main .catalog-controls button')||document.querySelector('.card-open');if(primary){move(e,primary);return;}}
-   if(e.key==='ArrowDown'&&current.closest('.focus-actions')){const filter=document.querySelector('main .category-filter-entry')||document.querySelector('main .live-hub .category-chip.selected');if(filter){move(e,filter);return;}let target=lastCard?.isConnected?lastCard:null;if(!target&&lastGroup?.isConnected){if(Number(lastGroup.dataset.virtualCount)>0)announce(e);target=restoreVirtualFocus(lastGroup,lastIndex);}target??=document.querySelector('.card-open');if(target){move(e,target);return;}}
+   if(e.key==='ArrowDown'&&current.closest('.focus-actions,.banner-next')){const filter=document.querySelector('main .category-filter-entry')||document.querySelector('main .live-hub .category-chip.selected');if(filter){move(e,filter);return;}let target=lastCard?.isConnected?lastCard:null;if(!target&&lastGroup?.isConnected){if(Number(lastGroup.dataset.virtualCount)>0)announce(e);target=restoreVirtualFocus(lastGroup,lastIndex);}target??=document.querySelector('.card-open');if(target){move(e,target);return;}}
    if(current.closest('.catalog-controls')){if(e.key==='ArrowUp'){move(e,document.querySelector('.app.has-tv-stage .focus-actions .primary')||document.querySelector('.topbar nav button.active'));return;}if(e.key==='ArrowDown'){const league=document.querySelector('main .league-stats [data-league-focus]')||document.querySelector('main .league-stats button');if(league){toLeague(e,league);return;}const empty=document.querySelector('main .empty-state:not([role=alert]) .empty-state-actions button'),row=document.querySelector('main .catalog-row .cards');move(e,empty||(row?recalled(e,row):lastCard?.isConnected?lastCard:document.querySelector('.card-open')));return;}}
-   // Direct banner: Left/Right on the carousel's Play change the slide in FocusStage (bannerKeyAction, which
-   // prevents the key); the dots are only an indicator. Up from the actions goes to the header.
-   if(e.key==='ArrowUp'&&current.closest('.focus-actions')){move(e,document.querySelector('.topbar nav button.active'));return;}
-   const horizontal=e.key==='ArrowLeft'||e.key==='ArrowRight',controlRow=current.closest('.topbar,.focus-actions');
+   // Banner: Up from its buttons (or «A continuación») goes to the header.
+   if(e.key==='ArrowUp'&&current.closest('.focus-actions,.banner-next')){move(e,document.querySelector('.topbar nav button.active'));return;}
+   // The banner's row runs ▶ · Mi lista · Más info · A continuación (the last one sits apart, in the stage's corner).
+   const horizontal=e.key==='ArrowLeft'||e.key==='ArrowRight',controlRow=current.closest('.topbar')||(current.closest('.focus-actions,.banner-next')&&current.closest('.focus-stage'));
    if(horizontal&&controlRow){
     // These are ordered rows. Spatially scoring every mounted Card is both
     // unnecessary and expensive on Samsung's browser during a held key.

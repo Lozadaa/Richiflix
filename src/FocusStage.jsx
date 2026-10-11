@@ -1,7 +1,7 @@
 import React,{memo,useCallback,useEffect,useMemo,useRef,useState} from 'react';
-import {Play,Heart,Check} from 'lucide-react';
+import {Play,Plus,Check,Info} from 'lucide-react';
 import {identityStyle,channelTitle} from './ContentIdentity.jsx';
-import {displayTitle,logoURL} from './artwork.js';
+import {displayTitle,logoURL,artworkURL} from './artwork.js';
 import {BannerArtwork} from './BannerArtwork.jsx';
 import {TrailerPreview} from './TrailerPreview.jsx';
 import {matchupFor,scoreLabelFor} from './matchup.js';
@@ -13,9 +13,10 @@ import {eventPhaseLine} from './liveEvents.js';
 import {guideNowLine} from './channelGuide.js';
 import {isTVBuild} from './platform.js';
 import {TitleFacts} from './UserScore.jsx';
-import {createCardPress,okHint} from './cardExpansion.js';
-import {bannerKeyAction,knobOn,hexToRgb,dotCycle} from './bannerFlow.js';
+import {knobOn,hexToRgb,dotCycle} from './bannerFlow.js';
 const FADE_MS=320;
+// «A continuación» thumbnail: the TMDB backdrop at w300 (the card's w780 is three times the bytes for a 160 px tile).
+const thumbURL=value=>artworkURL(value)?.replace('/t/p/w780/','/t/p/w300/');
 // H1-T4: the title logo (TMDB, H3) replaces the h1 only once decoded; the next slide's logo decodes ahead so the
 // copy never swaps h1 → img mid-slide (that would be a Layout after the text has settled).
 const decodedLogos=new Set();
@@ -26,7 +27,7 @@ function StageTitle({item,live}){
  useEffect(()=>{if(!src||ready)return;let alive=true;decodeLogo(src).then(()=>{if(alive)setReady(true);},()=>{});return()=>{alive=false;};},[src,ready]);
  return src&&ready?<img className="title-logo" src={src} alt={title} decoding="sync"/>:<h1>{title}</h1>;
 }
-export const FocusStage=memo(function FocusStage({item,active,visible=true,loading=false,metadataPending=loading,moving=false,open,inspect,favorite,toggle,tv,hover,leave,trailerDelay=0,next,nextPending=false,slide=0,slides=0,choose,onNextArt,profileId,paused=false}){
+export const FocusStage=memo(function FocusStage({item,active,visible=true,loading=false,metadataPending=loading,moving=false,open,inspect,favorite,toggle,tv,hover,leave,trailerDelay=0,next,nextPending=false,slide=0,slides=0,choose,onNextArt,profileId,paused=false,onStageFocus}){
  const [actionsFocused,setActionsFocused]=useState(false);
  const event=useEventPhase(item,true);
  // Fase C2 carousel: the outgoing art stays mounted under the incoming layer
@@ -39,20 +40,10 @@ export const FocusStage=memo(function FocusStage({item,active,visible=true,loadi
  if(carousel&&item&&layers.item!==item)setLayers({item,out:layers.item&&layers.item.id!==item.id&&(arrived(layers.item.id)||!layers.out)?layers.item:layers.out});
  const currentArrived=Boolean(item)&&arrived(item.id);
  useEffect(()=>{if(!layers.out||!currentArrived)return;const timer=setTimeout(()=>setLayers(previous=>({...previous,out:null})),FADE_MS+40);return()=>clearTimeout(timer);},[layers.out,currentArrived]);
- // Direct banner (TV carousel): Left/Right on Play change the slide (bannerKeyAction), held OK reveals Mi lista
- // (createCardPress, as on cards), Back/Up/Down return to the carousel mode. The dots are only an indicator.
- const direct=Boolean(tv&&choose),[mode,setMode]=useState('carousel'),[hintOn,setHintOn]=useState(false),hint=useMemo(()=>okHint(`banner:${profileId}`),[profileId]),latest=useRef(),press=useRef();
- latest.current={item,open,inspect,hint};
- if(!press.current)press.current=createCardPress({short:()=>{const {item,open,inspect}=latest.current;if(item.mediaType==='series')inspect(item);else open(item);},long:()=>{latest.current.hint.mastered();setHintOn(false);setMode('actions');}});
- const keyDown=event=>{
-  if(!direct)return;const action=bannerKeyAction({key:event.keyCode===13?'Enter':event.key,mode});if(!action)return;
-  if(action==='press'){if(event.target.matches('.primary')){event.preventDefault();press.current.down();}return;}
-  event.preventDefault();if(action==='previous'||action==='next'){press.current.cancel();choose(slide+(action==='next'?1:-1));return;}
-  const [primary,secondary]=event.currentTarget.querySelectorAll('button');
-  if(action==='toggle')(event.target===primary?secondary:primary).focus({preventScroll:true});else{setMode('carousel');primary.focus({preventScroll:true});}
- };
- const keyUp=event=>{if((event.key==='Enter'||event.keyCode===13)&&press.current.pressed){event.preventDefault();press.current.up();}};
- const hidden=direct&&mode==='carousel';
+ // «Destacado vivo» (TV carousel): the banner is a calm hero. Its buttons are ordinary (Left/Right walk ▶ · Mi lista ·
+ // Más info · A continuación, OK clicks); the recommendation changes only by itself while nobody is in the banner
+ // (App pauses the clock on onStageFocus) or with OK on «A continuación». No dots, no held OK.
+ const labeled=Boolean(tv&&choose);
  // Inicio con vida: the knobs --tv-kenburns / --tv-ambient (0/1 on .app.tv-mode) are read once on mount, never per key.
  const [knobs,setKnobs]=useState(null),[dot,setDot]=useState(null),[frozen,setFrozen]=useState(false),stageRef=useRef();
  if(carousel){const nextDot=dotCycle(dot,{slide,paused});if(nextDot!==dot)setDot(nextDot);}
@@ -70,7 +61,7 @@ export const FocusStage=memo(function FocusStage({item,active,visible=true,loadi
  const identity=identityStyle(item),ambient=carousel&&tv&&knobs?.ambient;
  // The tint is painted inside each art layer (BannerArtwork ::after, --wash-ink-rgb): the crossfade carries it, zero layers.
  const tintOf=entry=>ambient&&entry?hexToRgb(identityStyle(entry)['--identity-ink'])||undefined:undefined;
- return <section className={`hero focus-stage ${tv?'tv-stage':'pointer-stage'} ${carousel?'carousel-stage':''} ${live?'channel-stage':''} ${matchup?'mlb-stage':''}`} data-content-id={item.id} data-stage-visible={visible?'true':'false'} aria-hidden={!visible?true:undefined} data-stage-state={moving?'browsing':'settled'} data-slide={carousel?slide:undefined} data-kenburns={carousel&&knobs?.kenburns?'true':undefined} data-paused={carousel&&frozen?'true':undefined} data-ambient={ambient?'true':undefined} ref={stageRef} aria-label={carousel?'Recomendaciones':'Vista del título seleccionado'} style={identity} onMouseEnter={hover} onMouseLeave={leave} onFocus={event=>{if(remoteActions)setActionsFocused(true);if(direct&&!event.currentTarget.contains(event.relatedTarget)){const show=hint.visible();setHintOn(show);if(show)hint.shown();}hover?.(event);}} onBlur={event=>{if(!event.currentTarget.contains(event.relatedTarget)){setActionsFocused(false);press.current.cancel();setMode('carousel');setHintOn(false);leave?.();}}}>
+ return <section className={`hero focus-stage ${tv?'tv-stage':'pointer-stage'} ${carousel?'carousel-stage':''} ${live?'channel-stage':''} ${matchup?'mlb-stage':''}`} data-content-id={item.id} data-stage-visible={visible?'true':'false'} aria-hidden={!visible?true:undefined} data-stage-state={moving?'browsing':'settled'} data-slide={carousel?slide:undefined} data-kenburns={carousel&&knobs?.kenburns?'true':undefined} data-paused={carousel&&frozen?'true':undefined} data-ambient={ambient?'true':undefined} ref={stageRef} aria-label={carousel?'Recomendaciones':'Vista del título seleccionado'} style={identity} onMouseEnter={hover} onMouseLeave={leave} onFocus={event=>{if(remoteActions)setActionsFocused(true);if(!event.currentTarget.contains(event.relatedTarget))onStageFocus?.(true);hover?.(event);}} onBlur={event=>{if(!event.currentTarget.contains(event.relatedTarget)){setActionsFocused(false);onStageFocus?.(false);leave?.();}}}>
   {<TrailerPreview id={live?undefined:item.trailerId} active={!live&&active} delay={trailerDelay}/>}
   {[out&&<BannerArtwork key={out.id} item={out} tint={tintOf(out)} className="is-out"/>,<BannerArtwork key={item.id} item={item} tint={tintOf(item)} metadataPending={metadataPending} className={carousel?'is-current':undefined} onState={carousel?artChanged:undefined}/>,upcomingArt&&<BannerArtwork key={upcomingArt.id} item={upcomingArt} tint={tintOf(upcomingArt)} metadataPending={nextPending} className="is-next" onState={onNextArt}/>]}
   <div className="focus-stage-shade"/>
@@ -80,8 +71,17 @@ export const FocusStage=memo(function FocusStage({item,active,visible=true,loadi
    <p className="focus-description">{displayText(live?event?event.phase==='live'&&matchup?.teams[1]&&scoreLabelFor(item.eventScore,matchup.teams[0].id)?`En juego · ${scoreLabelFor(item.eventScore,matchup.teams[0].id).text}`:eventPhaseLine(item,event):guideNowLine(item.guide)||['Televisión en directo',item.genre].filter(Boolean).join(' · '):item.description||item.genre)}</p>
    <TitleFacts item={item}/>
    {item.cast&&<p className="focus-cast">{displayText(item.cast)}</p>}</React.Fragment>
-   <div className={`focus-actions${hidden?' is-direct':''}`} role="group" aria-label="Acciones del título seleccionado" aria-hidden={dormant?true:undefined} onKeyDown={keyDown} onKeyUp={keyUp}><button className="primary" tabIndex={dormant?-1:undefined} aria-label={item.mediaType==='series'?'Ver episodios':'Reproducir'} onClick={()=>item.mediaType==='series'?inspect(item):open(item)}><Play fill="currentColor" aria-hidden="true"/></button><button className="secondary" tabIndex={dormant||hidden?-1:undefined} aria-label={favorite?'Quitar de Mi lista':'Guardar en Mi lista'} aria-pressed={favorite} onClick={()=>toggle(item)}>{favorite?<Check aria-hidden="true"/>:<Heart aria-hidden="true"/>}</button>{hidden&&hintOn&&<span className="focus-remote-hint">Mantén OK para Mi lista</span>}</div>
+   <div className={`focus-actions${labeled?' is-labeled':''}`} role="group" aria-label="Acciones del título seleccionado" aria-hidden={dormant?true:undefined}>
+    <button className="primary" tabIndex={dormant?-1:undefined} aria-label={item.mediaType==='series'?'Ver episodios':'Reproducir'} onClick={()=>item.mediaType==='series'?inspect(item):open(item)}><Play fill="currentColor" aria-hidden="true"/>{labeled&&<span>{item.mediaType==='series'?'Ver episodios':'Reproducir'}</span>}</button>
+    <button className="secondary" tabIndex={dormant?-1:undefined} aria-label={favorite?'Quitar de Mi lista':'Guardar en Mi lista'} aria-pressed={favorite} onClick={()=>toggle(item)}>{favorite?<Check aria-hidden="true"/>:<Plus aria-hidden="true"/>}{labeled&&<span>{favorite?'En Mi lista':'Mi lista'}</span>}</button>
+    {labeled&&!live&&<button className="secondary focus-more" tabIndex={dormant?-1:undefined} aria-label={`Más información de ${displayTitle(item)}`} onClick={()=>inspect(item)}><Info aria-hidden="true"/><span>Más info</span></button>}
+   </div>
   </div>
-  {carousel&&slides>1&&<div className="banner-dots" role="group" aria-label="Elegir recomendación">{Array.from({length:slides},(_,index)=><button key={index===slide?`${index}:${dot?.cycle??0}`:index} className={index===slide?dot?.resumed?'active is-resumed':'active':''} aria-label={`Recomendación ${index+1} de ${slides}`} aria-pressed={index===slide} tabIndex={-1} onClick={()=>choose(index)}><span/></button>)}</div>}
+  {/* The next recommendation instead of dots: what comes, and a thin line that fills while the banner rotates by itself. */}
+  {labeled&&next&&slides>1&&<button className="banner-next" tabIndex={dormant?-1:undefined} aria-label={`A continuación: ${next.kind==='iptv'?channelTitle(next):displayTitle(next)}. Ver ahora`} onClick={()=>choose(slide+1)}>
+   <span className="banner-next-art" aria-hidden="true">{thumbURL(next.backdropImage||next.image)&&<img src={thumbURL(next.backdropImage||next.image)} alt="" decoding="async"/>}</span>
+   <span className="banner-next-copy"><small>A continuación</small><b>{next.kind==='iptv'?channelTitle(next):displayTitle(next)}</b></span>
+   <i key={`${slide}:${dot?.cycle??0}`} className={`banner-next-progress${dot?.resumed?' is-resumed':''}`} aria-hidden="true"/>
+  </button>}
  </section>;
 });

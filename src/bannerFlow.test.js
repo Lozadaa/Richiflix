@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createBannerFlow,createBannerCarousel,bannerKeyAction,knobOn,hexToRgb,dotCycle} from './bannerFlow.js';
+import {createBannerFlow,createBannerCarousel,knobOn,hexToRgb,dotCycle} from './bannerFlow.js';
 test('dot progress restarts on a slide change and on resume, never on a pause or a no-op render',()=>{
  const start=dotCycle(null,{slide:0});assert.deepEqual(start,{slide:0,paused:false,cycle:0,resumed:false});
  assert.equal(dotCycle(start,{slide:0}),start,'same slide, same state: same object');
@@ -80,13 +80,6 @@ test('a manual change selects at once and restarts the interval, even while paus
 });
 test('one slide or an emptied list never schedules, and reset keeps a valid index',()=>{
  const {carousel,timers}=carouselFixture();carousel.reset(1);assert.equal(timers.size,0);carousel.reset(5,4);assert.equal(carousel.index,4);carousel.reset(2,4);assert.equal(carousel.index,1);carousel.reset(0);assert.equal(carousel.index,0);assert.equal(timers.size,0);carousel.go(3);assert.equal(carousel.index,0);
-});
-test('banner keys: carousel changes slide and presses OK; actions alternate buttons and Back exits',()=>{
- const carousel=key=>bannerKeyAction({key,mode:'carousel'}),actions=key=>bannerKeyAction({key,mode:'actions'});
- assert.equal(carousel('ArrowLeft'),'previous');assert.equal(carousel('ArrowRight'),'next');assert.equal(carousel('Enter'),'press');
- for(const key of ['ArrowUp','ArrowDown','Escape','Tab'])assert.equal(carousel(key),null,`${key} is left to the page navigation`);
- assert.equal(actions('ArrowLeft'),'toggle');assert.equal(actions('ArrowRight'),'toggle');assert.equal(actions('Escape'),'exit');
- for(const key of ['ArrowUp','ArrowDown','Enter'])assert.equal(actions(key),null,`${key} keeps its native/page behaviour`);
 });
 test('carousel go wraps at both ends and re-arms the full interval',()=>{
  const timers=[];const carousel=createBannerCarousel({schedule:(fn,ms)=>{timers.push(ms);return timers.length;},cancel:()=>{}});

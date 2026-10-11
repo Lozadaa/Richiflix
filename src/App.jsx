@@ -307,9 +307,14 @@ export default function App({profile,changeProfile}){
  // Fase C2: in TV the Inicio banner is a recommendation carousel, independent of
  // the selected card (its information lives in the expanded card). It pauses for
  // key bursts, a focused/expanded card, a playing trailer, dialogs and hidden tabs.
- const bannerSlides=useMemo(()=>tv&&page==='Inicio'&&!query&&!collectionView?recommendedBanner({continuing,collections:smartCollections,featured:featuredBase}):[],[tv,page,query,collectionView,continuing,smartCollections,featuredBase]);
+ // «Destacado vivo»: the recommendation rotates by itself only while nobody is in the banner (its buttons focused or
+ // hovered), and a list refreshed meanwhile (metadata, TMDB tops) waits until the viewer leaves: nothing jumps under them.
+ const [stageFocused,setStageFocused]=useState(false),stageFocus=useStableEvent(value=>setStageFocused(value)),heldSlides=useRef(null);
+ const liveBannerSlides=useMemo(()=>tv&&page==='Inicio'&&!query&&!collectionView?recommendedBanner({continuing,collections:smartCollections,featured:featuredBase}):[],[tv,page,query,collectionView,continuing,smartCollections,featuredBase]);
+ if(!stageFocused||!heldSlides.current?.length)heldSlides.current=liveBannerSlides;
+ const bannerSlides=heldSlides.current;
  const nextArt=useRef({}),nextArtChanged=useMemo(()=>(id,state)=>{nextArt.current={id,state};},[]);
- const carousel=useBannerCarousel(bannerSlides.map(item=>item.id),!bannerAtTop||banner.moving||cardFocus||previewPlaying||Boolean(details||playing||modal),next=>nextArt.current.id===bannerSlides[next]?.id&&nextArt.current.state!=='loading');
+ const carousel=useBannerCarousel(bannerSlides.map(item=>item.id),!bannerAtTop||banner.moving||cardFocus||stageFocused||previewPlaying||Boolean(details||playing||modal),next=>nextArt.current.id===bannerSlides[next]?.id&&nextArt.current.state!=='loading');
  const slide=bannerSlides[carousel.index],nextSlide=bannerSlides.length>1?bannerSlides[(carousel.index+1)%bannerSlides.length]:null;
  // Metadata replies rerender matching cards, so they wait until the 320 ms crossfade has ended.
  useEffect(()=>{const timer=setTimeout(()=>{for(const item of [slide,nextSlide])if(item)preparePreview(item);},400);return()=>clearTimeout(timer);},[slide?.id,nextSlide?.id,previewCache]);
@@ -405,7 +410,7 @@ export default function App({profile,changeProfile}){
    </div>
   </header>
   {stageVisible&&autoTrailers&&<CardTrailerPreview delay={tv?TV_TRAILER_DELAY_MS:0}/>}
-  {stageVisible&&<StageWithMetadata item={stageBase} visible={bannerAtTop} loadingAllowed={previewActive&&!banner.moving} active={autoTrailers&&!banner.moving&&(tv?bannerAtTop&&!cardFocus:previewActive)} trailerDelay={tv?TV_TRAILER_DELAY_MS:0} moving={banner.moving} next={nextSlide} slide={carousel.index} slides={bannerSlides.length} choose={bannerSlides.length?carousel.go:undefined} onNextArt={nextArtChanged} paused={carousel.paused} profileId={profile.id} open={open} inspect={inspect} favorite={favorites.includes(stageBase.id)} toggle={toggle} tv={tv} hover={keepPreview} leave={leavePreview}/>}
+  {stageVisible&&<StageWithMetadata item={stageBase} visible={bannerAtTop} loadingAllowed={previewActive&&!banner.moving} active={autoTrailers&&!banner.moving&&(tv?bannerAtTop&&!cardFocus:previewActive)} trailerDelay={tv?TV_TRAILER_DELAY_MS:0} moving={banner.moving} next={nextSlide} slide={carousel.index} slides={bannerSlides.length} choose={bannerSlides.length?carousel.go:undefined} onNextArt={nextArtChanged} paused={carousel.paused} onStageFocus={stageFocus} profileId={profile.id} open={open} inspect={inspect} favorite={favorites.includes(stageBase.id)} toggle={toggle} tv={tv} hover={keepPreview} leave={leavePreview}/>}
   <main ref={mainRef} key={`${page}-${Boolean(query)}-${collectionView?.title||''}`} className="page-scene" data-banner-hidden={tvStage&&!bannerAtTop?'true':undefined}>
    {!tv&&page==='Inicio'&&!query&&!collectionView&&featured.length>0&&<Hero items={featured} prepare={preparePreview} open={open} inspect={inspect}/>}
    <div className={`content ${page==='Inicio'&&!query&&!collectionView&&featured.length?'home-content':''}`}>

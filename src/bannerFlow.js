@@ -42,15 +42,6 @@ export function createBannerCarousel({count=0,intervalMs=9000,resumeMs=2000,onCh
  };
 }
 
-// Remote keys with the focus on the TV carousel banner (its Play button). «carousel»: Left/Right change the
-// recommendation directly (the focus stays), OK is a press (short = play, held = reveal Mi lista). «actions»
-// (after a held OK): Left/Right alternate Play and Mi lista, OK clicks natively, Back returns to «carousel».
-// null = not the banner's key (Up/Down leave the banner and the blur returns it to «carousel»).
-export function bannerKeyAction({key,mode}){
- if(mode==='actions')return key==='ArrowLeft'||key==='ArrowRight'?'toggle':key==='Escape'?'exit':null;
- return key==='ArrowLeft'?'previous':key==='ArrowRight'?'next':key==='Enter'?'press':null;
-}
-
 // Inicio con vida: a CSS knob (--tv-kenburns, --tv-ambient) is on unless it reads exactly 0 (unset = the default 1).
 export const knobOn=value=>String(value??'').trim()!=='0';
 

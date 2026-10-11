@@ -100,22 +100,38 @@ body[data-focus-region]:not([data-focus-region='catalogue']) .tv-mode .virtual-r
 /* The prepainted next slide is decoded but not painted (visibility): rastering a new 1920×554 layer behind every key
    made 1 in 8 banner keys wait 200–350 ms on the compositor; it rasters on its first frame as is-current, under the fade. */
 .carousel-stage .focus-stage-visual.is-next{visibility:hidden}
-/* Held OK reveals Mi lista (visibility only: no layout); the hint sits under the buttons, out of flow. */
-.focus-actions.is-direct .secondary{visibility:hidden}
 .tv-stage .focus-actions{position:relative}
-.focus-remote-hint{position:absolute;left:0;top:100%;margin-top:14px;font-size:18px;line-height:1.25;color:#9caac3;white-space:nowrap;pointer-events:none}
 @keyframes stage-copy-in{from{opacity:0;transform:translateY(6px)}}
 .carousel-stage .focus-stage-copy>:not(.focus-actions){animation:stage-copy-in var(--tv-base,110ms) ease both}
-.banner-dots{position:absolute;z-index:4;left:4.5%;top:100px;display:flex;gap:4px;pointer-events:auto}
-.banner-dots button{position:relative;width:34px;height:20px;padding:0;display:grid;place-items:center;border:0;border-radius:10px;background:none;color:inherit}
-/* Dots switch at the commit, untransitioned: an opacity transition ending mid-fade would relayout. */
-.banner-dots span{display:block;width:10px;height:10px;border-radius:50%;background:#e8eef9;opacity:.42}
-.banner-dots .active span{background:var(--accent);opacity:1}
-.banner-dots button:after{content:'';position:absolute;inset:0;border:2px solid var(--focus);border-radius:inherit;opacity:0;pointer-events:none;transition:opacity var(--tv-fast,80ms) ease}
-.banner-dots button:focus:after{opacity:1}
-@media(prefers-reduced-motion:reduce){.carousel-stage .focus-stage-visual.is-current,.banner-dots button:after{transition:none}.carousel-stage .focus-stage-copy>:not(.focus-actions){animation:none}}
+@media(prefers-reduced-motion:reduce){.carousel-stage .focus-stage-visual.is-current{transition:none}.carousel-stage .focus-stage-copy>:not(.focus-actions){animation:none}}
+/* «Destacado vivo» buttons: labelled pills (▶ Reproducir · + Mi lista · ⓘ Más info), walked with Left/Right.
+   Focus = the existing outline and lift; nothing animates per key beyond that transform. */
+.focus-actions.is-labeled{gap:16px}
+.focus-actions.is-labeled>button{width:auto;height:64px;padding:0 28px 0 22px;border-radius:20px;display:inline-flex;align-items:center;gap:12px;font:800 22px/1 'Manrope',Arial,sans-serif;white-space:nowrap}
+.focus-actions.is-labeled>button.primary{padding-right:32px}
+.focus-actions.is-labeled svg{width:28px;height:28px;flex:0 0 auto}
+.focus-actions.is-labeled>button.secondary{color:var(--text);background:rgba(var(--bg-rgb),0.55);border:1px solid #ffffff24}
+.focus-actions.is-labeled>button.secondary[aria-pressed=true]{color:var(--accent);border-color:rgba(var(--accent-rgb),0.5)}
+.focus-actions.is-labeled>button:focus{transform:scale(1.04)}
+/* «A continuación»: the next recommendation in the stage's lower-right corner, in place of the dots. Solid translucent
+   plate (no backdrop blur: a full-width blur layer is the most expensive thing a Samsung compositor can be asked for). */
+.banner-next{position:absolute;z-index:4;right:4.5%;bottom:48px;display:grid;grid-template-columns:136px minmax(0,1fr);align-items:center;gap:16px;width:min(400px,30vw);padding:10px 18px 14px 10px;border-radius:18px;background:rgba(var(--bg-rgb),0.72);border:1px solid #ffffff1a;color:var(--text);text-align:left;overflow:hidden;box-shadow:0 14px 34px #0006}
+.banner-next-art{display:block;width:136px;height:77px;border-radius:12px;overflow:hidden;background:#ffffff10}
+.banner-next-art img{width:100%;height:100%;object-fit:cover;display:block}
+.banner-next-copy{display:flex;flex-direction:column;gap:5px;min-width:0}
+.banner-next-copy small{color:#9fb0c8;font-size:13px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+.banner-next-copy b{font:800 20px/1.2 'Bricolage Grotesque',Arial,sans-serif;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.banner-next:focus{outline:4px solid var(--focus);outline-offset:5px;transform:scale(1.03)}
+.banner-next:hover{background:rgba(var(--bg-rgb),0.85)}
+/* The line fills over the 9 s interval (createBannerCarousel intervalMs); FocusStage re-keys it on each slide change and
+   resume (dotCycle) and a resumed fill waits resumeMs (2 s). Paused banner (focus in it or in the rows): no line. */
+@keyframes next-progress{to{transform:scaleX(1)}}
+.banner-next-progress{position:absolute;left:10px;right:10px;bottom:5px;height:3px;border-radius:2px;background:var(--accent);transform:scaleX(0);transform-origin:left;animation:next-progress 9s linear both}
+.banner-next-progress.is-resumed{animation-delay:2s}
+.carousel-stage[data-paused='true'] .banner-next-progress{visibility:hidden;animation:none}
+@media(prefers-reduced-motion:reduce){.banner-next-progress{animation:none;visibility:hidden}.banner-next:focus,.focus-actions.is-labeled>button:focus{transform:none}}
 /* Inicio con vida (H1). Knobs, read once by FocusStage on mount: 0 = no animation and no layer. Change them here, or
-   on .app from the inspector and then reload. --tv-kenburns covers the Ken Burns and the dot progress (data-kenburns);
+   on .app from the inspector and then reload. --tv-kenburns covers the Ken Burns (data-kenburns);
    --tv-ambient the two ambient washes (at 0 they are not rendered at all). */
 .app.tv-mode{--tv-kenburns:1;--tv-ambient:1}
 /* H1-T1 Ken Burns: the carousel art layer (already the crossfade's layer, so no second layer) scales 1 → 1.06 over the
@@ -131,14 +147,6 @@ body[data-focus-region]:not([data-focus-region='catalogue']) .tv-mode .virtual-r
    no layer of its own, no transition, nothing per key. --tv-ambient:0 (data-ambient absent) paints nothing. */
 .carousel-stage[data-ambient='true'] .focus-stage-visual:after{content:'';position:absolute;top:0;bottom:0;left:47%;right:0;pointer-events:none;background:radial-gradient(ellipse at 43% 0%,rgba(var(--wash-ink-rgb,13,23,43),.55),transparent 70%)}
 .tv-stage[data-card-trailer='playing'] .focus-stage-visual:after{content:none}
-/* H1-T3 dot progress: one 32×3 line under the active dot fills with scaleX over the 9 s interval (the only new layer
-   of the dots). FocusStage re-keys the active dot on each slide change and resume (dotCycle); a resumed fill waits the
-   carousel's resumeMs (2 s) first. It pauses with the carousel and goes with the Ken Burns knob. */
-@keyframes dot-progress{to{transform:scaleX(1)}}
-.carousel-stage[data-kenburns='true'] .banner-dots .active:before{content:'';position:absolute;left:1px;right:1px;top:100%;height:3px;margin-top:2px;border-radius:2px;background:var(--accent);pointer-events:none;transform:scaleX(0);transform-origin:left;will-change:transform;animation:dot-progress 9s linear both}
-.carousel-stage[data-kenburns='true'] .banner-dots .active.is-resumed:before{animation-delay:2s}
-.carousel-stage[data-paused='true'] .banner-dots .active:before{content:none}/* paused carousel: no fill, no layer */
-@media(prefers-reduced-motion:reduce){.carousel-stage[data-kenburns='true'] .banner-dots .active:before{content:none}}
 /* H1-T3 staggered copy: the same stage-copy-in (duration unchanged), eyebrow / title (or logo) / description / facts. */
 .carousel-stage .focus-stage-copy>:nth-child(2){animation-delay:40ms}
 .carousel-stage .focus-stage-copy>:nth-child(3){animation-delay:80ms}

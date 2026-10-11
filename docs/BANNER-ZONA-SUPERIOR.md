@@ -23,3 +23,14 @@ npx vite build --outDir artifacts/banner-zone-pc-dist
 El test de zona usa contenido ficticio y un reproductor YouTube simulado, sin solicitudes externas ni credenciales. Comprueba aparición, ocultación persistente, retorno, cambios rápidos, pausa del reproductor, conservación de la recomendación, tráiler dentro de la tarjeta, rueda y movimiento reducido. También se repite la regresión del ancla lateral con este viewport.
 
 Las compilaciones y capturas se guardan separadamente de los paquetes de instalación. Esta corrección no se ha instalado ni comprobado físicamente en Samsung.
+
+## «Destacado vivo» (11 oct 2026)
+
+El banner de Inicio en TV deja de ser un carrusel con puntos. Conserva el arte grande, el logo del título, el tráiler, el Ken Burns y el tinte ambiental, y cambia la interacción:
+
+- Botones con texto: **▶ Reproducir · + Mi lista · ⓘ Más info**, recorridos con Izquierda/Derecha. Ya no hace falta mantener OK para Mi lista.
+- En lugar de los puntos, la tarjeta **«A continuación»** (esquina inferior derecha) muestra la siguiente recomendación con su miniatura y una línea que se llena mientras el banner rota solo. Es el último botón de la fila: OK salta a esa recomendación y el foco se queda ahí para seguir pasando.
+- La recomendación rota sola **solo cuando nadie está en el banner**. Con el foco en sus botones se detiene, y una lista refrescada mientras tanto (metadatos, tops TMDB) espera a que el usuario salga: nada cambia bajo sus ojos.
+- La placa de «A continuación» es sólida y translúcida, sin `backdrop-filter`: en Samsung un desenfoque a pantalla completa es la capa más cara.
+
+Archivos: `src/FocusStage.jsx`, `src/App.jsx` (`stageFocused`, `heldSlides`), `src/compositorMotion.css`, `src/useRemoteNavigation.js`.
