@@ -47,3 +47,5 @@ export function readAutoTrailers(storage=globalThis.localStorage,tvBuild=isTVBui
 // TV waits for a calm selection: a newly wanted id (or none) closes the gate; with no delay it opens at once.
 export const TV_TRAILER_DELAY_MS=1500;
 export const trailerGate=(gate,key,delay)=>gate.key===key?gate:{key,open:Boolean(key)&&!delay};
+// PC: a second with the pointer still on a card before its trailer starts, so passing over a row stays quiet.
+export const PC_TRAILER_DELAY_MS=1000;

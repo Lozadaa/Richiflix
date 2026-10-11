@@ -4,10 +4,12 @@ import {publishPreviewPlayback} from './previewPlaybackStore.js';
 import {youtubeID} from './metadata.js';
 import {youtubeAPI,trailerFrameURL,trailerErrorKind,trailerBridgeEnabled,trailerGate} from './trailerApi.js';
 export {warmTrailerAPI} from './trailerApi.js';
+import {applyTrailerAudio,stopTrailerAudio,useTrailerSound} from './trailerSound.js';
 let sequence=0;const IDLE_MS=10000;
-function applyAudio(player){player.setVolume?.(100);player.unMute?.();}
+// Muted unless the viewer turned trailer sound on (trailerSound.js), then a gentle fade-in to 40 %.
+const applyAudio=player=>applyTrailerAudio(player);
 export function TrailerPreview({id,active=true,card=false,delay=0}){
- const owner=useCardTrailer();
+ const owner=useCardTrailer(),sound=useTrailerSound();
  const playbackToken=useRef({});
  if(!card&&owner)active=false;
  const root=useRef(),player=useRef(),loaded=useRef(),wanted=useRef(),creating=useRef(false),playerReady=useRef(false),alive=useRef(false),generation=useRef(0),creationTimer=useRef(),playbackTimer=useRef(),exitTimer=useRef(),readyId=useRef(null),lastFrame=useRef(null),exitingId=useRef(null),lastIntent=useRef(),failed=useRef(new Set());
@@ -27,7 +29,7 @@ export function TrailerPreview({id,active=true,card=false,delay=0}){
  const clearPlayback=()=>{clearTimeout(playbackTimer.current);playbackTimer.current=undefined;};
  const clearExit=()=>{clearTimeout(exitTimer.current);exitTimer.current=undefined;exitingId.current=null;if(alive.current)setExiting(null);};
  const holdExit=candidate=>{clearExit();exitingId.current=candidate;setExiting(candidate);exitTimer.current=setTimeout(()=>{clearExit();},140);};
- const destroy=()=>{generation.current++;creating.current=false;playerReady.current=false;clearTimeout(creationTimer.current);clearPlayback();clearExit();lastFrame.current=null;try{player.current?.destroy();}catch{}player.current=null;loaded.current=null;root.current?.replaceChildren();};
+ const destroy=()=>{generation.current++;creating.current=false;playerReady.current=false;clearTimeout(creationTimer.current);clearPlayback();clearExit();lastFrame.current=null;stopTrailerAudio(player.current);try{player.current?.destroy();}catch{}player.current=null;loaded.current=null;root.current?.replaceChildren();};
  const error=(code,kind=code)=>{root.current?.setAttribute('data-trailer-error',String(code));root.current?.setAttribute('data-trailer-error-kind',kind);hide();clearPlayback();};
  const failVideo=(candidate,code,kind=code)=>{clearExit();lastFrame.current=null;if(candidate){failed.current.add(candidate);if(failed.current.size>32)failed.current.delete(failed.current.values().next().value);}error(code,kind);pause();};
  useEffect(()=>{alive.current=true;const media=window.matchMedia('(prefers-reduced-motion: reduce)'),change=()=>setMotion(!media.matches),visibility=()=>setVisible(!document.hidden);media.addEventListener('change',change);document.addEventListener('visibilitychange',visibility);return()=>{alive.current=false;media.removeEventListener('change',change);document.removeEventListener('visibilitychange',visibility);destroy();};},[]);
@@ -77,6 +79,8 @@ export function TrailerPreview({id,active=true,card=false,delay=0}){
   return()=>{clearPlayback();pause();};
  },[valid,play,initialized]);
  const playing=ready===valid&&play,holding=exiting===valid&&valid&&!failed.current.has(valid);
+ // The speaker button changes the playing trailer at once (unmute fades in; mute is immediate).
+ useEffect(()=>{if(playerReady.current&&player.current)try{applyAudio(player.current);}catch{}},[sound]);
  useLayoutEffect(()=>{publishPreviewPlayback(playbackToken.current,playing);},[playing]);
  useEffect(()=>()=>publishPreviewPlayback(playbackToken.current,false),[]);
  useLayoutEffect(()=>{
@@ -87,5 +91,5 @@ export function TrailerPreview({id,active=true,card=false,delay=0}){
   owner.banner?.setAttribute('data-card-trailer',playing?'playing':'pending');
   return()=>{deck?.setAttribute('data-trailer-state','poster');owner.banner?.removeAttribute('data-card-trailer');};
  },[card,owner,playing]);
- return <div ref={root} className={'trailer-preview '+(playing?'is-playing':holding?'is-exiting':'')} data-trailer-state={playing?'playing':'poster'} data-trailer-transport={trailerBridgeEnabled?'bridge':'direct'} data-trailer-muted="false" aria-hidden="true"/>;
+ return <div ref={root} className={'trailer-preview '+(playing?'is-playing':holding?'is-exiting':'')} data-trailer-state={playing?'playing':'poster'} data-trailer-transport={trailerBridgeEnabled?'bridge':'direct'} data-trailer-muted={sound?'false':'true'} aria-hidden="true"/>;
 }

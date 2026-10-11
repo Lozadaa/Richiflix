@@ -1,5 +1,6 @@
-import React,{memo,useCallback,useEffect,useMemo,useRef,useState} from 'react';
-import {Play,Plus,Check,Info} from 'lucide-react';
+import React,{memo,useCallback,useContext,useEffect,useRef,useState} from 'react';
+import {Play,Plus,Check,Info,Volume2,VolumeX,Clapperboard} from 'lucide-react';
+import {TrailerContext,useTrailerSound,setTrailerSound} from './trailerSound.js';
 import {identityStyle,channelTitle} from './ContentIdentity.jsx';
 import {displayTitle,logoURL,artworkURL} from './artwork.js';
 import {BannerArtwork} from './BannerArtwork.jsx';
@@ -43,7 +44,7 @@ export const FocusStage=memo(function FocusStage({item,active,visible=true,loadi
  // «Destacado vivo» (TV carousel): the banner is a calm hero. Its buttons are ordinary (Left/Right walk ▶ · Mi lista ·
  // Más info · A continuación, OK clicks); the recommendation changes only by itself while nobody is in the banner
  // (App pauses the clock on onStageFocus) or with OK on «A continuación». No dots, no held OK.
- const labeled=Boolean(tv&&choose);
+ const labeled=Boolean(tv&&choose),trailers=useContext(TrailerContext),sound=useTrailerSound();
  // Inicio con vida: the knobs --tv-kenburns / --tv-ambient (0/1 on .app.tv-mode) are read once on mount, never per key.
  const [knobs,setKnobs]=useState(null),[dot,setDot]=useState(null),[frozen,setFrozen]=useState(false),stageRef=useRef();
  if(carousel){const nextDot=dotCycle(dot,{slide,paused});if(nextDot!==dot)setDot(nextDot);}
@@ -75,6 +76,7 @@ export const FocusStage=memo(function FocusStage({item,active,visible=true,loadi
     <button className="primary" tabIndex={dormant?-1:undefined} aria-label={item.mediaType==='series'?'Ver episodios':'Reproducir'} onClick={()=>item.mediaType==='series'?inspect(item):open(item)}><Play fill="currentColor" aria-hidden="true"/>{labeled&&<span>{item.mediaType==='series'?'Ver episodios':'Reproducir'}</span>}</button>
     <button className="secondary" tabIndex={dormant?-1:undefined} aria-label={favorite?'Quitar de Mi lista':'Guardar en Mi lista'} aria-pressed={favorite} onClick={()=>toggle(item)}>{favorite?<Check aria-hidden="true"/>:<Plus aria-hidden="true"/>}{labeled&&<span>{favorite?'En Mi lista':'Mi lista'}</span>}</button>
     {labeled&&!live&&<button className="secondary focus-more" tabIndex={dormant?-1:undefined} aria-label={`Más información de ${displayTitle(item)}`} onClick={()=>inspect(item)}><Info aria-hidden="true"/><span>Más info</span></button>}
+    {labeled&&!live&&item.trailerId&&((trailers.auto||trailers.manual===item.id)?<button className="secondary focus-sound" tabIndex={dormant?-1:undefined} aria-pressed={sound} aria-label={sound?'Silenciar tráiler':'Activar sonido del tráiler'} onClick={()=>setTrailerSound(!sound)}>{sound?<Volume2 aria-hidden="true"/>:<VolumeX aria-hidden="true"/>}</button>:trailers.playManual&&<button className="secondary" tabIndex={dormant?-1:undefined} aria-label={`Ver tráiler de ${displayTitle(item)}`} onClick={()=>trailers.playManual(item.id)}><Clapperboard aria-hidden="true"/><span>Tráiler</span></button>)}
    </div>
   </div>
   {/* The next recommendation instead of dots: what comes, and a thin line that fills while the banner rotates by itself. */}

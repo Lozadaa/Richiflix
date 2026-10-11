@@ -193,3 +193,6 @@ body[data-focus-region]:not([data-focus-region='catalogue']) .tv-mode .virtual-r
 .tv-mode .virtual-rail-wrap:after{left:auto;right:0;width:120px;background:linear-gradient(270deg,var(--bg),transparent)}
 .tv-mode .virtual-rail-wrap>.rail-halo{z-index:4}
 .tv-mode .catalog-row[data-row-far] .virtual-rail-wrap:before,.tv-mode .catalog-row[data-row-far] .virtual-rail-wrap:after{visibility:hidden}
+/* Trailer sound in the banner row: a round speaker beside the labelled pills (accent when on). */
+.focus-actions.is-labeled>button.focus-sound{width:64px;padding:0;justify-content:center}
+.focus-actions.is-labeled>button.focus-sound[aria-pressed=true]{color:var(--accent);border-color:rgba(var(--accent-rgb),0.5)}

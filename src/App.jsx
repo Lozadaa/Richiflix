@@ -34,6 +34,7 @@ import {prefetchLeagues} from './useLeagueStats.js';
 import {leagueSlug} from './leagueStats.js';
 import {MatchDetail} from './MatchDetail.jsx';
 import {MatchDetailContext} from './matchContext.js';
+import {TrailerContext} from './trailerSound.js';
 import {footballMatchup,footballLeague,FOOTBALL,FOOTBALL_LEAGUE_LABELS} from './footballArtwork.js';
 import {groupLiveEvents,splitLiveEvents,homeLiveEvents,liveNowCount,preferredFeed,rememberFeed,liveHubRows,liveChipItems,FOOTBALL_HUB_CHIPS} from './liveEvents.js';
 import {LiveHub} from './LiveHub.jsx';
@@ -48,7 +49,7 @@ import {createProactivePreviews} from './proactivePreviews.js';
 import {clearPreviewArtwork,preloadPreviewArtwork,previewArtworkStats} from './previewArtwork.js';
 import {createArtworkPrefetch,loadPosterArtwork,shownArtwork,tvPrefetchOptions} from './artworkPrefetch.js';
 import {warmTrailerAPI} from './TrailerPreview.jsx';
-import {AUTO_TRAILERS_KEY,TV_TRAILER_DELAY_MS,readAutoTrailers} from './trailerApi.js';
+import {AUTO_TRAILERS_KEY,TV_TRAILER_DELAY_MS,PC_TRAILER_DELAY_MS,readAutoTrailers} from './trailerApi.js';
 import {useBannerMotion,useBannerCarousel} from './useBannerMotion.js';
 import {useTVBannerVisibility,useTVBannerLayout} from './useTVBannerVisibility.js';
 import {recommendedBanner} from './bannerRecommendations.js';
@@ -185,6 +186,9 @@ export default function App({profile,changeProfile}){
  useEffect(()=>{if(autoTrailers&&(movies.length||shows.length))warmTrailerAPI();},[autoTrailers,Boolean(movies.length||shows.length)]);
  useEffect(()=>localStorage.setItem('rf-tv-mode',JSON.stringify(tv)),[tv]);
  useEffect(()=>localStorage.setItem(AUTO_TRAILERS_KEY,JSON.stringify(autoTrailers)),[autoTrailers]);
+ // With automatic trailers off, «Tráiler» (card panel, TV banner) plays that title's trailer on request.
+ const [manualTrailer,setManualTrailer]=useState(null),playManual=useStableEvent(id=>{warmTrailerAPI();setManualTrailer(id);});
+ const trailerContext=useMemo(()=>({auto:autoTrailers,manual:manualTrailer,playManual}),[autoTrailers,manualTrailer,playManual]);
  useEffect(()=>()=>{clearTimeout(previewTimer.current);clearTimeout(leaveTimer.current);clearPreviewArtwork();setSelectedCard(null);resetMetadata({layers:true});},[]);
  const commitPreview=useStableEvent(()=>{
   const item=previewCandidate.current;if(!item)return false;
@@ -399,7 +403,7 @@ export default function App({profile,changeProfile}){
   return()=>clearTimeout(warm);
  },[previewItem?.id,page,query,category,nearby.length,previewCache,banner.moving,previewActive,burstEpoch.current]);
  useEffect(()=>{if(!viewAllPending.current)return;viewAllPending.current=false;const frame=requestAnimationFrame(()=>revealRowFor(mainRef.current?.querySelector('.catalog-grid .card-open,.live-hub .card-open')||document.querySelector('.topbar nav button.active'))?.focus({preventScroll:true}));return()=>cancelAnimationFrame(frame);},[page,category,collectionView]);
- return <FollowContext.Provider value={follow}><MatchDetailContext.Provider value={matchContext}><div onFocusCapture={event=>{setCardFocus(Boolean(event.target.closest('.card,.card-expansion')));headerPreview(event);}} onKeyDownCapture={event=>{if(event.key.startsWith('Arrow')&&event.target.closest('.card'))lastDirection.current=event.key;pointerPosition.current.itemId=null;pointerPosition.current.cardId=null;}} onMouseMoveCapture={event=>{const previous=pointerPosition.current,moved=event.clientX!==previous.x||event.clientY!==previous.y;event.nativeEvent.richiflixPointerMoved=moved;if(moved){const card=event.target.closest('.card');pointerPosition.current={x:event.clientX,y:event.clientY,itemId:card?.dataset.contentId,cardId:card?.dataset.cardId,at:performance.now()};}}} className={`app ${tv?'tv-mode':''} ${tvStage?'has-tv-stage':''} ${isKids?'kids-space':''} ${page==='Inicio'&&!query&&!collectionView&&featured.length?'scenic':''}`}>
+ return <FollowContext.Provider value={follow}><MatchDetailContext.Provider value={matchContext}><TrailerContext.Provider value={trailerContext}><div onFocusCapture={event=>{setCardFocus(Boolean(event.target.closest('.card,.card-expansion')));headerPreview(event);}} onKeyDownCapture={event=>{if(event.key.startsWith('Arrow')&&event.target.closest('.card'))lastDirection.current=event.key;pointerPosition.current.itemId=null;pointerPosition.current.cardId=null;}} onMouseMoveCapture={event=>{const previous=pointerPosition.current,moved=event.clientX!==previous.x||event.clientY!==previous.y;event.nativeEvent.richiflixPointerMoved=moved;if(moved){const card=event.target.closest('.card');pointerPosition.current={x:event.clientX,y:event.clientY,itemId:card?.dataset.contentId,cardId:card?.dataset.cardId,at:performance.now()};}}} className={`app ${tv?'tv-mode':''} ${tvStage?'has-tv-stage':''} ${isKids?'kids-space':''} ${page==='Inicio'&&!query&&!collectionView&&featured.length?'scenic':''}`}>
   <header className={`topbar ${scrolled?'is-scrolled':''}`}>
    <a className="brand" href="#" onClick={event=>{event.preventDefault();navigate('Inicio');}}><Brand/></a>
    <nav aria-label="Principal">{(isKids?['Inicio','Películas','Series','Mi lista']:['Inicio','Películas','Series','TV en vivo','MLB','Fútbol','Mi lista']).map(name=><button className={page===name?'active':''} aria-current={page===name?'page':undefined} key={name} onClick={()=>navigate(name)}>{name}</button>)}</nav>
@@ -409,10 +413,10 @@ export default function App({profile,changeProfile}){
     <button className="icon-button" aria-label="Ajustes" onClick={()=>setModal('ajustes')}><Settings size={20}/></button>
    </div>
   </header>
-  {stageVisible&&autoTrailers&&<CardTrailerPreview delay={tv?TV_TRAILER_DELAY_MS:0}/>}
+  {stageVisible&&(autoTrailers||manualTrailer)&&<CardTrailerPreview delay={!autoTrailers?0:tv?TV_TRAILER_DELAY_MS:PC_TRAILER_DELAY_MS}/>}
   {/* PC: hovering a card grows the card in place with its trailer (ExpandedCard + CardTrailerPreview), like Netflix; the
      floating stage that covered the catalogue is only the TV banner now. */}
-  {stageVisible&&tv&&<StageWithMetadata item={stageBase} visible={bannerAtTop} loadingAllowed={previewActive&&!banner.moving} active={autoTrailers&&!banner.moving&&(tv?bannerAtTop&&!cardFocus:previewActive)} trailerDelay={tv?TV_TRAILER_DELAY_MS:0} moving={banner.moving} next={nextSlide} slide={carousel.index} slides={bannerSlides.length} choose={bannerSlides.length?carousel.go:undefined} onNextArt={nextArtChanged} paused={carousel.paused} onStageFocus={stageFocus} profileId={profile.id} open={open} inspect={inspect} favorite={favorites.includes(stageBase.id)} toggle={toggle} tv={tv} hover={keepPreview} leave={leavePreview}/>}
+  {stageVisible&&tv&&<StageWithMetadata item={stageBase} visible={bannerAtTop} loadingAllowed={previewActive&&!banner.moving} active={(autoTrailers||manualTrailer===stageBase.id)&&!banner.moving&&(tv?bannerAtTop&&!cardFocus:previewActive)} trailerDelay={autoTrailers&&tv?TV_TRAILER_DELAY_MS:0} moving={banner.moving} next={nextSlide} slide={carousel.index} slides={bannerSlides.length} choose={bannerSlides.length?carousel.go:undefined} onNextArt={nextArtChanged} paused={carousel.paused} onStageFocus={stageFocus} profileId={profile.id} open={open} inspect={inspect} favorite={favorites.includes(stageBase.id)} toggle={toggle} tv={tv} hover={keepPreview} leave={leavePreview}/>}
   <main ref={mainRef} key={`${page}-${Boolean(query)}-${collectionView?.title||''}`} className="page-scene" data-banner-hidden={tvStage&&!bannerAtTop?'true':undefined}>
    {!tv&&page==='Inicio'&&!query&&!collectionView&&featured.length>0&&<Hero items={featured} prepare={preparePreview} open={open} inspect={inspect}/>}
    <div className={`content ${page==='Inicio'&&!query&&!collectionView&&featured.length?'home-content':''}`}>
@@ -435,7 +439,7 @@ export default function App({profile,changeProfile}){
   {!isKids&&followedEvents.length>0&&<FollowAlerts events={followedEvents} paused={Boolean(details||playing||modal)} check={showAlert}/>}
   {notice&&<div key={notice} className="toast" role="status" onKeyDown={followAlert?.text===notice?event=>{if(['Escape','ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)){event.preventDefault();event.stopPropagation();leaveAlert();}}:undefined} onFocus={followAlert?.text===notice?event=>{if(!alertOrigin.current&&event.relatedTarget)alertOrigin.current=event.relatedTarget;}:undefined}><Check size={18}/>{displayText(notice)}{followAlert?.text===notice&&<button className="toast-action" ref={button=>{if(button&&tv&&followAlert.steal&&!alertOrigin.current&&document.activeElement!==button){alertOrigin.current=document.activeElement;button.focus({preventScroll:true});}}} onClick={()=>{const event=followAlert.event;leaveAlert();open(event);}}>Ver</button>}<button aria-label="Cerrar aviso" onClick={()=>setNotice('')}><X size={16}/></button></div>}
   {match&&<MatchDetail match={match} close={()=>setMatch(null)} play={open}/>}
- </div></MatchDetailContext.Provider></FollowContext.Provider>;
+ </div></TrailerContext.Provider></MatchDetailContext.Provider></FollowContext.Provider>;
 }
 // R6.1: the banner merges its current and next slide with their store entries; a metadata reply rerenders this, not App.
 const isMedia=item=>Boolean(item&&['movie','series'].includes(item.mediaType));
