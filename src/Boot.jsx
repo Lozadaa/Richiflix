@@ -1,6 +1,5 @@
 import React,{useEffect,useState} from 'react';
-import {Brand,KingdomLoader} from './Brand.jsx';
-import {loaderPhrase} from './loaderPhrases.js';
+import {Brand,KingdomLoader,useLoaderPhrase} from './Brand.jsx';
 import {contentStore,loadContent} from './contentStore.js';
 import {xtreamClient} from './xtreamClient.js';
 import {preloadPreviewArtwork} from './previewArtwork.js';
@@ -34,8 +33,7 @@ export function Boot({children}){
   Promise.all([contentWork,resourcesWork,profileWork]).then(([, ,saved])=>{if(!live)return;if(saved.error){setStage('profiles');setProfileError(saved.error.message);return;}setProfiles(saved.value);setReady(true);performance.mark('richiflix-boot-ready');performance.measure('richiflix-boot','richiflix-boot-start','richiflix-boot-ready');});
   return()=>{live=false;clearTimeout(timer);unsubscribe();};
  },[attempt]);
- const [tick,setTick]=useState(0);
- useEffect(()=>{if(ready)return;const id=setInterval(()=>setTick(value=>value+1),2500);return()=>clearInterval(id);},[ready]);
+ const phrase=useLoaderPhrase(!ready);
  const stages={configuration:'Recuperando tu configuración',catalogue:'Preparando tus fuentes',indexing:'Ordenando tu catálogo',artwork:'Preparando tu próxima portada',profiles:'Recuperando tus perfiles',resources:'Preparando las imágenes y tipografías'};
- return ready?children(profiles):<div className="boot-screen" role="status" aria-label="Preparando Kingdom" data-boot-stage={stage}><div className="brand"><Brand/></div><KingdomLoader label={profileError?'Recuperando tus perfiles':stages[stage]||'Preparando Kingdom'} phrase={profileError?null:loaderPhrase(tick)}/>{profileError?<><small role="alert">{profileError}</small><button className="primary" onClick={()=>setAttempt(value=>value+1)} autoFocus>Reintentar</button></>:slow&&<small>La primera carga necesita más tiempo</small>}</div>;
+ return ready?children(profiles):<div className="boot-screen" role="status" aria-label="Preparando Kingdom" data-boot-stage={stage}><div className="brand"><Brand/></div><KingdomLoader label={profileError?'Recuperando tus perfiles':stages[stage]||'Preparando Kingdom'} phrase={profileError?null:phrase}/>{profileError?<><small role="alert">{profileError}</small><button className="primary" onClick={()=>setAttempt(value=>value+1)} autoFocus>Reintentar</button></>:slow&&<small>La primera carga necesita más tiempo</small>}</div>;
 }

@@ -4,8 +4,7 @@ import {isTizen,isTVBuild,nativePlayback} from './platform.js';
 import {createAVPlayer} from './avplay.js';
 import {Play,Pause,Volume2,Volume1,VolumeX,RotateCcw,RotateCw,Maximize,Minimize,MessageSquareText,Radio,Antenna,SkipBack,SkipForward,RefreshCcw} from 'lucide-react';
 import {Dialog} from './Dialog.jsx';
-import {Brand,KingdomLoader} from './Brand.jsx';
-import {loaderPhrase} from './loaderPhrases.js';
+import {Brand,KingdomLoader,useLoaderPhrase} from './Brand.jsx';
 import {displayText} from './displayText.js';
 import {artworkURL,displayTitle} from './artwork.js';
 import {usePlaybackChrome} from './usePlaybackChrome.js';
@@ -70,8 +69,7 @@ export function Player({item,start,save,close,change,seasons,series,intros={},se
   setMedia({current:video.currentTime,duration:video.duration||0,buffered:video.buffered.length?video.buffered.end(video.buffered.length-1):0,from:last>=0?video.seekable.start(last):0,to:last>=0?video.seekable.end(last):0});
  };
  useEffect(()=>{if(!loading){setShowLoader(false);return;}const timer=setTimeout(()=>setShowLoader(true),250);return()=>clearTimeout(timer);},[loading]);
- const [tick,setTick]=useState(0);
- useEffect(()=>{if(!loading)return;const id=setInterval(()=>setTick(value=>value+1),2500);return()=>clearInterval(id);},[loading]);
+ const phrase=useLoaderPhrase(loading);
  useEffect(()=>{if(nativePlayback)return;const video=videoRef.current;if(tv){video.volume=1;video.muted=false;return;}video.volume=volume;video.muted=muted;try{localStorage.setItem('rf-player-volume',String(volume));}catch{}},[volume,muted,tv]);
  useEffect(()=>{if(!nativePlayback)videoRef.current.playbackRate=tv?1:rate;},[rate,tv]);
  useEffect(()=>()=>{clearTimeout(feedbackTimer.current);clearTimeout(cueTimer.current);clearTimeout(switchTimer.current);accumulator.current.cancel();},[]);
@@ -275,7 +273,7 @@ export function Player({item,start,save,close,change,seasons,series,intros={},se
   <div className="video-stage">
    <video ref={videoRef} controls={false} autoPlay playsInline tabIndex={0} aria-label={`Vídeo: ${title}`} onClick={play} onKeyUpCapture={e=>{if(e.code==='Space'){e.preventDefault();e.stopPropagation();}}} onWaiting={()=>healthRef.current?.waiting()} onSeeking={()=>{seekingRef.current=true;healthRef.current?.waiting();}} onSeeked={()=>{healthRef.current?.reposition();seekingRef.current=false;settled();if(videoRef.current.paused)setLoading(false);sync();}} onEmptied={()=>{seekingRef.current=false;healthRef.current?.reposition();}} onPlaying={()=>healthRef.current?.playing()} onPause={()=>setPaused(true)} onCanPlay={sync} onProgress={sync} onDurationChange={sync} onVolumeChange={e=>{if(tv)return;setVolume(e.currentTarget.volume);setMuted(e.currentTarget.muted);}} onTimeUpdate={()=>{healthRef.current?.progress();sync();resumeAt.current=videoRef.current.currentTime;const seconds=Math.floor(videoRef.current.currentTime);if(item.kind!=='iptv'&&seconds%5===0&&seconds!==lastSaved.current){lastSaved.current=seconds;saveRef.current(seconds,item.id,{duration:videoRef.current.duration});}}} onError={()=>{if(!nativePlayback)healthRef.current?.fault('No pudimos reproducir esta fuente.');}} onEnded={()=>{healthRef.current?.ended();saveRef.current(0,item.id,{ended:true});setEnded(true);setLoading(false);}}/>
    {isTizen&&<object className="avplay-surface" type="application/avplayer" aria-hidden="true"/>}
-   {showLoader&&loading&&!error&&!ended&&<div className="player-loading" role="status" aria-label="Cargando vídeo"><KingdomLoader className="player-kingdom-loader" label={item.trying&&media.current===0?'Probando otra señal…':media.current>0?'Cargando…':title} phrase={loaderPhrase(tick)}/></div>}
+   {showLoader&&loading&&!error&&!ended&&<div className="player-loading" role="status" aria-label="Cargando vídeo"><KingdomLoader className="player-kingdom-loader" label={item.trying&&media.current===0?'Probando otra señal…':media.current>0?'Cargando…':title} phrase={phrase}/></div>}
    {!tv&&paused&&!loading&&!error&&!ended&&<button className="player-resume" aria-label="Reanudar reproducción" onClick={play}><Play size={36} fill="currentColor"/></button>}
    {switching&&<div className="player-switch" role="status">{switching}</div>}
    {feedback&&<div className="seek-feedback" key={feedback} aria-live="polite"><span className="seek-feedback-icon">{feedback.startsWith('-')?<RotateCcw size={34}/>:<RotateCw size={34}/>}</span><strong>{feedback}</strong></div>}
