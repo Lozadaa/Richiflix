@@ -64,7 +64,9 @@ try{
  await page.getByRole('button',{name:'Conectar',exact:true}).focus();await remote(13);await page.getByLabel('Contraseña Xtream').waitFor({state:'detached'});await page.getByText('Principal',{exact:true}).waitFor();
  await page.getByText('1 canales · 1 películas · 1 series',{exact:true}).waitFor();
  await remote(10009);await page.getByRole('dialog').waitFor({state:'detached'});
- const movie=page.locator('.cards[aria-label="Películas"] .card-open').first();await movie.focus();await remote(13);await page.locator('.player-dialog').waitFor();
+ const movie=page.locator('.cards[aria-label="Películas"] .card-open').first();await movie.focus();await remote(13);
+ // TV: OK on a film opens its sheet with the focus on «Reproducir» (Netflix-style tile, 12 oct); OK again plays.
+ await page.waitForFunction(()=>/Reproducir|Ver ahora/.test(document.activeElement?.getAttribute('aria-label')||document.activeElement?.textContent||''));await remote(13);await page.locator('.player-dialog').waitFor();
  await page.getByRole('status',{name:'Cargando vídeo'}).waitFor();assert.equal(await page.getByRole('status',{name:'Cargando vídeo'}).count(),1);
  assert.equal(await page.locator('.player-loading .kingdom-loader-shadow').evaluate(el=>getComputedStyle(el).borderRadius),'50%');
  assert.ok((await page.locator('.player-loading .kingdom-loader-stage img').getAttribute('src')).endsWith('kingdom-glyph.svg'));
