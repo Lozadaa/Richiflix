@@ -54,25 +54,38 @@
 .expansion-trailer-button{display:inline-flex;align-items:center;gap:8px}.expansion-trailer-button svg{width:18px;height:18px}
 /* TV panel: «Tráiler» is a labelled pill, not one of the round follow buttons. */
 .expansion-follow.expansion-trailer-button{width:auto;min-width:0;padding:0 18px;border-radius:999px;white-space:nowrap}
-/* TV, films and series: Netflix-style tile (pointer-events:none: a pointer in TV mode clicks the card under it, which
-   does what OK does). A 16:9 picture as tall as the poster (trailer inside, title on it), then
-   the facts line and the synopsis as plain text; no box, no buttons (OK opens the title page, hold OK plays). */
-.card-expansion.expansion-tv.expansion-tile{pointer-events:none;flex-direction:column;overflow:visible;border:0;border-radius:0;background:none;box-shadow:none;animation:none}
-/* The card under the tile goes at once (no focus lift, no delayed hide), so its poster never shows round the picture. */
-.tv-mode .card.is-tile .poster,.tv-mode .card.is-tile .card-caption{visibility:hidden;transition:none}
-.tv-mode .card.is-tile .card-open{transform:none;transition:none}
-.expansion-tile .tile-media{width:100%}
-.expansion-tile .tile-media{position:relative;flex:0 0 var(--tile-media);height:var(--tile-media);border-radius:16px;overflow:hidden;background:transparent}
-/* The focus ring is drawn inside the picture: the panel's paint containment clips anything outside its box. */
-.expansion-tile .tile-media:after{content:'';position:absolute;z-index:3;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 3px var(--focus);pointer-events:none}
-.expansion-tile .tile-media .expansion-art{position:absolute;inset:0;width:100%;height:100%;transition:opacity .32s ease}
-/* TrailerPreview marks the trailer placeholder's parent (.tile-media) while the deck plays. */
-.expansion-tile .tile-media[data-trailer-state="playing"] .expansion-art{opacity:0}
+/* TV, films and series: Netflix-style tile (ExpandedCard, tvTile.js). It is drawn inside the focused card's cell: a 16:9
+   picture as tall as the poster (trailer over it, title on it), then the facts line and the synopsis as plain text; no
+   box, no buttons (OK opens the title page, hold OK plays). Nothing animates: it is there in the frame of the focus.
+   pointer-events:none: a pointer in TV mode clicks the card under it, which does what OK does. */
+.is-tiled{--tile-r:1000000;--tile-c:1000000;--tile-shift:0px}
+/* Each cell knows its row and column (--r, --c); the container knows the focused ones. The cells after the tile in its
+   row move right by the extra width, the whole row moves left by --tile-shift (a grid tile in the last columns), and
+   the rows under it move down by --tile-below. */
+.is-tiled>.virtual-rail-track>.virtual-rail-cell,.is-tiled>.virtual-grid-cell{
+ --same:calc(1 - clamp(0,var(--r) - var(--tile-r),1) - clamp(0,var(--tile-r) - var(--r),1));
+ transform:translate3d(calc(var(--same) * (clamp(0,var(--c) - var(--tile-c),1) * var(--tile-extra) - var(--tile-shift))),calc(clamp(0,var(--r) - var(--tile-r),1) * var(--tile-below,0px)),0);transition:none}
+.is-tiled>.virtual-rail-track>.virtual-rail-cell:has(.card.is-tile),.is-tiled>.virtual-grid-cell:has(.card.is-tile){z-index:3}
+/* The row holding the focus grows to the tile's height, so the rows under it move down instead of being covered. */
+.catalog-row[data-active-row] .virtual-rail.is-tiled>.virtual-rail-track{height:var(--tile-track-h)!important}
+.tv-mode .is-tiled .card.is-previewed .card-open{transform:none;transition:none}
+.tv-mode .is-tiled .card.is-previewed{z-index:auto}
+/* The card under the tile goes at once, so its poster never shows round the picture. */
+.tv-mode .card.is-tile .poster,.tv-mode .card.is-tile .card-caption,.tv-mode .card.is-tile .card-rank{visibility:hidden;transition:none}
+.card-expansion.expansion-tile{position:absolute;left:0;top:0;z-index:4;width:var(--tile-w,560px);height:var(--tile-h,465px);display:flex;flex-direction:column;overflow:visible;contain:none;pointer-events:none;border:0;border-radius:0;background:none;box-shadow:none;animation:none}
+.expansion-tile .tile-media{position:relative;width:100%;flex:0 0 calc(var(--tile-h,465px) - 150px);border-radius:16px;overflow:hidden;background:#151b2a}
+.expansion-tile .tile-media:after,.tile-deck-overlay:after{content:'';position:absolute;z-index:3;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 3px var(--focus);pointer-events:none}
+.expansion-tile .tile-media .expansion-art{position:absolute;inset:0;width:100%;height:100%}
 .expansion-tile .expansion-trailer{display:none}
-.expansion-tile .tile-shade{position:absolute;inset:0;background:linear-gradient(10deg,rgba(5,9,18,.82) 0%,rgba(5,9,18,.35) 34%,transparent 58%);pointer-events:none}
-.expansion-tile .tile-logo{position:absolute;left:22px;bottom:20px;max-width:46%;max-height:36%;object-fit:contain;object-position:left bottom;filter:drop-shadow(0 2px 8px #000a)}
-.expansion-tile .tile-title{position:absolute;left:22px;right:22px;bottom:18px;margin:0;font-size:32px;line-height:1.1;font-weight:800;text-shadow:0 2px 10px #000c;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.expansion-tile .tile-info{padding:16px 4px 0;display:flex;flex-direction:column;gap:8px;min-width:0}
+/* While the deck plays the trailer over the picture, the title layer is drawn in the deck (above the video). */
+.expansion-tile .tile-media[data-trailer-state="playing"]>:not(.expansion-trailer){visibility:hidden}
+.tile-deck-overlay{position:absolute;inset:0;z-index:2;border-radius:16px}
+.card-trailer-deck:not([data-trailer-state="playing"]) .tile-deck-overlay{display:none}
+.card-trailer-deck:has(.tile-deck-overlay){border-radius:16px}
+.expansion-tile .tile-shade,.tile-deck-overlay .tile-shade{position:absolute;inset:0;background:linear-gradient(10deg,rgba(5,9,18,.82) 0%,rgba(5,9,18,.35) 34%,transparent 58%);pointer-events:none}
+.expansion-tile .tile-logo,.tile-deck-overlay .tile-logo{position:absolute;left:22px;bottom:20px;max-width:46%;max-height:36%;object-fit:contain;object-position:left bottom;filter:drop-shadow(0 2px 8px #000a)}
+.expansion-tile .tile-title,.tile-deck-overlay .tile-title{position:absolute;left:22px;right:22px;bottom:18px;margin:0;font-size:32px;line-height:1.1;font-weight:800;color:#fff;text-shadow:0 2px 10px #000c;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.expansion-tile .tile-info{padding:16px 4px 0;display:flex;flex-direction:column;gap:8px;min-width:0;color:#f5f2fb}
 .expansion-tile .tile-facts{display:flex;align-items:center;gap:14px;font-size:20px;font-weight:700;color:#f2f0f8;white-space:nowrap;overflow:hidden}
 .expansion-tile .tile-facts .user-score.score-compact{font-size:20px}
 .expansion-tile .tile-remaining{color:var(--accent)}

@@ -159,6 +159,9 @@ export default function App({profile,changeProfile}){
     const rows=[...document.querySelectorAll('.catalog-row[data-warm-id]')],current=rows.indexOf(card.closest('.catalog-row'));
     for(let step=1;current>=0&&step<=rowSteps;step++)(railWindows.current.get(rows[current+(up?-step:step)]?.dataset.warmId)||[]).forEach((item,position)=>targets.push({src:poster(item),distance:(step-1)*8+position+(vertical?0:8)}));
    }
+   // TV tile (tvTile.js): the pictures of the titles one key away, so the next tile opens with its picture.
+   if(isTVBuild){const backdrop=item=>{if(!item||item.kind==='iptv')return null;const merged={...item,...getMetadata(item.id)};return artworkURL(merged.backdropImage,true)||null;},{items,index}=context,steps=context.kind==='grid'?[1,-1,context.columns,-context.columns]:[1,2,-1];
+    steps.forEach((step,order)=>{const position=context.kind==='grid'?index+step:(index+step+items.length)%items.length;if(position>=0&&position<items.length)targets.push({src:backdrop(items[position]),distance:order*.4});});}
    prefetch.plan(targets,{layoutWidth,dpr:window.devicePixelRatio||1});
   },150);
   return()=>clearTimeout(timer);

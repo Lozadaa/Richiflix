@@ -5,6 +5,8 @@ import {Card} from './interactions.jsx';
 import {nextGridIndex,rowWindow,sameIndices,pinWindowFocus,assignSlots,haloPlacement,haloFrames} from './virtualWindow.js';
 import {registerVirtualNavigation,virtualCardIndex,haloMotion,liftHalo,cellsShifted,revealRowFor} from './virtualNavigation.js';
 import {revealGridIndex,scrollViewport,viewportHeight,viewportOffset,viewportIsGliding,cancelViewportGlide} from './virtualViewport.js';
+import {tileMetrics,tileStyle,cellTileStyle,setTileFocus,clearTileFocus,gridTileShift} from './tvTile.js';
+import {isTVTile} from './ExpandedCard.jsx';
 import './virtualCatalogue.css';
 
 const initialLayout={columns:7,width:210,rowHeight:420,gap:30,paddingTop:20,paddingBottom:28,paddingLeft:12};
@@ -15,7 +17,9 @@ export const VirtualCatalogue=memo(function VirtualCatalogue({items,metadata,ope
  const haloRef=useCallback(node=>{halo.current=node;haloAt.current=null;},[]);
  const [layout,setLayout]=useState(initialLayout),[indices,setIndices]=useState(()=>(win.current=rowWindow({count:items.length,columns:7,rowHeight:420,viewport:600,overscan:tv?1:2})).indices);
  const live=useMemo(()=>items.length>0&&items.every(item=>item.kind==='iptv'),[items]),favoriteIds=useMemo(()=>new Set(favorites),[favorites]);
- snapshot.current={items,layout};shown.current=indices;
+ // Netflix-style tile (tvTile.js): the focused row makes room for it, the rows under it move down.
+ const tile=tv&&!live?tileMetrics({posterHeight:layout.openHeight,width:layout.width,gap:layout.gap,rowHeight:layout.rowHeight-(layout.rowGap||0),columns:layout.columns}):null;
+ snapshot.current={items,layout,tile};shown.current=indices;
  useEffect(()=>{const viewport=scrollViewport(grid.current),rect=grid.current.getBoundingClientRect(),top=viewport===window?0:viewport.getBoundingClientRect().top;const ahead=rowWindow({count:items.length,columns:layout.columns,rowHeight:layout.rowHeight,offset:top-rect.top-layout.paddingTop,viewport:viewportHeight(viewport),overscan:2}).indices;return warmWindow?.(warmId,ahead.map(index=>items[index]));},[items,indices,layout,warmWindow,warmId]);
  const focusedPreview=useStableEvent((item,id,index)=>preview?.(item,id,{items:snapshot.current.items,index,columns:snapshot.current.layout.columns||1,kind:'grid'}));
  const pointedPreview=useStableEvent((item,event,id)=>pointerPreview?.(item,event,id,{items:snapshot.current.items,index:virtualCardIndex(event.currentTarget),columns:snapshot.current.layout.columns||1,kind:'grid'}));
@@ -71,11 +75,12 @@ export const VirtualCatalogue=memo(function VirtualCatalogue({items,metadata,ope
   const element=grid.current,viewport=scrollViewport(element);let revealed;
   const schedule=()=>{if(pending.current)return;pending.current=requestAnimationFrame(()=>{pending.current=null;refresh(true);});};
   viewport.addEventListener('scroll',schedule,{passive:true});window.addEventListener('resize',schedule,{passive:true});
-  const focus=event=>{const next=virtualCardIndex(event.target);if(next>=0){focused.current=next;focusedId.current=snapshot.current.items[next]?.id;if(tv)placeHalo(next);}};element.addEventListener('focusin',focus);
+  const tileFocus=index=>{const {items,layout,tile}=snapshot.current,item=items[index],column=index%layout.columns;if(tile&&item&&isTVTile(tv,item))setTileFocus(element,Math.floor(index/layout.columns),column,gridTileShift(tile,column,layout.width,layout.gap));else clearTileFocus(element);};
+  const focus=event=>{const next=virtualCardIndex(event.target);if(next>=0){focused.current=next;focusedId.current=snapshot.current.items[next]?.id;tileFocus(next);if(tv)placeHalo(next);}};element.addEventListener('focusin',focus);
   const point=event=>{const next=virtualCardIndex(event.target);if(next>=0)placeHalo(next);};if(tv)element.addEventListener('pointerover',point);
   // Removing a filtered item reports relatedTarget=null. Keep its index until
   // the filter effect restores a replacement; a real focus destination clears it.
-  const blur=event=>{if(event.relatedTarget&&!element.contains(event.relatedTarget)){focused.current=-1;haloAt.current=null;schedule();}};element.addEventListener('focusout',blur);
+  const blur=event=>{if(event.relatedTarget&&!element.contains(event.relatedTarget)){focused.current=-1;haloAt.current=null;clearTileFocus(element);schedule();}};element.addEventListener('focusout',blur);
   const focusIndex=index=>{
    const {items,layout}=snapshot.current;if(index<0||index>=items.length)return null;focused.current=index;
    const targetRow=Math.floor(index/layout.columns);
@@ -108,12 +113,12 @@ export const VirtualCatalogue=memo(function VirtualCatalogue({items,metadata,ope
  slots.current=assignSlots(slots.current,cells.map(index=>items[index].id),!(tv&&cellsShifted(grid.current)));
  if(tv)cells.sort((a,b)=>slots.current.get(items[a].id)-slots.current.get(items[b].id));
   // TV aligns the focused row to the scene top: leave room for the last row to get there too.
- const height=Math.ceil(items.length/layout.columns)*layout.rowHeight-(items.length?(layout.rowGap||0):0)+layout.paddingTop+layout.paddingBottom+(layout.scene?Math.max(0,layout.scene-layout.rowHeight-24):0);
- return <div ref={grid} className={`catalog-grid virtual-catalogue ${live?'live-grid':'poster-grid'}`} data-virtual-kind="grid" data-virtual-count={items.length} data-virtual-columns={layout.columns} style={{height}}>
+ const height=Math.ceil(items.length/layout.columns)*layout.rowHeight-(items.length?(layout.rowGap||0):0)+layout.paddingTop+layout.paddingBottom+(layout.scene?Math.max(0,layout.scene-layout.rowHeight-24):0)+(tile?tile.below:0);
+ return <div ref={grid} className={`catalog-grid virtual-catalogue ${live?'live-grid':'poster-grid'} ${tile?'is-tiled':''}`} data-virtual-kind="grid" data-virtual-count={items.length} data-virtual-columns={layout.columns} style={{height,...tileStyle(tile)}}>
   <div ref={probe} className="virtual-layout-probe" aria-hidden="true"/>
-  {cells.map(index=>{const item=items[index];return <div key={`s${slots.current.get(item.id)}`} className="virtual-grid-cell" data-virtual-index={index} style={{width:layout.width,left:layout.paddingLeft+(index%layout.columns)*(layout.width+layout.gap),top:layout.paddingTop+Math.floor(index/layout.columns)*layout.rowHeight}}>
+  {cells.map(index=>{const item=items[index];return <div key={`s${slots.current.get(item.id)}`} className="virtual-grid-cell" data-virtual-index={index} style={{width:layout.width,left:layout.paddingLeft+(index%layout.columns)*(layout.width+layout.gap),top:layout.paddingTop+Math.floor(index/layout.columns)*layout.rowHeight,...(tile?cellTileStyle(Math.floor(index/layout.columns),index%layout.columns):{})}}>
    <Card instanceId={`${instancePrefix}:${item.id}`} item={item} metadata={metadata?.[item.id]} metadataPending={resolvedMetadata?!resolvedMetadata.has(item.id):false} open={open} progress={history[item.id]} favorite={favoriteIds.has(item.id)} toggle={toggle} index={index} total={items.length} preview={focusedPreview} pointerPreview={pointedPreview} leave={leave} tv={tv} profileId={profileId} kids={kids}/>
   </div>;})}
-  {tv&&cells.length>0&&<i ref={haloRef} className="rail-halo" aria-hidden="true" style={{width:layout.width,height:layout.openHeight||layout.width*1.5}}/>}
+  {tv&&!tile&&cells.length>0&&<i ref={haloRef} className="rail-halo" aria-hidden="true" style={{width:layout.width,height:layout.openHeight||layout.width*1.5}}/>}
  </div>;
 });

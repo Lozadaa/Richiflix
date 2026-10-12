@@ -15,6 +15,7 @@ import {UserScore} from './UserScore.jsx';
 import {EventBadge,useEventPhase} from './EventBadge.jsx';
 import {preferredFeed,rememberFeed,eventPhaseLine} from './liveEvents.js';
 import {useCardExpansion} from './useCardExpansion.js';
+import {viewportIsGliding} from './virtualViewport.js';
 import {currentGuide,guideProgress,guideNextLine} from './channelGuide.js';
 import {claimCardTrailer} from './cardTrailerStore.js';
 import {okHint} from './cardExpansion.js';
@@ -30,20 +31,22 @@ export const isTVTile=(tv,item)=>Boolean(tv&&item.kind!=='iptv'&&item.kind!=='pr
 // R4.4: on the TV the panel opens with the card's own w342 (already decoded, CSS
 // cover ≈1.34×) and layers the sharp variant on top after this rest with it open.
 export const PANEL_SHARP_DELAY_MS=600;
+// The tile's trailer deck is fixed on the page: it is placed once the rail's and the scene's glides have landed.
+const gliding=node=>Boolean(node.closest('.virtual-rail-track')?.getAnimations?.().some(animation=>animation.playState==='running')||viewportIsGliding(node.closest('main')||window));
 
 // The preview's local timers and geometry must never rerender the catalogue Card.
 export function SelectedCardExpansion({anchor,controller,...props}){
  const hint=useMemo(()=>okHint(props.profileId),[props.profileId]),details=useContext(CardDetailsContext),tile=isTVTile(props.tv,props.item);
  const expansion=useCardExpansion(anchor,true,props.instanceId,props.tv,()=>tile&&details?details(props.item):props.open(props.item),props.item.kind==='iptv'||props.item.kind==='provider',tile?()=>{hint.mastered();props.open(props.item);}:hint.mastered,Boolean(props.item.isEvent&&props.item.feeds.length>1));
  useLayoutEffect(()=>{
-  controller.current=expansion;const card=anchor.current,button=card?.querySelector('.card-open');card?.classList.toggle('is-expanded',Boolean(expansion.placement));card?.classList.toggle('is-tile',Boolean(tile&&expansion.placement));button?.setAttribute('aria-expanded',String(Boolean(expansion.placement)));
+  controller.current=expansion;const card=anchor.current,button=card?.querySelector('.card-open');card?.classList.toggle('is-expanded',Boolean(expansion.placement)&&!tile);card?.classList.toggle('is-tile',Boolean(tile&&expansion.placement));button?.setAttribute('aria-expanded',String(Boolean(expansion.placement)));
   return()=>{controller.current=null;card?.classList.remove('is-expanded','is-tile');button?.setAttribute('aria-expanded','false');};
  });
  return <ExpandedCard {...props} expansion={expansion} hint={hint}/>;
 }
 
 export function ExpandedCard({item,instanceId,expansion,metadataPending,favorite,toggle,open,tv,index=0,total=0,remaining='',kids=false,hint}){
- const trailer=useRef(),opened=Boolean(expansion.placement);
+ const trailer=useRef(),opened=Boolean(expansion.placement),[deck,setDeck]=useState(null);
  // Decided once per opening, so counting this opening never hides the hint mid-view.
  const showHint=useMemo(()=>Boolean(tv&&opened&&hint?.visible()),[tv,opened,hint]);
  useEffect(()=>{if(showHint)hint.shown();},[showHint,hint]);
@@ -56,8 +59,13 @@ export function ExpandedCard({item,instanceId,expansion,metadataPending,favorite
  useEffect(()=>{if(!tv||!opened)return;const timer=setTimeout(()=>setSharpFor(item.id),PANEL_SHARP_DELAY_MS);return()=>{clearTimeout(timer);setSharpFor(previous=>previous===null?previous:null);};},[tv,opened,item.id]);
  useLayoutEffect(()=>{
   if(!expansion.placement||item.kind==='iptv'||!trailerOn)return;
-  // Netflix-style tile: the trailer plays inside the picture.
-  if(isTVTile(tv,item)){const {left,top,width,media}=expansion.placement;return claimCardTrailer(trailer.current,item.trailerId,{left,top,width,height:media},null);}
+  // Netflix-style tile: the trailer plays over the picture, with the tile's title layer portalled on top of it.
+  if(isTVTile(tv,item)){
+   const target=trailer.current;let release,timer;
+   const claim=()=>{if(gliding(target)){timer=setTimeout(claim,60);return;}const box=target.parentElement.getBoundingClientRect();release=claimCardTrailer(target,item.trailerId,{left:box.left,top:box.top,width:box.width,height:box.height},null);setDeck(document.querySelector('.card-trailer-deck'));};
+   timer=setTimeout(claim,0);
+   return()=>{clearTimeout(timer);release?.();setDeck(null);};
+  }
   const frame=tv?expansion.placement.trailer:null;
   // PC: the trailer covers the panel's picture strip only (layout offsets: transform-independent, read once on open),
   // not the whole panel, so it sits where the art was and never over the title, synopsis or buttons.
@@ -86,19 +94,20 @@ export function ExpandedCard({item,instanceId,expansion,metadataPending,favorite
  if(isTVTile(tv,item)){
   const genre=displayText(String(item.contentGenre||item.genre||'').split(/[,/|]/)[0].trim()),type=item.mediaType==='series'?'Serie':'Película';
   const line=[type,genre,facts].filter(Boolean).join(' · ');
-  return createPortal(<section ref={expansion.surface} className={`card-expansion expansion-tv expansion-tile ${kids?'expansion-kids':''}`} role="group" aria-label={`Vista previa de ${title}`} data-card-owner={instanceId} data-content-id={item.id} style={{...identityStyle(item),left:position.left,top:position.top,width:position.width,height:position.height,'--tile-media':`${position.media}px`}} onKeyUp={expansion.keyUp}>
+  const overlay=<><span className="tile-shade"/>{logo&&logoReady===logo?<img className="tile-logo" src={logo} alt=""/>:<h3 className="tile-title">{title}</h3>}</>;
+  // Drawn inside the card's own cell (no portal, nothing to place): it is there in the frame the card is focused.
+  return <section ref={expansion.surface} className={`card-expansion expansion-tile ${kids?'expansion-kids':''}`} role="group" aria-label={`Vista previa de ${title}`} data-card-owner={instanceId} data-content-id={item.id} style={identityStyle(item)}>
    <div className="tile-media" aria-hidden="true">
-    <QualityImage className="expansion-art" src={artworkURL(item.backdropImage,true)||artwork} sizeHint={position.width} eager loader fallbackWhileLoading={false} fallback={<ContentIdentity item={item} wide/>}/>
+    <QualityImage className="expansion-art" src={artworkURL(item.backdropImage,true)||artwork} fixedSrc eager fallbackWhileLoading={false} fallback={<ContentIdentity item={item} wide/>}/>
     <div ref={trailer} className="expansion-trailer"/>
-    <span className="tile-shade"/>
-    {logo&&logoReady===logo?<img className="tile-logo" src={logo} alt=""/>:<h3 className="tile-title">{title}</h3>}
-    <AgeBadge item={item}/>
+    {overlay}<AgeBadge item={item}/>
    </div>
    <div className="tile-info">
     <div className="tile-facts">{!kids&&<UserScore item={item} compact/>}<span>{line}</span>{remaining&&<span className="tile-remaining">{remaining}</span>}</div>
     {description?<p className="tile-synopsis">{description}</p>:metadataPending?<div className="expansion-synopsis-loading" role="status" aria-label="Cargando información"><span/><span/></div>:null}
    </div>
-  </section>,document.body);
+   {deck&&createPortal(<div className="tile-deck-overlay">{overlay}</div>,deck)}
+  </section>;
  }
  const key=event=>{
   if(['ArrowLeft','ArrowRight'].includes(event.key)){event.preventDefault();event.stopPropagation();const buttons=[...expansion.surface.current.querySelectorAll('.expansion-actions button,.expansion-feeds button')],index=buttons.indexOf(event.target),next=(index+(event.key==='ArrowRight'?1:-1)+buttons.length)%buttons.length;buttons[next]?.focus({preventScroll:true});}

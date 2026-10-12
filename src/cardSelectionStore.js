@@ -12,13 +12,13 @@ const ownedPanels=id=>[...document.querySelectorAll('.card-expansion')].filter(p
 const flushDrops=()=>{dropTask=0;const ids=[...drops];drops.clear();for(const id of ids)if(selected!==id)notify(id);};
 function dropLater(id){
  const card=globalThis.document?.querySelector?.(`.tv-mode .card[data-card-id="${globalThis.CSS?.escape?CSS.escape(id):id}"]`);if(!card)return false;
- card.classList.remove('is-previewed','is-expanded');for(const panel of ownedPanels(id))panel.style.visibility='hidden';
+ card.classList.remove('is-previewed','is-expanded','is-tile');for(const panel of ownedPanels(id))panel.style.visibility='hidden';
  drops.add(id);if(!dropTask)dropTask=globalThis.requestIdleCallback?requestIdleCallback(flushDrops,{timeout:120}):setTimeout(flushDrops,60);
  return true;
 }
 function undrop(id){
  if(!drops.delete(id))return;
- document.querySelector(`.card[data-card-id="${globalThis.CSS?.escape?CSS.escape(id):id}"]`)?.classList.add('is-previewed');for(const panel of ownedPanels(id))panel.style.visibility='';
+ const card=document.querySelector(`.card[data-card-id="${globalThis.CSS?.escape?CSS.escape(id):id}"]`);card?.classList.add('is-previewed');if(card?.querySelector('.expansion-tile'))card.classList.add('is-tile');for(const panel of ownedPanels(id))panel.style.visibility='';
 }
 export function setSelectedCard(instanceId){
  if(selected===instanceId)return;const previous=selected;selected=instanceId??null;
