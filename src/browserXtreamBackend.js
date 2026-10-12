@@ -8,9 +8,9 @@ import {prepareChannels,prepareCatalogueGroups} from './channelPreparation.js';
 
 // The same database, keys and encryption envelope are used in a window and
 // a dedicated worker. No private source values are copied into RPC messages.
-// Android TV (android/): the panel's lists reach the TV through the app's native proxy, and a 12 MB film list over a
+// TVs (Samsung and Android TV): a 12 MB film list over the living-room wifi or through the native proxy, from a
 // distant server can need more than the default 18 s budget for the whole catalogue.
-const androidTVBudget=()=>/KingdomAndroidTV\//.test(globalThis.navigator?.userAgent||'')?{catalogueTimeout:90000}:{};
+const tvBudget=()=>/KingdomAndroidTV\/|Tizen|SMART-TV/i.test(globalThis.navigator?.userAgent||'')?{catalogueTimeout:90000}:{};
 
 export function createBrowserXtreamBackend({storage=deviceStorage,cryptography=globalThis.crypto,fetcher=globalThis.fetch,registryOptions={},metadataOptions={}}={}){
  async function decryptStored(name){const saved=await storage(name);if(!saved)return null;try{return new TextDecoder().decode(await cryptography.subtle.decrypt({name:'AES-GCM',iv:saved.iv},saved.key,saved.data));}catch{throw Error('No se pudo leer la conexión guardada.');}}
@@ -21,7 +21,7 @@ export function createBrowserXtreamBackend({storage=deviceStorage,cryptography=g
  const registry=createSourceRegistry({readRatings:ratings.getMany,writeRating:ratings.put,readDetails:details.get,writeDetails:details.put,readRankings:()=>storage('tmdb-selections-v1'),writeRankings:data=>storage('tmdb-selections-v1',data),
   readAccounts:async()=>{const saved=await decryptStored('sources');if(saved)return JSON.parse(saved);const legacy=await decryptStored('account');if(!legacy)return null;const migrated=[{...JSON.parse(legacy),sourceId:'eterboxtv'}];await encryptStored('sources',JSON.stringify(migrated));return migrated;},
   writeAccounts:async list=>encryptStored('sources',JSON.stringify(list)),
-  readCache:async account=>await storage('catalogue-'+account.sourceId)||await storage('catalogue-'+accountKey(account)),writeCache:(account,data)=>storage('catalogue-'+account.sourceId,data),metadataToken:metadata.token,fetcher,...androidTVBudget(),...registryOptions,
+  readCache:async account=>await storage('catalogue-'+account.sourceId)||await storage('catalogue-'+accountKey(account)),writeCache:(account,data)=>storage('catalogue-'+account.sourceId,data),metadataToken:metadata.token,fetcher,...tvBudget(),...registryOptions,
  });
  const prepared=new WeakMap();
  return {
