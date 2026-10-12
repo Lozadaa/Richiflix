@@ -1,3 +1,4 @@
+import {displayText} from './displayText.js';
 // Frases del reino para los loaders (arranque y reproductor). Máx. 44 caracteres: caben en una línea a 24 px en el TV.
 export const LOADER_PHRASES=[
  'Puliendo la corona…',
@@ -18,3 +19,8 @@ export const LOADER_PHRASES=[
 ];
 // tick es un contador ≥ 0; un valor negativo o inválido vuelve a la primera frase.
 export const loaderPhrase=tick=>LOADER_PHRASES[Math.max(0,Math.floor(Number(tick)||0))%LOADER_PHRASES.length];
+// Etiqueta del loader de búsqueda: la consulta tal como se ve, cortada a 40 caracteres.
+export function searchLoaderLabel(query){
+ const text=Array.from(displayText(query));
+ return `Buscando «${text.length>40?`${text.slice(0,39).join('').trimEnd()}…`:text.join('')}»`;
+}

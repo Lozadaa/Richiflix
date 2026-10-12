@@ -732,6 +732,11 @@ button.playback-toggle svg.lucide-play{margin-left:3px}
 .kingdom-loader-shadow{position:absolute;left:26px;bottom:14px;width:60px;height:14px;border-radius:50%;background:radial-gradient(closest-side,rgba(var(--accent-rgb),0.34),rgba(var(--accent-rgb),0));transform-origin:50% 50%;animation:kingdom-shadow 1.2s cubic-bezier(.3,0,.2,1) infinite;will-change:transform,opacity}
 .kingdom-loader-label{font-size:24px;margin:0;color:var(--text-2)}
 .kingdom-loader-phrase{font-size:17px;color:rgba(var(--text-2-rgb),0.75);animation:kingdom-phrase .35s ease-out}
+/* Búsqueda: corona de 48 px (escala fija, sin animar), textos 20/16 px y altura de una fila para no saltar al llegar los resultados. */
+.kingdom-loader.is-search{min-height:360px;justify-content:center;gap:10px}
+.kingdom-loader.is-search .kingdom-loader-stage{transform:scale(.75);margin:-16px 0 -17px}
+.kingdom-loader.is-search .kingdom-loader-label{font-size:20px}
+.kingdom-loader.is-search .kingdom-loader-phrase{font-size:16px}
 @keyframes kingdom-bounce{0%,100%{transform:translateY(42px) scale(1.18,.82)}18%{transform:translateY(30px) scale(.94,1.1)}50%{transform:translateY(0) scale(1,1)}82%{transform:translateY(30px) scale(.98,1.04)}}
 @keyframes kingdom-shadow{0%,100%{transform:scale(1.15,1);opacity:.9}50%{transform:scale(.55,.7);opacity:.35}}
 @keyframes kingdom-phrase{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
