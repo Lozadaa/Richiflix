@@ -372,6 +372,13 @@ test('autoSlide avanza cada 6 s sólo mientras nadie toca',()=>{
 
 **Verificación en TV (yo):** terminar una película (cursor hasta el final): pantalla con 8 parecidos, autoslide cada 6 s sin tocar; una flecha lo detiene y la barra se congela; OK reproduce; Volver cierra. `measure:tv` no aplica (fuera de la navegación); comprobar que no deja capas tras cerrar. Captura `artifacts/pantalla-final-55.png`.
 
+### Añadidos del 12 oct (Richard)
+
+- **E3 cambia:** «Te quedan N min» desaparece como texto (a veces no cabe). En su lugar, bajo la imagen de la tarjeta ampliada / tarjeta estilo Netflix y en el panel, una barra de progreso tipo YouTube pegada al borde inferior de la imagen (4 px, pista `rgba(var(--text-rgb),.25)`, relleno `--accent`) con el porcentaje a la derecha («37 %») en 14 px. Pintura estática; `titleProgress` ya da `fraction`.
+- **D (bug previo a D3):** a veces la tarjeta activa reserva el espacio que necesitaba la tarjeta anterior en vez del suyo (vecinas corridas de más o de menos tras cambiar de tarjeta, sobre todo entre tarjetas de distinto ancho o entre la tarjeta estilo Netflix y el panel de canales). Reproducir en el TV con Derecha/Izquierda entre Top 10 ↔ fila normal y entre película ↔ canal; causa probable: `reserveCardExpansion` conserva `space` de la ancla anterior cuando `cleanup(true)` no llega a ejecutarse antes del nuevo `show` (el `hidePending` del hub y el `requestIdleCallback` del desmontaje). Corregirlo dentro de D2 (`retarget` recalcula siempre desde el estado real de las celdas, nunca desde el `space` anterior) y añadir una prueba con dos anclas de distinto ancho seguidas.
+- **Banner:** Richard pidió primero flechas laterales y deslizar con Izquierda/Derecha y después retiró el cambio («el cambio del banner no lo hagas»): el banner se queda como lo dejó Rubén («A continuación» y botones). No hacer nada.
+- **Instalaciones:** sólo en el 65" (192.168.1.12). Al lanzar en modo depuración la app queda **oculta** (`document.hidden`, temporizadores y red congelados: parece colgada en «Preparando tus fuentes»); hay que traerla al frente con `sdb shell 0 execute Richiflix1.Richiflix` tras el `debug`.
+
 ---
 
 ## Medición: mismas pruebas, antes y después
