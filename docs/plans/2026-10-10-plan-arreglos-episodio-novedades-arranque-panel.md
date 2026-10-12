@@ -1,4 +1,4 @@
-# Plan de implementación · Siguiente episodio con cuenta atrás, recién llegados, aviso de arranque y panel persistente
+# Plan de implementación · Siguiente episodio, recién llegados, aviso de arranque, panel persistente, visto/progreso y pantalla final
 
 > **Para los agentes ejecutores (Opus, un worktree por lote):** sub-skill `superpowers:subagent-driven-development` o `superpowers:executing-plans`, tarea por tarea. Antes de empezar: `git merge-base main HEAD` debe ser `main` local (los worktrees del Agent tool nacen de `origin/main`, historia ajena: `git checkout -B <rama> main`). Cada tarea termina con `npm test` en verde y un commit. Sólo se tocan los archivos del lote; si hace falta otro, se anota en el informe y se para. Sin smokes de Playwright/Electron (sólo `npm run test:tizen`). Nunca instalar en el TV.
 
@@ -323,6 +323,57 @@ test('titleProgress: visto por marca o por fracción, empezado con minutos resta
 
 ---
 
+## Lote F · Pantalla final de película con recomendaciones
+
+**Pedido de Richard (12 oct):** «después de terminar una peli, que te salgan recomendaciones de otras pelis similares, bonito, y que se vaya haciendo autoslide SOLO si no lo mueves».
+
+**Hoy:** al terminar una película (`ended`, `mediaType==='movie'`) el reproductor muestra «Reproducción terminada» con «Volver al catálogo». Las recomendaciones por título existen para el banner (`bannerRecommendations.js`, colecciones TMDB) y las colecciones por género (`tmdbSelections.js`: «Lo mejor de {género} · TMDB», `tmdbGenres` por ítem).
+
+**Diseño:** sobre el último fotograma atenuado, una pantalla «Si te gustó *Título*» con un carrusel de hasta 8 títulos del catálogo parecidos, cada uno con backdrop, título, nota y «2026 · Drama · 1 h 49 min». La tarjeta activa ocupa el centro grande (backdrop ancho) y las demás asoman a los lados en pequeño; el cambio de activa es un fundido de opacidad entre dos capas (como el banner) y un desplazamiento `transform` de la tira de miniaturas. **Autoslide**: cada 6 s pasa a la siguiente **sólo mientras el usuario no haya tocado nada**; la primera tecla (cualquier flecha, OK, Volver) detiene el autoslide para siempre en esa pantalla y una barra bajo los puntos deja de llenarse. OK reproduce la activa; Izquierda/Derecha mueven; Abajo lleva a «Volver al catálogo»; Volver cierra el reproductor. Si no hay parecidos (catálogo pequeño), se muestra el estado actual.
+
+**Parecidos** (función pura `similarTitles(item,catalogue,{limit=8})`): mismo tipo (película); puntuación = géneros TMDB compartidos ×3 + mismo género del proveedor ×1 + década igual ×1 + nota ≥ 7 ×1; excluye el propio título, los ya vistos (`watched`) y los de Kids si el perfil no lo es; desempate por `tmdbScore`; estable (sin aleatoriedad) para que la prueba sea determinista.
+
+**Archivos:** `src/similarTitles.js` (nuevo, + test), `src/autoSlide.js` (nuevo, + test: `autoSlideStep(state,{now,touched})`), `src/EndScreen.jsx` (nuevo), `src/endScreen.css` (nuevo, importado desde `main.jsx`), `src/Player.jsx` (estado `ended` de película → `<EndScreen>`; recibe `catalogue`/`library` desde `App.jsx` a través de una prop nueva `similar={…}` calculada en App con `useMemo` sólo cuando `playing` cambia), `src/App.jsx` (una prop). Se ejecuta **después** de A (comparten `Player.jsx`).
+
+### Tarea F1: parecidos y autoslide (puras)
+
+- [ ] **Paso 1: pruebas** (`similarTitles.test.js`, `autoSlide.test.js`)
+
+```js
+test('similarTitles puntúa por géneros TMDB, década y nota, y excluye el propio título y los vistos',()=>{
+ const base={id:'m0',mediaType:'movie',tmdbGenres:['Drama','Crimen'],year:'1994',tmdbScore:8.6,genre:'Cine'};
+ const pool=[base,{id:'m1',mediaType:'movie',tmdbGenres:['Drama','Crimen'],year:'1995',tmdbScore:8.9},{id:'m2',mediaType:'movie',tmdbGenres:['Comedia'],year:'1994',tmdbScore:6},{id:'m3',mediaType:'movie',tmdbGenres:['Drama'],year:'2020',tmdbScore:7.5},{id:'s1',mediaType:'series',tmdbGenres:['Drama','Crimen']}];
+ assert.deepEqual(similarTitles(base,pool,{watched:{}}).map(x=>x.id),['m1','m3','m2']);
+ assert.deepEqual(similarTitles(base,pool,{watched:{m1:true}}).map(x=>x.id),['m3','m2']);
+ assert.deepEqual(similarTitles(base,pool,{watched:{},limit:1}).map(x=>x.id),['m1']);
+});
+test('autoSlide avanza cada 6 s sólo mientras nadie toca',()=>{
+ let s=autoSlideStep(null,{now:0});assert.deepEqual(s,{index:0,since:0,live:true});
+ s=autoSlideStep(s,{now:5999});assert.equal(s.index,0);
+ s=autoSlideStep(s,{now:6000,count:3});assert.deepEqual(s,{index:1,since:6000,live:true});
+ s=autoSlideStep(s,{now:7000,touched:true});assert.equal(s.live,false);
+ s=autoSlideStep(s,{now:20000,count:3});assert.equal(s.index,1,'tocado: nunca más avanza solo');
+});
+```
+
+- [ ] **Paso 2:** fallan. **Paso 3:** implementar (`AUTO_SLIDE_MS=6000`; `autoSlideStep` devuelve el mismo objeto si nada cambia). **Paso 4:** verde; commit `feat(F1): parecidos y autoslide puros`.
+
+### Tarea F2: `EndScreen`
+
+- [ ] **Paso 1:** componente con `items`, `title`, `onPlay(item)`, `onClose`; estado `{index,since,live}` con un `setInterval` de 500 ms que aplica `autoSlideStep` mientras `live`; `onKeyDown` captura todas las teclas: marca `touched` y actúa (Izq/Der índice, OK `onPlay(items[index])`, Abajo foco a «Volver al catálogo», Volver `onClose`). Foco inicial en la tarjeta activa (`tabIndex=0`), nunca en la tira.
+- [ ] **Paso 2:** render: dos capas de backdrop (actual/saliente, fundido `--tv-slow` por opacidad, la siguiente decodificada antes como en el banner), copia (título, nota, datos, «Si te gustó …»), tira de miniaturas con `transform:translateX(-index*paso)` (`--tv-base`), puntos con barra de autoslide (`scaleX` 6 s, `animation-play-state` según `live`). Sólo `transform`/`opacity`; las miniaturas son `img` w342 ya en caché de rail cuando existan.
+- [ ] **Paso 3:** CSS en `endScreen.css` con tokens; `prefers-reduced-motion` sin fundidos. Commit `feat(F2): pantalla final con carrusel y autoslide`.
+
+### Tarea F3: cableado
+
+- [ ] **Paso 1:** `App.jsx`: `const similar=useMemo(()=>playing&&playing.mediaType==='movie'?similarTitles(playing,movies,{watched,limit:8}):[],[playing?.id])` y `<Player … similar={similar}/>`.
+- [ ] **Paso 2:** `Player.jsx`: en `ended` de película, si `similar.length`, `<EndScreen items={similar} title={title} onPlay={target=>change?.({movie:target})||open?.(target)} onClose={close}/>` en lugar del estado «Reproducción terminada» (comprobar cómo `change` admite una película; si sólo admite `{episode}`/`{feed}`/`{channel}`, añadir `{movie}` en `changeSource` de App con `xtreamClient().playback`). «Volver al catálogo» se mantiene.
+- [ ] **Paso 3:** `npm test`, builds, `test:tizen`; commit `feat(F3): pantalla final de película conectada al reproductor`.
+
+**Verificación en TV (yo):** terminar una película (cursor hasta el final): pantalla con 8 parecidos, autoslide cada 6 s sin tocar; una flecha lo detiene y la barra se congela; OK reproduce; Volver cierra. `measure:tv` no aplica (fuera de la navegación); comprobar que no deja capas tras cerrar. Captura `artifacts/pantalla-final-55.png`.
+
+---
+
 ## Medición: mismas pruebas, antes y después
 
 Pedido de Richard: «deja los mismos tests que miden, o ajústalos, pero con eso comprobamos; si desmejora algo lo mejoramos, tratemos de que sea mejor».
@@ -337,10 +388,11 @@ Pedido de Richard: «deja los mismos tests que miden, o ajústalos, pero con eso
 
 - Tres Opus en paralelo, worktrees disjuntos: **A** (`nextEpisodeFlow`, `NextEpisodeCard`, `Player.jsx`, `playerControls.css`), **B+C** (`firstSeen`, `sourceRegistry`, `browserXtreamBackend`, `tvHome`, `App.jsx` filas, `Boot.jsx`, `contentStore`, `scripts/tv-enter.mjs`), **D** (`cardExpansion*`, `useCardExpansion`, `cardSelectionStore`, `interactions.jsx`, `VirtualCarousel.jsx`, `ExpandedCard.jsx`, `expandedCard.css`). B y C comparten `sourceRegistry.js`: un solo agente, B antes que C.
 - **E** va después del merge de D (mismo agente de D al terminar, o uno nuevo sobre main); su cambio de App.jsx (prop library) lo hago yo al integrar.
-- Integración: merge A → B+C → D → E; `npm test`, builds, `test:tizen`; instalación en el 55" sólo con el «instala» de Richard; medición de D y C2/C3; sección «Resultado».
+- **F** va después de A (comparten Player.jsx): el agente de A la hace al terminar A3.
+- Integración: merge A+F → B+C → D → E; `npm test`, builds, `test:tizen`; instalación en el 55" sólo con el «instala» de Richard; medición de D y C2/C3; sección «Resultado».
 
 ## Autorrevisión
 
-- **Cobertura de lo pedido:** halo verde de visto y progreso lineal → E1–E3; medición con las mismas pruebas → sección «Medición»; cuenta atrás visible, con texto, animación y cancelación → A1–A3; títulos que no estaban antes en sección aparte → B1–B3; aviso de primera carga → C1 (y causa del arranque lento → C2/C3); panel que no desaparece al moverse en horizontal → D1–D4.
+- **Cobertura de lo pedido:** pantalla final con parecidos y autoslide sólo sin tocar → F1–F3; halo verde de visto y progreso lineal → E1–E3; medición con las mismas pruebas → sección «Medición»; cuenta atrás visible, con texto, animación y cancelación → A1–A3; títulos que no estaban antes en sección aparte → B1–B3; aviso de primera carga → C1 (y causa del arranque lento → C2/C3); panel que no desaparece al moverse en horizontal → D1–D4.
 - **Nombres consistentes:** `nextEpisodePhase`/`countdownStep`/`COUNTDOWN_MS` (A1→A2→A3); `stampFirstSeen`/`firstSeenAt`/`isArrival`/`ARRIVAL_DAYS` (B1→B2→B3); `sanitizedPolicy` (C3); `shiftDiff` (D1→D2), `retarget` (D2→D3), `registerCard`/`useRailSelection`/`expansionOwner`/`EXPANSION_SWAP_MS`/`is-settling` (D3→D4).
 - **Enfoque de revisión:** los cinco casos tienen prueba o verificación nombrada (A1, A2+TV, B1, C3, D4).
