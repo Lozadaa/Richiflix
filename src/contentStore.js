@@ -30,7 +30,7 @@ export function loadContent(force=false){
   publish({...snapshot,phase:'indexing'});
   const indexingStart=performance.now(),preparedChannels=Array.isArray(data.preparedChannels)?data.preparedChannels:await prepareChannels(data,{cancelled:()=>current!==generation});const preparedGroups=data.preparedGroups||await prepareCatalogueGroups(data,preparedChannels,{budget:2,batchSize:128,cancelled:()=>current!==generation});timings.indexing=performance.now()-indexingStart;timings.total=performance.now()-started;
   markAllowedCatalogue({...data,preparedChannels});primeCatalogueGroups({...data,preparedChannels,preparedGroups});
-  const value={...data,preparedChannels,preparedGroups,connection:{...data.connection,configured:true},loading:false,refreshing:false,phase:'ready',bootTimings:existing?snapshot.bootTimings:timings,loadTimings:timings,error:data.sources?.length&&data.sources.every(source=>source.error)?'No pudimos actualizar tus fuentes. Revisa su estado en Ajustes.':null};
+  const value={...data,preparedChannels,preparedGroups,connection:{...data.connection,configured:true},loading:false,refreshing:false,phase:'ready',bootTimings:existing?snapshot.bootTimings:timings,loadTimings:timings,error:!(data.channels.length||data.movies.length||data.shows.length)&&data.sources?.length&&data.sources.every(source=>source.error)?'No pudimos actualizar tus fuentes. Revisa su estado en Ajustes.':null};
   if(current===generation){
    publish(value);
    const failed=data.sources?.some(source=>source.error),delay=failed?5*60*1000:data.needsRefresh?1000:Math.max(1000,(data.cacheExpiresAt||Date.now()+2*60*60*1000)-Date.now());
