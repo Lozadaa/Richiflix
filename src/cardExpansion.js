@@ -9,6 +9,14 @@ export function expandedCardPlacement(anchor,viewport,{tv=false,live=false,tall=
  const top=clamp(anchor.top+(anchor.height-height)/2,viewport.top+margin,viewport.top+viewport.height-margin-height);
  return {left,top,width,height};
 }
+// TV, films and series (Netflix style): the focused card becomes a 16:9 picture as tall as its poster, opening right
+// from the card, with the facts line and synopsis in `info` px below it. `media` is the picture's height.
+export const TV_TILE_INFO=150;
+export function tvTilePlacement(anchor,posterHeight,viewport,{info=TV_TILE_INFO,margin=16}={}){
+ if(anchor.width<=0||!(posterHeight>0)||anchor.bottom<=viewport.top||anchor.top>=viewport.top+viewport.height)return null;
+ const media=Math.round(posterHeight),width=Math.max(anchor.width,Math.min(viewport.width-2*margin,Math.round(media*16/9)));
+ return {left:anchor.left,top:anchor.top,width,height:media+info,media};
+}
 // Top edge of the panel's viewport: below the row heading in rails; in grids below the grid's
 // top and the catalogue controls (count and chips), whichever is lower. Undefined edges are ignored.
 export function expansionViewportTop({mainTop=0,boxTop,headingBottom,gridTop,controlsBottom}){
@@ -25,10 +33,17 @@ export function anchorBoxFromLayout({trackRect,left=0,top=0,width,height,scrollD
 // read those, never the cell rect, which includes neighbour transitions.
 // Top 10: the cell keeps the rank number in its left padding; the panel anchors to the poster so the number stays visible.
 export function insetAnchorBox(box,inset){if(!(inset>0)||inset>=box.width)return box;return {...box,left:box.left+inset,width:box.width-inset};}
+function trackGlideX(track){
+ const transform=typeof getComputedStyle==='function'?getComputedStyle(track).transform:'none';
+ if(!transform||transform==='none'||typeof DOMMatrixReadOnly!=='function')return 0;
+ try{return new DOMMatrixReadOnly(transform).m41||0;}catch{return 0;}
+}
 export function cellAnchorBox(cell){
  const track=cell.parentElement;if(!cell.matches('.virtual-rail-cell,.virtual-grid-cell')||!track)return cell.getBoundingClientRect();
- const rect=track.getBoundingClientRect();
- return anchorBoxFromLayout({trackRect:{left:rect.left+track.clientLeft,top:rect.top+track.clientTop},left:parseFloat(cell.style.left)||0,top:parseFloat(cell.style.top)||0,width:parseFloat(cell.style.width)||cell.offsetWidth,height:cell.offsetHeight});
+ // A TV rail glide slides the track by transform toward its new scroll (VirtualCarousel glideRail): measure where the
+ // track lands, not where it is drawn mid-glide, so a panel opened at once already sits at its final place.
+ const rect=track.getBoundingClientRect(),glide=trackGlideX(track);
+ return anchorBoxFromLayout({trackRect:{left:rect.left-glide+track.clientLeft,top:rect.top+track.clientTop},left:parseFloat(cell.style.left)||0,top:parseFloat(cell.style.top)||0,width:parseFloat(cell.style.width)||cell.offsetWidth,height:cell.offsetHeight});
 }
 // Fase F2: a rail panel opens toward the side already seen. Past the rail's middle (card centre relative to
 // its viewport) it opens left ('end'); ±half a card of hysteresis around the middle keeps the previous side, so

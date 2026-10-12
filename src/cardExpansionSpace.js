@@ -20,18 +20,25 @@ const play=(cell,keyframes,duration)=>cell.animate(keyframes,{duration,easing:NE
 function settle(animations,instant){
  for(const animation of animations){if(instant){animation.cancel();continue;}animation.onfinish=()=>animation.cancel();animation.reverse();}
 }
-function makeRoom(group,selected,box,panel,align){
+function makeRoom(group,selected,box,panel,align,below=0,tile=false){
  const rail=group.dataset.virtualKind==='rail',track=selected.parentElement,rect=track.getBoundingClientRect(),bounds=group.getBoundingClientRect(),trackRect={left:rect.left+track.clientLeft,top:rect.top+track.clientTop},nodes=new Map(),anchorIndex=Number(selected.dataset.virtualIndex),offset=group.scrollLeft;
  const cells=[...track.children].filter(cell=>cell.dataset.virtualIndex!==undefined).map(cell=>{const index=Number(cell.dataset.virtualIndex);nodes.set(index,cell);return {index,...anchorBoxFromLayout({trackRect,left:parseFloat(cell.style.left)||0,top:parseFloat(cell.style.top)||0,width:parseFloat(cell.style.width)||box.width,height:box.height})};});
  const visibleRight=Math.min(window.innerWidth,bounds.right),end=rail&&align==='end',model=neighbourShifts({cells,anchorIndex,panel,kind:rail?'rail':'grid',columns:Number(group.dataset.virtualColumns)||1,viewportRight:visibleRight-(rail?16:0),viewportLeft:Math.max(0,bounds.left)+16,align});
  // ponytail: the rail track carries a fixed tail (expandedCard.css) so this scroll always fits.
  let scroll=0;if(Math.abs(model.scroll)>1){group.scrollTo({left:offset+model.scroll,behavior:'instant'});scroll=group.scrollLeft-offset;}
  const byIndex=new Map(cells.map(cell=>[cell.index,cell])),seen=(index,x)=>{const cell=byIndex.get(index);return cell.left<visibleRight&&cell.left+cell.width>bounds.left||cell.left+x-scroll<visibleRight&&cell.left+x-scroll+cell.width>bounds.left;};
- const dx=model.shifts[0]?.[1]||0,side=index=>end?index<anchorIndex:index>anchorIndex,{move,fade}=durations(true);
- const shifts=rail?(dx?cells.filter(cell=>side(cell.index)).map(cell=>[cell.index,dx]):[]):model.shifts;
+ const dx=model.shifts[0]?.[1]||0,side=index=>end?index<anchorIndex:index>anchorIndex,{move,fade}=tile?{move:0,fade:0}:durations(true);
+ // Grid tile: the rows under the anchor's row slide down by `below` instead of fading the cells under the text.
+ const columns=Number(group.dataset.virtualColumns)||1,gridTile=!rail&&tile&&below>0,anchorRow=Math.floor(anchorIndex/columns);
+ const shifts=rail?(dx?cells.filter(cell=>side(cell.index)).map(cell=>[cell.index,dx]):[]):gridTile?[...model.shifts.filter(([index])=>Math.floor(index/columns)===anchorRow),...cells.filter(cell=>Math.floor(cell.index/columns)>anchorRow).map(cell=>[cell.index,0,below])]:model.shifts;
+ // The anchor row still fades what no longer fits on its right; only the rows below move instead of fading.
+ const faded=gridTile?model.faded.filter(index=>Math.floor(index/columns)===anchorRow):model.faded;
  // Ola 4: cells seen neither before nor after the move are left alone (no fill-forwards animation, no layer); the next
  // key closes the panel before they can scroll into view, and cells mounted later still take the shift (observer below).
- const animations=neighbourMotions({shifts:shifts.filter(([index,x])=>seen(index,x)),faded:model.faded.filter(index=>seen(index,0)),move,fade}).map(({index,keyframes,duration})=>play(nodes.get(index),keyframes,duration));
+ const animations=neighbourMotions({shifts:shifts.filter(([index,x])=>seen(index,x)),faded:faded.filter(index=>seen(index,0)),move,fade}).map(({index,keyframes,duration})=>play(nodes.get(index),keyframes,duration));
+ // Netflix-style tile: the facts and synopsis under the picture need `below` px more than the card's caption, so the
+ // following rows of the page slide down (and back on close) instead of being covered.
+ if(below>0){const row=group.closest('.catalog-row');for(let next=row?.nextElementSibling;next;next=next.nextElementSibling)if(next.animate)animations.push(play(next,[{transform:'translate3d(0,0,0)'},{transform:`translate3d(0,${below}px,0)`}],move));}
  let observer;
  if(rail&&dx&&typeof MutationObserver==='function'){
   observer=new MutationObserver(records=>{for(const record of records)for(const cell of record.addedNodes){const index=Number(cell.dataset?.virtualIndex);if(cell.animate&&Number.isFinite(index)&&side(index))animations.push(play(cell,shiftFrames(dx),0));}});
@@ -40,9 +47,9 @@ function makeRoom(group,selected,box,panel,align){
  let active=true;const marked=Boolean(animations.length||observer);if(marked)shiftBy(group,1);
  return {scroll,cleanup(instant=false){if(!active)return;active=false;observer?.disconnect();settle(animations,instant);if(!marked)return;if(instant)shiftBy(group,-1);else Promise.all(animations.map(animation=>animation.finished?.catch(()=>{}))).then(()=>shiftBy(group,-1));}};
 }
-export function reserveCardExpansion(anchor,box,panel,tv=false,align='start'){
+export function reserveCardExpansion(anchor,box,panel,tv=false,align='start',tileBelow=0,tile=false){
  const group=anchor.closest('[data-virtual-kind]'),selected=group&&anchor.closest('[data-virtual-index]');if(!group||!selected)return {cleanup(){},scroll:0};
- if(tv)return makeRoom(group,selected,box,panel,align);
+ if(tv)return makeRoom(group,selected,box,panel,align,tileBelow,tile);
  const index=Number(selected.dataset.virtualIndex),rail=group.dataset.virtualKind==='rail',end=rail&&align==='end',columns=Number(group.dataset.virtualColumns)||1,row=Math.floor(index/columns),track=rail?group.querySelector('.virtual-rail-track'):group;
  const oldMinWidth=track.style.minWidth,oldMinHeight=track.style.minHeight,shifts=[],nodes=new Map();
  // Read the rail before sizing the track, avoiding a forced layout between the writes and the scroll measurement.

@@ -1,5 +1,5 @@
 import {useEffect,useLayoutEffect,useRef,useState} from 'react';
-import {expandedCardPlacement,expansionAlignFor,cellAnchorBox,insetAnchorBox,createCardPress,expansionViewportTop,createExpansionHub,EXPANSION_DELAY_MS} from './cardExpansion.js';
+import {expandedCardPlacement,tvTilePlacement,expansionAlignFor,cellAnchorBox,insetAnchorBox,createCardPress,expansionViewportTop,createExpansionHub,EXPANSION_DELAY_MS} from './cardExpansion.js';
 import {useStableEvent} from './useStableEvent.js';
 import {reserveCardExpansion} from './cardExpansionSpace.js';
 import {viewportIsGliding} from './virtualViewport.js';
@@ -18,14 +18,16 @@ function stageTrailerFrame(app){
  return trailerFrame={key,stage,position:{left:0,top:bottom,width:window.innerWidth,height:Math.max(0,stage.offsetHeight-bottom)}};
 }
 export function useCardExpansion(anchor,selected,instanceId,tv,onOpen,live=false,onLong,tall=false){
+ const tile=tv&&!live;
  const [placement,setPlacement]=useState(null),surface=useRef(),latest=useRef(),press=useRef();
  const previousPlacement=useRef(),movement=useRef();
  useLayoutEffect(()=>{
   const previous=previousPlacement.current;previousPlacement.current=placement;movement.current?.cancel();
-  if(!previous||!placement||!surface.current||window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  // The Netflix-style tile never glides between placements: it is simply there.
+  if(tile||!previous||!placement||!surface.current||window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
   const x=previous.left-placement.left,y=previous.top-placement.top;if(Math.abs(x)+Math.abs(y)<1)return;
   movement.current=surface.current.animate([{transform:`translate3d(${x}px,${y}px,0)`},{transform:'translate3d(0,0,0)'}],{duration:tv?140:220,easing:'cubic-bezier(.22,1,.36,1)'});
- },[placement,tv]);
+ },[placement,tv,tile]);
  useEffect(()=>()=>movement.current?.cancel(),[]);
  latest.current={placement,onOpen,onLong};
  const owned=useStableEvent(node=>Boolean(node&&(anchor.current?.contains(node)||surface.current?.contains(node))));
@@ -51,16 +53,20 @@ export function useCardExpansion(anchor,selected,instanceId,tv,onOpen,live=false
    const heading=rail?anchor.current.closest('.catalog-row')?.querySelector('.row-heading'):null,grid=rail?null:anchor.current.closest('.catalog-grid'),controls=grid?main?.querySelector('.catalog-controls'):null;
    const top=expansionViewportTop({mainTop:bounds?.top||0,boxTop:box.top,headingBottom:heading?.getBoundingClientRect().bottom,gridTop:grid?.getBoundingClientRect().top,controlsBottom:controls?.getBoundingClientRect().bottom});
    const viewport={left:0,top,width:window.innerWidth,height:Math.min(window.innerHeight,bounds?.bottom||window.innerHeight)-top};
-   const options={tv,live,tall,align:rail||tv?'start':'center'};let panel=expandedCardPlacement(box,viewport,options);if(!panel)return;
+   const options={tv,live,tall,align:rail||tv?'start':'center'};
+   // TV films and series: the Netflix-style tile (picture as tall as the poster, text below; rows below slide down).
+   const posterHeight=tile?anchor.current.querySelector('.poster')?.offsetHeight:0,place=shifted=>tile?tvTilePlacement(shifted,posterHeight,viewport):expandedCardPlacement(shifted,viewport,options);
+   let panel=place(box);if(!panel)return;
    // Kingdom A3: a TV rail keeps the card at the fixed column, first and last items included, so expansionAlignFor
    // never flips its side (expansionAlignFor tv:true; here TV skips it and its scrollLeft read). Pointer browsing on desktop retains its near-edge placement (F2).
    if(rail&&!tv){options.align=railNode.dataset.expansionAlign=expansionAlignFor({cellLeft:parseFloat(cell.style.left)||0,cellWidth:box.width,scrollLeft:railNode.scrollLeft,viewportWidth:railNode.clientWidth,previous:railNode.dataset.expansionAlign,panelWidth:panel.width});if(options.align==='end')panel=expandedCardPlacement(box,viewport,options);}
    // The rail scroll depends only on the panel width; place once from the model shifted by that scroll.
-   ignoreScrollUntil=performance.now()+80;space=reserveCardExpansion(anchor.current,box,panel,tv,options.align);
-   const placed=space.scroll?expandedCardPlacement({...box,left:box.left-space.scroll,right:box.right-space.scroll},viewport,options)||panel:panel;
-   setPlacement(tv&&!live?{...placed,trailer:stageTrailerFrame(anchor.current.closest('.app'))}:placed);
+   ignoreScrollUntil=performance.now()+80;space=reserveCardExpansion(anchor.current,box,panel,tv,options.align,tile?Math.max(0,Math.round(panel.top+panel.height-box.bottom+8)):0,tile);
+   const placed=space.scroll?place({...box,left:box.left-space.scroll,right:box.right-space.scroll})||panel:panel;
+   setPlacement(tv&&!live&&!tile?{...placed,trailer:stageTrailerFrame(anchor.current.closest('.app'))}:placed);
   };
-  const queue=()=>{if(!timer)timer=setTimeout(show,tv?EXPANSION_DELAY_MS:250);};
+  // The tile is already open when the card is reached (Netflix): no rest delay, only the next frame's layout.
+  const queue=()=>{if(!timer)timer=setTimeout(show,tile?16:tv?EXPANSION_DELAY_MS:250);};
   const unregister=hub.register({
    focus:event=>{if(owned(event.target)){hidePending=false;if(!latest.current.placement)queue();}else requestHide();},
    move:event=>{pointer=owned(event.target);if(pointer){if(!latest.current.placement)queue();}else if(!owned(document.activeElement))hide(false);},
@@ -73,7 +79,7 @@ export function useCardExpansion(anchor,selected,instanceId,tv,onOpen,live=false
   queue();
   // A card left behind retires its reservation: the hub cancels it in the next frame (or the next opening's batch).
   return()=>{clearTimeout(timer);unregister();hub.retire(space);space=undefined;press.current.cancel();};
- },[selected,anchor,instanceId,tv,owned,live,tall]);
+ },[selected,anchor,instanceId,tv,owned,live,tall,tile]);
  const keyDown=event=>{
   if(event.key==='Tab'&&!event.shiftKey&&placement&&event.target.matches('.card-open')){event.preventDefault();actions();return;}
   if(tv&&placement&&selected&&(event.key==='Enter'||event.keyCode===13)&&event.target.matches('.card-open')){event.preventDefault();event.stopPropagation();press.current.down();}

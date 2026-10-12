@@ -1,4 +1,4 @@
-import React,{memo,useEffect,useId,useMemo,useRef,useState} from 'react';
+import React,{memo,useContext,useEffect,useId,useMemo,useRef,useState} from 'react';
 import {ArrowUpRight,Check,ChevronLeft,ChevronRight,Heart,Info,Play} from 'lucide-react';
 import {QualityImage} from './QualityImage.jsx';
 import {artworkURL,displayTitle} from './artwork.js';
@@ -16,7 +16,7 @@ import {recordCardRender} from './focusPaintDiagnostics.js';
 import {isTVBuild} from './platform.js';
 import {BannerArtwork} from './BannerArtwork.jsx';
 import {UserScore,TitleFacts} from './UserScore.jsx';
-import {SelectedCardExpansion} from './ExpandedCard.jsx';
+import {SelectedCardExpansion,CardDetailsContext,isTVTile} from './ExpandedCard.jsx';
 import {remainingLabel} from './cardExpansion.js';
 import {cardFacts} from './cardFacts.js';
 
@@ -31,14 +31,14 @@ export const Card=memo(function Card({item:original,instanceId,metadata:fallback
  const item=useMemo(()=>metadata?{...original,...metadata}:original,[original,metadata]);
  // R6.2/G5b: a stable veil for the memoized image; in TV the category PNG is decoded only when the poster failed or is missing.
  const fallback=useMemo(()=>failed=><ContentIdentity item={item} channel={item.kind==='iptv'} artwork={!tv||failed}/>,[item,tv]);
- const anchor=useRef(),expansion=useRef();
+ const anchor=useRef(),expansion=useRef(),details=useContext(CardDetailsContext);
  const sameOwner=node=>node?.closest?.('.card-expansion')?.dataset.cardOwner===instanceId;
  const duration=item.durationSeconds||Number.parseFloat(item.duration)*60;
  // H2-T4: facts line and audio codes are static data, memoized per item (a key only changes `selected`, never `item`).
  const {facts,audio}=useMemo(()=>({facts:item.kind==='iptv'||item.resumeLabel?'':cardFacts(item),audio:item.languages?.slice(0,3).join(' · ')||''}),[item]);
  const matchup=matchupFor(item),guideLine=item.kind==='iptv'&&!item.isEvent?guideNowLine(item.guide):'';
  return <div ref={anchor} className={`card ${selected?'is-previewed':''} ${favorite?'is-favorite':''} ${item.kind==='iptv'?'live-card':'portrait-card'}`} data-content-id={item.id} data-card-id={instanceId} style={{'--card-index':Math.min(index,11)}} onKeyDown={event=>expansion.current?.keyDown(event)} onKeyUp={event=>expansion.current?.keyUp(event)} onMouseEnter={event=>pointerPreview?.(item,event,instanceId)} onMouseMove={event=>{if(tv&&event.nativeEvent.richiflixPointerMoved)pointerPreview?.(item,event,instanceId);}} onMouseLeave={leave} onFocus={event=>{if(event.target.classList.contains('card-open')&&!event.currentTarget.contains(event.relatedTarget)&&!sameOwner(event.relatedTarget))preview?.(item,instanceId,index);}} onBlur={event=>{if(!event.currentTarget.contains(event.relatedTarget)&&!sameOwner(event.relatedTarget))leave?.();}}>
-  <button className="card-open" aria-label={displayText(item.displayTitle||item.title)} onClick={()=>open(item)}>
+  <button className="card-open" aria-label={displayText(item.displayTitle||item.title)} onClick={()=>details&&isTVTile(tv,item)?details(item):open(item)}>
    {original.rank>0&&<b className="card-rank" aria-hidden="true">{original.rank}</b>}
    <div className={`poster ${item.kind==='provider'?'provider-poster':''} ${matchup?'mlb-poster':''} ${item.kind!=='iptv'&&Number(item.tmdbScore)>=8?'is-gold':''}`} style={identityStyle(item)}>
     {item.kind==='iptv'&&<svg className="channel-pattern" viewBox="0 0 400 240" aria-hidden="true"><circle cx="370" cy="10" r="160"/><circle cx="-15" cy="280" r="185"/><path d="M220 -20L440 200M190 -20L410 200"/></svg>}

@@ -13,7 +13,8 @@ function Dialog({close,children,immersive=false,label='Kingdom',player=false,uti
  useEffect(()=>{
   const dialog=ref.current,previous=restoreFocus||document.activeElement,overflow=document.body.style.overflow;
   const backgrounds=[...document.querySelectorAll('.app>.topbar,.app>main')].map(element=>({element,inert:element.inert,hidden:element.getAttribute('aria-hidden')}));
-  backgrounds.forEach(({element})=>{element.inert=true;});document.body.style.overflow='hidden';dialog.querySelector(player?'video':'button')?.focus({preventScroll:true});backgrounds.forEach(({element})=>element.setAttribute('aria-hidden','true'));
+  backgrounds.forEach(({element})=>{element.inert=true;});document.body.style.overflow='hidden';// [data-autofocus]: the control a dialog opens on (the title page's «Reproducir» on TV), else its first button.
+  (player?dialog.querySelector('video'):dialog.querySelector('[data-autofocus]')||dialog.querySelector('button'))?.focus({preventScroll:true});backgrounds.forEach(({element})=>element.setAttribute('aria-hidden','true'));
   const trap=e=>{if(e.key!=='Tab')return;const elements=[...dialog.querySelectorAll('button,input,textarea,select,a,video')].filter(el=>!el.disabled&&!el.closest('[inert]')&&el.getBoundingClientRect().width>0);if(e.shiftKey&&document.activeElement===elements[0]){e.preventDefault();elements[elements.length-1]?.focus();}else if(!e.shiftKey&&document.activeElement===elements[elements.length-1]){e.preventDefault();elements[0]?.focus();}};
   dialog.addEventListener('keydown',trap);
   return()=>{clearTimeout(timer.current);dialog.removeEventListener('keydown',trap);document.body.style.overflow=overflow;backgrounds.forEach(({element,inert,hidden})=>{element.inert=inert;if(hidden===null)element.removeAttribute('aria-hidden');else element.setAttribute('aria-hidden',hidden);});if(previous?.isConnected)revealRowFor(previous).focus({preventScroll:true});};
