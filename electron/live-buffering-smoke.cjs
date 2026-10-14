@@ -66,8 +66,11 @@ async function createLiveFixture(directory){
   response.writeHead(404);response.end();
  });
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+ const port=server.address().port;
  return {
   host:`http://127.0.0.1:${server.address().port}`,stats,
+  async stop(){server.closeAllConnections();await new Promise(resolve=>server.close(resolve));},
+  async restart(){await new Promise(resolve=>server.listen(port,'127.0.0.1',resolve));},
   freeze(){frozenAt=Date.now();},thaw(){frozenAt=null;},expire(){expired=true;},failSegments(count){segmentFailures=count;},
   cut(){blocked=true;},
   async release(){blocked=false;const waiting=[...pending];pending.clear();await Promise.all(waiting.map(entry=>entry.playlist?deliverPlaylist(entry.response):deliver(entry.response,entry.index)));},
@@ -107,7 +110,7 @@ async function instrumentPlayer(page,root){
      const policy=this.config.fragLoadPolicy.default;
      this.config.fragLoadPolicy={default:{...policy,maxTimeToFirstByteMs:1000,maxLoadTimeMs:1200,timeoutRetry:{...policy.timeoutRetry,maxNumRetry:1,retryDelayMs:100,maxRetryDelayMs:200},errorRetry:{...policy.errorRetry,maxNumRetry:1,retryDelayMs:100,maxRetryDelayMs:200}}};
      const playlist=this.config.playlistLoadPolicy.default;
-     this.config.playlistLoadPolicy={default:{...playlist,maxTimeToFirstByteMs:1000,maxLoadTimeMs:1200,timeoutRetry:{...playlist.timeoutRetry,maxNumRetry:1,retryDelayMs:100,maxRetryDelayMs:200},errorRetry:{...playlist.errorRetry,maxNumRetry:1,retryDelayMs:100,maxRetryDelayMs:200}}};
+     this.config.playlistLoadPolicy={default:{...playlist,maxTimeToFirstByteMs:600,maxLoadTimeMs:800,timeoutRetry:{...playlist.timeoutRetry,maxNumRetry:0,retryDelayMs:100,maxRetryDelayMs:200},errorRetry:{...playlist.errorRetry,maxNumRetry:0,retryDelayMs:100,maxRetryDelayMs:200}}};
     }
     if(method==='attachMedia'){value.video=args[0]?.media||args[0];value.dialog=value.video.closest('.player-dialog');}
     return original.apply(this,args);
@@ -178,7 +181,7 @@ if(require.main===module)(async()=>{
  try{
   fixture=await createLiveFixture(directory);
   app=await electron.launch({executablePath:require('electron'),args:[path.join(__dirname,'main.cjs')],env:{...process.env,RICHIFLIX_TEST_EMPTY_SOURCE:'1',RICHIFLIX_USER_DATA:path.join(directory,'profile')}});
-  await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().forEach(window=>window.webContents.setBackgroundThrottling(false)));
+  await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().forEach(window=>{window.webContents.setBackgroundThrottling(false);window.setFullScreen(false);window.hide();}));
   page=await app.firstWindow();const errors=[];page.on('pageerror',error=>errors.push(error.message));await page.emulateMedia({reducedMotion:'reduce'});
   await instrumentPlayer(page,root);
   await page.getByRole('button',{name:'Crear perfil',exact:true}).click();await page.getByRole('button',{name:'Adulto',exact:true}).click();
@@ -250,7 +253,7 @@ if(require.main===module)(async()=>{
 
   checkpoint='close during buffer outage';
   await page.evaluate(id=>window.__liveBuffering.begin(id),id);fixture.cut();await waitForEmptyBuffer(page,id);
-  await page.keyboard.press('Escape');await page.locator('.player-dialog').waitFor({state:'detached'});await page.evaluate(()=>window.__liveBuffering.end());
+  await page.locator('video').focus();await page.keyboard.press('Escape');await page.locator('.player-dialog').waitFor({state:'detached'});await page.evaluate(()=>window.__liveBuffering.end());
   const closed=await snapshot(page,id);assert.equal(closed.destroy,1,'Close must dispose the Hls session once');
   await fixture.release();
 
@@ -260,7 +263,7 @@ if(require.main===module)(async()=>{
   await expect(page.getByRole('alert')).toHaveText('Esta emisión no está disponible ahora.');await expect(page.getByRole('button',{name:'Reintentar',exact:true})).toBeFocused();
   const afterClose=await snapshot(page,id);
   for(const key of ['loadSource','attachMedia','recoverMediaError','startLoad','destroy'])assert.equal(afterClose[key],closed[key],`Disposed session must not perform a late ${key}`);
-  await page.keyboard.press('Escape');await page.locator('.player-dialog').waitFor({state:'detached'});assert.deepEqual(errors,[]);
+  await page.locator('video').focus();await page.keyboard.press('Escape');await page.locator('.player-dialog').waitFor({state:'detached'});assert.deepEqual(errors,[]);
   console.log('Live buffering OK: moving live HLS survives fatal stall notifications and an eight-second empty-buffer HTTP outage with one loader and the same video/Hls/MediaSource; pause and close cancel late recovery, and an absent signal still reports its error.');
  }catch(error){
   if(page){try{const id=await page.evaluate(()=>window.__liveBuffering?.latest());console.error(JSON.stringify({checkpoint,player:id>=0?await snapshot(page,id):null,observation:await observe(page),ui:await page.evaluate(()=>({headings:[...document.querySelectorAll('h1,h2')].map(node=>node.textContent),alerts:[...document.querySelectorAll('[role=alert]')].map(node=>node.textContent)}))}));await page.screenshot({path:path.join(root,'live-buffering-test-failure.png')});}catch{}}
