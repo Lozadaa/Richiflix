@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createPlaybackHealth,createHlsRecovery} from './playbackRecovery.js';
+import {createPlaybackHealth,createHlsRecovery,createLiveRecovery} from './playbackRecovery.js';
 
 function fixture(options={}){
  let clock=0,position=0,seeking=false,id=0;
@@ -85,3 +85,29 @@ test('terminal failure cancels pending retries so later progress cannot fire a s
  f.setPosition(1);f.health.progress();f.advance(20000);assert.equal(f.calls.length,2);
 });
 
+
+function liveFixture(){
+ const f=fixture({bufferGrace:120000}),calls=[];
+ const recovery=createLiveRecovery({health:f.health,readPosition:()=>0,onReconnecting:()=>calls.push('waiting'),startLoad:()=>calls.push('start'),recoverMediaError:()=>calls.push('decoder'),swapAudioCodec:()=>calls.push('swap'),reload:()=>calls.push('reload'),now:f.now,schedule:f.schedule,cancel:f.cancel});
+ return {...f,calls,recovery};
+}
+test('silent live stalls trigger retries and renewal without a preceding error',async()=>{
+ const f=liveFixture();f.advance(12000);assert.ok(f.calls.includes('start'));f.advance(20000);await Promise.resolve();assert.ok(f.calls.includes('reload'));f.recovery.dispose();
+});
+test('nonfatal media faults recover the decoder twice, with codec fallback',()=>{
+ const f=liveFixture();for(let i=0;i<3;i++){f.recovery.error(null,{type:'mediaError',details:'bufferAppendError',fatal:false});f.advance(2000);}assert.equal(f.calls.filter(x=>x==='decoder').length,2);assert.equal(f.calls.filter(x=>x==='swap').length,1);f.recovery.dispose();
+});
+test('online resumes loads but pause and disposal suppress late actions',()=>{
+ const f=liveFixture();f.recovery.online();assert.ok(f.calls.includes('start'));f.health.pause();const count=f.calls.length;f.recovery.online();f.advance(60000);assert.equal(f.calls.length,count);f.recovery.dispose();f.health.resume();f.advance(60000);assert.equal(f.calls.length,count);
+});
+test('renewal has a finite budget even if there is no fatal HLS event',async()=>{
+ const f=liveFixture();for(let i=0;i<5;i++){f.advance(24000);await Promise.resolve();await Promise.resolve();await Promise.resolve();await Promise.resolve();}assert.equal(f.calls.filter(x=>x==='reload').length,3);assert.equal(f.failures.length,1);f.recovery.dispose();
+});
+
+test('disposal cancels decoder backoff and a renewal queued in a microtask',async()=>{
+ const f=liveFixture();f.recovery.error(null,{type:'mediaError',details:'bufferAppendError'});f.advance(27000);f.recovery.dispose();await Promise.resolve();assert.equal(f.calls.includes('reload'),false);
+ const g=liveFixture();g.recovery.error(null,{type:'mediaError',details:'bufferAppendError'});g.recovery.dispose();g.advance(10000);assert.equal(g.calls.includes('decoder'),false);
+});
+test('buffer notifications alone never rebuild the decoder',()=>{
+ const f=liveFixture();for(const details of ['bufferStalledError','bufferSeekOverHole','bufferNudgeOnStall','bufferFullError'])f.recovery.error(null,{type:'mediaError',details,fatal:true});f.advance(5000);assert.equal(f.calls.includes('decoder'),false);f.recovery.dispose();
+});

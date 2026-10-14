@@ -41,6 +41,43 @@ export function createPlaybackHealth({readPosition,readSeeking=()=>false,onFailu
  };
 }
 
+// Desktop live supervision: decoded progress is the only success signal.
+// This also catches silent playlist stalls with no waiting/error event.
+export function createLiveRecovery({health,readPosition,readSeeking=()=>false,startLoad,recoverMediaError,swapAudioCodec=()=>{},reload,onReconnecting,now=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,maxReloads=3}){
+ let closed=false,timer,decoderTimer,last=readPosition(),advancedAt=now(),actionAt=now(),reloads=0,steps=0,decoders=0,busy=false,failed=false,goodSince=null;
+ const tick=()=>{
+  timer=undefined;if(closed)return;
+  if(health.canRecover()&&!failed){
+   const position=readPosition(),time=now();
+   if(!readSeeking()&&position>last+.025){advancedAt=time;goodSince??=time;if(time-goodSince>=10000){reloads=0;steps=0;decoders=0;}}
+   else goodSince=null;
+   last=position;
+   const stalled=time-advancedAt;
+   if(stalled>=10000){onReconnecting();health.waiting();}
+   if(!busy&&stalled>=24000&&time-actionAt>=8000){
+    if(reloads>=maxReloads){failed=true;health.fault('Esta emisión no está disponible ahora.');}
+    else{reloads++;busy=true;actionAt=time;Promise.resolve().then(()=>{if(!closed&&health.canRecover())return reload();}).catch(()=>{}).finally(()=>{busy=false;});}
+   }else if(!busy&&stalled>=12000&&time-actionAt>=Math.min(8000,1000*2**steps)){
+    actionAt=time;steps++;try{startLoad();}catch{}
+   }
+  }else{advancedAt=now();actionAt=now();last=readPosition();goodSince=null;}
+  if(!closed)timer=schedule(tick,1000);
+ };
+ timer=schedule(tick,1000);
+ return {
+  online(){if(!closed&&!failed&&health.canRecover()){onReconnecting();try{startLoad();}catch{}}},
+  error(_event,data){
+   if(closed||failed||!health.canRecover())return;
+   if(data.type==='mediaError'&&(data.details==='bufferAppendError'||data.details==='fragParsingError'||(data.fatal&&!String(data.details).startsWith('buffer')))&&decoders<2&&decoderTimer===undefined){
+    onReconnecting();health.waiting();
+    decoderTimer=schedule(()=>{decoderTimer=undefined;if(closed||!health.canRecover())return;try{if(decoders++)swapAudioCodec();recoverMediaError();}catch{}},1000*2**decoders);
+   }
+   if(data.type==='networkError'||data.details==='bufferStalledError'){onReconnecting();health.waiting();}
+  },
+  dispose(){closed=true;cancel(timer);cancel(decoderTimer);},
+ };
+}
+
 export function createHlsRecovery({hls,health,url,networkType,mediaType,live=false,readPosition=()=>hls.media?.currentTime||0,readMediaError=()=>hls.media?.error,schedule=setTimeout,cancel=clearTimeout}){
  let loads=0,decoders=0,manifest=false,timer,closed=false,pending=null;
  const delays=[1000,2000,4000,8000];
