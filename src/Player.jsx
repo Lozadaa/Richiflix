@@ -8,7 +8,7 @@ import {Brand,KingdomLoader,useLoaderPhrase} from './Brand.jsx';
 import {displayText} from './displayText.js';
 import {artworkURL,displayTitle} from './artwork.js';
 import {usePlaybackChrome} from './usePlaybackChrome.js';
-import {createPlaybackHealth,createHlsRecovery} from './playbackRecovery.js';
+import {createPlaybackHealth,createHlsRecovery,createLiveRecovery} from './playbackRecovery.js';
 import {feedsOf,nextFeed,siblingChannel,eventPhaseLabel,eventPhaseLine} from './liveEvents.js';
 import {channelTitle} from './ContentIdentity.jsx';
 import {createSeekAccumulator,naturalCross} from './seekAccumulator.js';
@@ -18,6 +18,7 @@ import {useIntroSkip} from './useIntroSkip.js';
 import {playerKeyAction} from './playerKeys.js';
 import {trackNames} from './trackNames.js';
 import {PlaybackSidebar} from './PlaybackSidebar.jsx';
+import {xtreamClient} from './xtreamClient.js';
 import './playerLive.css';
 import './playerControls.css';
 
@@ -45,6 +46,7 @@ export function Player({item,start,save,close,change,seasons,series,intros={},se
  const [volume,setVolume]=useState(()=>clamp(preference('rf-player-volume',.8),0,1)),[muted,setMuted]=useState(false),[rate,setRate]=useState(1),[options,setOptions]=useState(false),[cue,setCue]=useState('');
  const [levels,setLevels]=useState([]),[quality,setQuality]=useState(-1),[audioTracks,setAudioTracks]=useState([]),[audio,setAudio]=useState(0),[captions,setCaptions]=useState([]),[caption,setCaption]=useState(-1);
  const [switching,setSwitching]=useState('');
+ const [reconnecting,setReconnecting]=useState(false);
  const event=item.event,feeds=feedsOf(event),feed=feeds.find(entry=>entry.id===item.feedId);const title=item.kind==='iptv'?channelTitle(event||item):displayTitle(item);if(feed)tried.current.add(feed.id);
  const alternative=event&&nextFeed(event,item.feedId,1,[...tried.current]);
  const chooseQuality=tv?levels.length>1:levels.length>0;
@@ -78,10 +80,10 @@ export function Player({item,start,save,close,change,seasons,series,intros={},se
  useEffect(()=>{
   const video=videoRef.current;let hls,stopped=false;
   userPaused.current=false;seekingRef.current=false;video.autoplay=true;
-  setError('');setLoading(true);setShowLoader(false);setEnded(false);setPaused(true);setMedia(emptyMedia);setLevels([]);setQuality(-1);setAudioTracks([]);setCaptions([]);setCaption(-1);setCue('');if(document.activeElement?.closest('.playback-sidebar'))videoRef.current?.focus({preventScroll:true});setOptions(false);lastSaved.current=-1;accumulator.current.cancel();accumulator.current.settle();setPendingSeek(null);setScrub(null);
+  setError('');setReconnecting(false);setLoading(true);setShowLoader(false);setEnded(false);setPaused(true);setMedia(emptyMedia);setLevels([]);setQuality(-1);setAudioTracks([]);setCaptions([]);setCaption(-1);setCue('');if(document.activeElement?.closest('.playback-sidebar'))videoRef.current?.focus({preventScroll:true});setOptions(false);lastSaved.current=-1;accumulator.current.cancel();accumulator.current.settle();setPendingSeek(null);setScrub(null);
   // A new episode in the same dialog resumes from its own history entry.
   if(startFor.current!==item.id){startFor.current=item.id;resumeAt.current=start;}setNextCard(false);setStillThere(false);nextDismissed.current=false;lastPosition.current=0;
-  const health=createPlaybackHealth({readPosition:()=>engine()?.currentTime||0,readSeeking:()=>!nativePlayback&&(video.seeking||seekingRef.current),onFailure:message=>{setLoading(false);setError(message);},onHealthy:()=>{const restore=document.activeElement?.closest('.player-state');setError('');setLoading(false);setPaused(false);setEnded(false);if(restore)requestAnimationFrame(()=>{if(healthRef.current===health)document.querySelector('.player-dialog .playback-toggle')?.focus({preventScroll:true});});},onWaiting:()=>setLoading(true)});healthRef.current=health;
+  const health=createPlaybackHealth({readPosition:()=>engine()?.currentTime||0,readSeeking:()=>!nativePlayback&&(video.seeking||seekingRef.current),onFailure:message=>{setLoading(false);setError(message);},onHealthy:()=>{setReconnecting(false);const restore=document.activeElement?.closest('.player-state');setError('');setLoading(false);setPaused(false);setEnded(false);if(restore)requestAnimationFrame(()=>{if(healthRef.current===health)document.querySelector('.player-dialog .playback-toggle')?.focus({preventScroll:true});});},onWaiting:()=>setLoading(true),...(!nativePlayback&&item.kind==='iptv'?{bufferGrace:120000}:{})});healthRef.current=health;
   const visibility=()=>health.visibility(document.hidden);document.addEventListener('visibilitychange',visibility);visibility();
   const clearHealth=()=>{health.dispose();if(healthRef.current===health)healthRef.current=null;document.removeEventListener('visibilitychange',visibility);};
   if(nativePlayback){
@@ -113,15 +115,17 @@ export function Player({item,start,save,close,change,seasons,series,intros={},se
    sync();video.play().catch(()=>{setLoading(false);setPaused(true);});tracks();
   };
   video.addEventListener('loadedmetadata',resume);video.textTracks.addEventListener('addtrack',tracks);
-  let recovery;
+  let recovery,liveRecovery;
+  const online=()=>liveRecovery?.online();window.addEventListener('online',online);
   const startVideo=async()=>{
    if(/\.m3u8(?:\?|$)/i.test(item.url)){
     const Hls=await loadHlsLibrary();if(stopped)return;
     if(Hls.isSupported()){
-     hls=new Hls();hlsRef.current=hls;
+     hls=new Hls(item.kind==='iptv'?{liveSyncDurationCount:3,maxBufferLength:20,backBufferLength:30,lowLatencyMode:false}:{});hlsRef.current=hls;
      recovery=createHlsRecovery({hls,health,url:item.url,live:item.kind==='iptv',readPosition:()=>video.currentTime,readMediaError:()=>video.error,networkType:Hls.ErrorTypes.NETWORK_ERROR,mediaType:Hls.ErrorTypes.MEDIA_ERROR});
      hls.on(Hls.Events.MANIFEST_PARSED,()=>{recovery.manifestParsed();setLevels(hls.levels.map((level,index)=>({index,label:level.height?`${level.height}p`:`${Math.round(level.bitrate/1000)} kbps`})));setAudioTracks(named(hls.audioTracks.map((track,index)=>({index,language:track.lang,label:track.name,codec:track.audioCodec})),'audio'));setAudio(Math.max(0,hls.audioTrack));});
-     hls.on(Hls.Events.ERROR,recovery.error);hls.on(Hls.Events.FRAG_BUFFERED,recovery.buffered);
+     if(item.kind==='iptv')liveRecovery=createLiveRecovery({health,readPosition:()=>video.currentTime,readSeeking:()=>video.seeking||seekingRef.current,onReconnecting:()=>{setReconnecting(true);setLoading(true);},startLoad:()=>{const edge=hls.liveSyncPosition;if(Number.isFinite(edge)&&edge-video.currentTime>10){video.currentTime=edge;health.reposition(edge);}hls.startLoad(video.currentTime,true);},recoverMediaError:()=>hls.recoverMediaError(),swapAudioCodec:()=>hls.swapAudioCodec(),reload:async()=>{if(stopped||!health.canRecover())return;const url=await xtreamClient().playback(item.playbackItem||item);if(stopped||!health.canRecover())return;hls.stopLoad();hls.detachMedia();hls.loadSource(url);hls.attachMedia(video);}});
+     hls.on(Hls.Events.ERROR,(_event,data)=>{if(!liveRecovery||data.type!==Hls.ErrorTypes.MEDIA_ERROR||['bufferStalledError','bufferSeekOverHole'].includes(data.details))recovery.error(_event,data);liveRecovery?.error(_event,data);});hls.on(Hls.Events.FRAG_BUFFERED,recovery.buffered);
      hls.loadSource(item.url);hls.attachMedia(video);return;
     }
    }
@@ -129,7 +133,7 @@ export function Player({item,start,save,close,change,seasons,series,intros={},se
   };
   startVideo().catch(()=>{if(!stopped){setLoading(false);health.fault('No pudimos preparar el reproductor.');}});
   return()=>{
-   stopped=true;clearHealth();recovery?.dispose();
+   stopped=true;liveRecovery?.dispose();window.removeEventListener('online',online);clearHealth();recovery?.dispose();
    if(item.kind!=='iptv'&&video.currentTime>0&&!video.ended)saveRef.current(Math.floor(video.currentTime),item.id,{duration:video.duration});
    video.removeEventListener('loadedmetadata',resume);video.textTracks.removeEventListener('addtrack',tracks);hls?.destroy();hlsRef.current=null;video.pause();video.removeAttribute('src');video.load();
   };
@@ -271,9 +275,9 @@ export function Player({item,start,save,close,change,seasons,series,intros={},se
 
  return <Dialog immersive player tvMode={tv} chromeHidden={chromeHidden} close={close} label={`Reproduciendo ${title}`} restoreFocus={restoreFocus} onKeyDownCapture={keyboard}>
   <div className="video-stage">
-   <video ref={videoRef} controls={false} autoPlay playsInline tabIndex={0} aria-label={`Vídeo: ${title}`} onClick={play} onKeyUpCapture={e=>{if(e.code==='Space'){e.preventDefault();e.stopPropagation();}}} onWaiting={()=>healthRef.current?.waiting()} onSeeking={()=>{seekingRef.current=true;healthRef.current?.waiting();}} onSeeked={()=>{healthRef.current?.reposition();seekingRef.current=false;settled();if(videoRef.current.paused)setLoading(false);sync();}} onEmptied={()=>{seekingRef.current=false;healthRef.current?.reposition();}} onPlaying={()=>healthRef.current?.playing()} onPause={()=>setPaused(true)} onCanPlay={sync} onProgress={sync} onDurationChange={sync} onVolumeChange={e=>{if(tv)return;setVolume(e.currentTarget.volume);setMuted(e.currentTarget.muted);}} onTimeUpdate={()=>{healthRef.current?.progress();sync();resumeAt.current=videoRef.current.currentTime;const seconds=Math.floor(videoRef.current.currentTime);if(item.kind!=='iptv'&&seconds%5===0&&seconds!==lastSaved.current){lastSaved.current=seconds;saveRef.current(seconds,item.id,{duration:videoRef.current.duration});}}} onError={()=>{if(!nativePlayback)healthRef.current?.fault('No pudimos reproducir esta fuente.');}} onEnded={()=>{healthRef.current?.ended();saveRef.current(0,item.id,{ended:true});setEnded(true);setLoading(false);}}/>
+   <video ref={videoRef} controls={false} autoPlay playsInline tabIndex={0} aria-label={`Vídeo: ${title}`} onClick={play} onKeyUpCapture={e=>{if(e.code==='Space'){e.preventDefault();e.stopPropagation();}}} onStalled={()=>healthRef.current?.waiting()} onWaiting={()=>healthRef.current?.waiting()} onSeeking={()=>{seekingRef.current=true;healthRef.current?.waiting();}} onSeeked={()=>{healthRef.current?.reposition();seekingRef.current=false;settled();if(videoRef.current.paused)setLoading(false);sync();}} onEmptied={()=>{seekingRef.current=false;healthRef.current?.reposition();}} onPlaying={()=>healthRef.current?.playing()} onPause={()=>setPaused(true)} onCanPlay={sync} onProgress={sync} onDurationChange={sync} onVolumeChange={e=>{if(tv)return;setVolume(e.currentTarget.volume);setMuted(e.currentTarget.muted);}} onTimeUpdate={()=>{healthRef.current?.progress();sync();resumeAt.current=videoRef.current.currentTime;const seconds=Math.floor(videoRef.current.currentTime);if(item.kind!=='iptv'&&seconds%5===0&&seconds!==lastSaved.current){lastSaved.current=seconds;saveRef.current(seconds,item.id,{duration:videoRef.current.duration});}}} onError={()=>{if(!nativePlayback)healthRef.current?.fault('No pudimos reproducir esta fuente.');}} onEnded={()=>{healthRef.current?.ended();saveRef.current(0,item.id,{ended:true});setEnded(true);setLoading(false);}}/>
    {isTizen&&<object className="avplay-surface" type="application/avplayer" aria-hidden="true"/>}
-   {showLoader&&loading&&!error&&!ended&&<div className="player-loading" role="status" aria-label="Cargando vídeo"><KingdomLoader className="player-kingdom-loader" label={item.trying&&media.current===0?'Probando otra señal…':media.current>0?'Cargando…':title} phrase={phrase}/></div>}
+   {showLoader&&loading&&!error&&!ended&&<div className="player-loading" role="status" aria-label="Cargando vídeo"><KingdomLoader className="player-kingdom-loader" label={reconnecting&&!nativePlayback?'Reconectando…':item.trying&&media.current===0?'Probando otra señal…':media.current>0?'Cargando…':title} phrase={phrase}/></div>}
    {!tv&&paused&&!loading&&!error&&!ended&&<button className="player-resume" aria-label="Reanudar reproducción" onClick={play}><Play size={36} fill="currentColor"/></button>}
    {switching&&<div className="player-switch" role="status">{switching}</div>}
    {feedback&&<div className="seek-feedback" key={feedback} aria-live="polite"><span className="seek-feedback-icon">{feedback.startsWith('-')?<RotateCcw size={34}/>:<RotateCw size={34}/>}</span><strong>{feedback}</strong></div>}

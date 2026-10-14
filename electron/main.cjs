@@ -57,7 +57,7 @@ app.whenReady().then(()=>{
  ipcMain.handle('xtream-restore',event=>{trusted(event);streams.clear();return xtream.restore();});
  ipcMain.handle('metadata-status',event=>{trusted(event);return xtream.metadataStatus();});
  ipcMain.handle('metadata-save',(event,token)=>{trusted(event);return xtream.metadataSave(token);});
- ipcMain.handle('xtream-playback',async(event,item)=>{trusted(event);const url=await xtream.playback(item);streams.clear();return item.mediaType==='live'&&/\.m3u8$/i.test(url)?streams.start(url):url;});
+ ipcMain.handle('xtream-playback',async(event,item)=>{trusted(event);const url=await xtream.playback(item);streams.clear();return item.mediaType==='live'&&/\.m3u8(?:\?|$)/i.test(url)?streams.start(url):url;});
  ipcMain.handle('pick-videos',async event=>{trusted(event);const result=await dialog.showOpenDialog(window,{properties:['openFile','multiSelections'],filters:[{name:'Vídeos',extensions:['mp4','webm','mkv','mov','m4v']}]});return result.filePaths.map(file=>{const id=randomUUID();files.set(id,file);return {id,title:path.basename(file,path.extname(file)),url:`richiflix://${id}/video`,kind:'local',description:'Archivo de tu biblioteca personal',genre:'Mi biblioteca'};});});
  ipcMain.handle('pick-playlist',async event=>{trusted(event);const result=await dialog.showOpenDialog(window,{properties:['openFile'],filters:[{name:'Lista IPTV',extensions:['m3u','m3u8']}]});if(result.canceled)return null;const stat=await fs.stat(result.filePaths[0]);if(stat.size>5*1024*1024)throw new Error('La lista supera los 5 MB');return fs.readFile(result.filePaths[0],'utf8');});
  ipcMain.handle('open-source',(event,id)=>{trusted(event);const url=providerDestinations[id];if(!url)throw Error('Fuente desconocida');return shell.openExternal(url);});

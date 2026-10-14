@@ -267,7 +267,7 @@ export default function App({profile,changeProfile}){
   // An event plays its preferred signal; if preparing it fails, the next signal is tried once.
   const first=item.isEvent?preferredFeed(item):null,targets=first?[first,item.feeds.find(feed=>feed.id!==first.id)].filter(Boolean).map(feed=>feed.item):[item];
   try{let url,target;for(const [attempt,candidate] of targets.entries()){try{url=await xtreamClient().playback(candidate);target=candidate;break;}catch(error){if(attempt===targets.length-1||playRequest.current!==request)throw error;}}
-   if(playRequest.current!==request)return;setPlaying(item.isEvent?{...target,url,id:item.id,title:item.title,eventDisplayTitle:item.eventDisplayTitle,feedId:target.id,event:item,...(target!==targets[0]&&{trying:true,tried:[targets[0].id]})}:{...item,url,siblings});setDetails(null);}catch{if(playRequest.current===request){if(!details)closeExperience();setNotice('No pudimos preparar la reproducción. Revisa la conexión en Ajustes.');}}
+   if(playRequest.current!==request)return;setPlaying(item.isEvent?{...target,playbackItem:target,url,id:item.id,title:item.title,eventDisplayTitle:item.eventDisplayTitle,feedId:target.id,event:item,...(target!==targets[0]&&{trying:true,tried:[targets[0].id]})}:{...item,playbackItem:item,url,siblings});setDetails(null);}catch{if(playRequest.current===request){if(!details)closeExperience();setNotice('No pudimos preparar la reproducción. Revisa la conexión en Ajustes.');}}
  });
  // L6: another signal of the playing event, or a sibling channel, through the same session: the player dialog stays open.
  // D3: the next/previous episode also goes through here, so the player dialog stays open and history is kept per episode.
@@ -275,9 +275,9 @@ export default function App({profile,changeProfile}){
   const current=playing,target=feed?feed.item:channel||episode;if(!current||!target||!allowed(target))return false;
   const request=++playRequest.current;
   try{const url=await xtreamClient().playback(target);if(playRequest.current!==request)return false;
-   if(feed){rememberFeed(current.event,feed.id);setPlaying({...target,url,id:current.id,title:current.title,eventDisplayTitle:current.eventDisplayTitle,feedId:feed.id,event:current.event,trying});}
+   if(feed){rememberFeed(current.event,feed.id);setPlaying({...target,playbackItem:target,url,id:current.id,title:current.title,eventDisplayTitle:current.eventDisplayTitle,feedId:feed.id,event:current.event,trying});}
    else if(episode){if(episodeOrigin.current)episodeOrigin.current={...episodeOrigin.current,season:episode.season,episodeId:episode.id};setPlaying({...episode,url});}
-   else setPlaying({...target,url,siblings:current.siblings});
+   else setPlaying({...target,playbackItem:target,url,siblings:current.siblings});
    return true;}catch{return false;}
  });
  // D5: playback position per id, plus the known duration, the watched mark (≥ 90 % or the end) and, for an episode, its series' latest episode.
