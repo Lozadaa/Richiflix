@@ -43,15 +43,19 @@ export function createPlaybackHealth({readPosition,readSeeking=()=>false,onFailu
 
 // Desktop live supervision: decoded progress is the only success signal.
 // This also catches silent playlist stalls with no waiting/error event.
-export function createLiveRecovery({health,readPosition,readSeeking=()=>false,startLoad,recoverMediaError,swapAudioCodec=()=>{},reload,onReconnecting,now=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,maxReloads=3}){
- let closed=false,timer,decoderTimer,last=readPosition(),advancedAt=now(),actionAt=now(),reloads=0,steps=0,decoders=0,busy=false,failed=false,goodSince=null;
+export function createLiveRecovery({health,readPosition,readFrames=()=>undefined,readSeeking=()=>false,startLoad,recoverMediaError,swapAudioCodec=()=>{},reload,onReconnecting,now=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,maxReloads=3}){
+ let closed=false,timer,decoderTimer,last=readPosition(),frames=readFrames(),advancedAt=now(),actionAt=now(),reloads=0,steps=0,decoders=0,busy=false,failed=false,goodSince=null;
  const tick=()=>{
   timer=undefined;if(closed)return;
   if(health.canRecover()&&!failed){
-   const position=readPosition(),time=now();
-   if(!readSeeking()&&position>last+.025){advancedAt=time;goodSince??=time;if(time-goodSince>=10000){reloads=0;steps=0;decoders=0;}}
+   const position=readPosition(),nextFrames=readFrames(),time=now();
+   // HLS nudges currentTime over gaps without displaying a new frame.
+   const hasFrames=Number.isFinite(nextFrames)&&Number.isFinite(frames)&&(nextFrames>0||frames>0);
+   const moved=position>last+.5&&(!hasFrames||nextFrames>frames);
+   if(!readSeeking()&&moved){last=position;advancedAt=time;goodSince??=time;if(time-goodSince>=10000){reloads=0;steps=0;decoders=0;}}
    else goodSince=null;
-   last=position;
+   if(readSeeking()||position<last-2)last=position;
+   frames=nextFrames;
    const stalled=time-advancedAt;
    if(stalled>=10000){onReconnecting();health.waiting();}
    if(!busy&&stalled>=24000&&time-actionAt>=8000){
@@ -60,12 +64,12 @@ export function createLiveRecovery({health,readPosition,readSeeking=()=>false,st
    }else if(!busy&&stalled>=12000&&time-actionAt>=Math.min(8000,1000*2**steps)){
     actionAt=time;steps++;try{startLoad();}catch{}
    }
-  }else{advancedAt=now();actionAt=now();last=readPosition();goodSince=null;}
+  }else{advancedAt=now();actionAt=now();last=readPosition();frames=readFrames();goodSince=null;}
   if(!closed)timer=schedule(tick,1000);
  };
  timer=schedule(tick,1000);
  return {
-  online(){if(!closed&&!failed&&health.canRecover()){onReconnecting();try{startLoad();}catch{}}},
+  online(){if(!closed&&!failed&&health.canRecover()){onReconnecting();health.waiting();try{startLoad();}catch{}}},
   error(_event,data){
    if(closed||failed||!health.canRecover())return;
    if(data.type==='mediaError'&&(data.details==='bufferAppendError'||data.details==='fragParsingError'||(data.fatal&&!String(data.details).startsWith('buffer')))&&decoders<2&&decoderTimer===undefined){

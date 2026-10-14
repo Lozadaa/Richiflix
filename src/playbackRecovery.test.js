@@ -111,3 +111,17 @@ test('disposal cancels decoder backoff and a renewal queued in a microtask',asyn
 test('buffer notifications alone never rebuild the decoder',()=>{
  const f=liveFixture();for(const details of ['bufferStalledError','bufferSeekOverHole','bufferNudgeOnStall','bufferFullError'])f.recovery.error(null,{type:'mediaError',details,fatal:true});f.advance(5000);assert.equal(f.calls.includes('decoder'),false);f.recovery.dispose();
 });
+
+test('clock nudges without presented frames cannot postpone renewal',async()=>{
+ const f=fixture({bufferGrace:120000});let position=0,renewals=0;
+ const recovery=createLiveRecovery({health:f.health,readPosition:()=>position,readFrames:()=>10,startLoad:()=>{},reload:()=>renewals++,onReconnecting:()=>{},now:f.now,schedule:f.schedule,cancel:f.cancel});
+ for(let i=0;i<27;i++){position+=.1;f.advance(1000);}
+ await Promise.resolve();assert.equal(renewals,1);recovery.dispose();
+});
+
+test('decoding the same short gap repeatedly cannot postpone renewal',async()=>{
+ const f=fixture({bufferGrace:120000});let position=10,frames=10,renewals=0;
+ const recovery=createLiveRecovery({health:f.health,readPosition:()=>position,readFrames:()=>frames,startLoad:()=>{},reload:()=>renewals++,onReconnecting:()=>{},now:f.now,schedule:f.schedule,cancel:f.cancel});
+ for(let i=0;i<27;i++){position=10+(i%3)*.1;frames++;f.advance(1000);}
+ await Promise.resolve();assert.equal(renewals,1);recovery.dispose();
+});
