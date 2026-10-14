@@ -25,10 +25,10 @@ async function createLiveFixture(directory){
  assert.ok(segments.every(segment=>segment.duration===1),'Live fixture requires one-second segments');
  const pending=new Set();
  const stats={master:0,media:0,segments:0,blocked:0,blockedPlaylists:0,sequences:new Set(),servedLive:true};
- let startedAt,blocked=false;
+ let startedAt,blocked=false,frozenAt=null,expired=false,segmentFailures=0;
  const deliverPlaylist=response=>{
   if(response.destroyed||response.writableEnded)return;
-  startedAt??=Date.now();const last=24+Math.floor((Date.now()-startedAt)/1000),first=Math.max(0,last-19);
+  startedAt??=Date.now();const last=24+Math.floor(((frozenAt??Date.now())-startedAt)/1000),first=Math.max(0,last-19);
   if(last>=segments.length){response.writeHead(503);response.end();return;}
   const playlist=['#EXTM3U','#EXT-X-VERSION:3','#EXT-X-TARGETDURATION:1',`#EXT-X-MEDIA-SEQUENCE:${first}`];
   for(let index=first;index<=last;index++)playlist.push(`#EXTINF:${segments[index].duration.toFixed(6)},`,segments[index].name);
@@ -45,16 +45,18 @@ async function createLiveFixture(directory){
   const pathname=new URL(request.url,'http://fixture').pathname;
   response.setHeader('Cache-Control','no-store');response.setHeader('Access-Control-Allow-Origin','*');
   if(pathname==='/master.m3u8'){
-   stats.master++;startedAt??=Date.now();response.setHeader('Content-Type','application/vnd.apple.mpegurl');
+   expired=false;stats.master++;startedAt??=Date.now();response.setHeader('Content-Type','application/vnd.apple.mpegurl');
    response.end('#EXTM3U\n#EXT-X-VERSION:3\n#EXT-X-STREAM-INF:BANDWIDTH=450000,RESOLUTION=320x180\nlive.m3u8\n');return;
   }
   if(pathname==='/live.m3u8'){
+   if(expired){response.writeHead(403);response.end();return;}
    if(blocked){stats.blockedPlaylists++;const entry={response,playlist:true};pending.add(entry);response.once('close',()=>pending.delete(entry));return;}
    deliverPlaylist(response);return;
   }
   const match=/^\/segment-(\d+)\.ts$/.exec(pathname);
   if(match&&Number(match[1])<segments.length){
    const index=Number(match[1]);stats.segments++;
+   if(segmentFailures>0){segmentFailures--;response.writeHead(404);response.end();return;}
    if(blocked){
     stats.blocked++;const entry={response,index};pending.add(entry);
     response.once('close',()=>pending.delete(entry));return;
@@ -66,6 +68,7 @@ async function createLiveFixture(directory){
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  return {
   host:`http://127.0.0.1:${server.address().port}`,stats,
+  freeze(){frozenAt=Date.now();},thaw(){frozenAt=null;},expire(){expired=true;},failSegments(count){segmentFailures=count;},
   cut(){blocked=true;},
   async release(){blocked=false;const waiting=[...pending];pending.clear();await Promise.all(waiting.map(entry=>entry.playlist?deliverPlaylist(entry.response):deliver(entry.response,entry.index)));},
   async close(){blocked=false;for(const entry of pending)entry.response.destroy();pending.clear();server.closeAllConnections();await new Promise(resolve=>server.close(resolve));},
@@ -167,7 +170,8 @@ async function waitForEmptyBuffer(page,id){
  assert.equal((await snapshot(page,id)).terminal,0,'Waiting for bytes must not become a terminal error');
 }
 
-(async()=>{
+exports.createLiveFixture=createLiveFixture;exports.instrumentPlayer=instrumentPlayer;exports.openLive=openLive;exports.snapshot=snapshot;exports.waitForAdvancement=waitForAdvancement;
+if(require.main===module)(async()=>{
  const root=path.resolve(__dirname,'..'),prefix='richiflix-live-buffering-';
  const directory=await fs.mkdtemp(path.join(os.tmpdir(),prefix));
  let app,page,fixture,checkpoint='create local live fixture';
